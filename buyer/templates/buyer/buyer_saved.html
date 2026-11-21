@@ -1,0 +1,54 @@
+{% extends 'buyer/base_buyer.html' %}
+{% load buyer_tags %}
+
+{% block title %}RealtyFlow — Saved Properties{% endblock %}
+{% block meta_description %}Your saved and favorited properties on RealtyFlow.{% endblock %}
+
+{% block content %}
+
+{# Hidden CSRF token for heart toggle #}
+<form style="display:none;">{% csrf_token %}</form>
+
+<div id="bl-progress"></div>
+
+<section class="px-4 md:px-8 pt-24 sm:pt-28">
+  <div class="mb-10">
+    <p class="fade-up text-indigo-400 text-sm font-semibold tracking-wider uppercase">Your collection</p>
+    <h2 class="fade-up font-clash font-bold text-3xl md:text-4xl text-white mt-2" style="transition-delay:.1s;">Saved properties</h2>
+  </div>
+
+  {# ── Mode filter ── #}
+  <div class="glass-strong rounded-2xl p-2 flex items-center gap-1 mb-8 w-fit">
+    <a href="{% url 'buyer_saved' %}" class="bn-link shrink-0 {% if filter_mode == 'all' %}active{% endif %}">All</a>
+    <a href="{% url 'buyer_saved' %}?mode=buy" class="bn-link shrink-0 {% if filter_mode == 'buy' %}active{% endif %}">Buy</a>
+    <a href="{% url 'buyer_saved' %}?mode=rent" class="bn-link shrink-0 {% if filter_mode == 'rent' %}active{% endif %}">Rent</a>
+  </div>
+
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
+    {% for p in properties %}
+      {% include 'buyer/partials/property_card.html' with p=p saved_ids=saved_ids %}
+    {% empty %}
+      <div class="sm:col-span-2 lg:col-span-3 glass rounded-3xl p-12 text-center">
+        <i class="ri-heart-line text-4xl text-indigo-300"></i>
+        <p class="text-white font-clash font-semibold text-xl mt-4">No saved properties yet</p>
+        <p class="text-gray-400 text-sm mt-2">Heart any property to save it for later.</p>
+        <a href="{% url 'buyer_listings' 'buy' %}" class="clay-cta mt-6 px-6 py-3 text-sm font-semibold inline-flex items-center gap-2">
+          Browse listings <i class="ri-arrow-right-up-line"></i>
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<div class="mb-24"></div>
+
+{% endblock %}
+
+{% block buyer_scripts %}
+{% include 'buyer/partials/heart_toggle.html' %}
+<script>
+(function() {
+  document.querySelectorAll('.bl-fade').forEach(el => window.blObserver.observe(el));
+})();
+</script>
+{% endblock %}

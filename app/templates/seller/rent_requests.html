@@ -1,0 +1,26 @@
+{% extends "seller/base.html" %}
+{% load static %}
+
+{% block content %}
+      <!-- =========================================================
+           PAGE: RENT REQUESTS (Transactions)
+      ========================================================== -->
+      <section id="page-rent-requests" class="page active space-y-6">
+        <div><h2 class="text-xl font-extrabold text-ink-900 dark:text-white">Rent Requests</h2><p class="text-sm text-ink-400">Pending and recent rental applications</p></div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="card p-5"><p class="text-xs text-ink-400 font-semibold uppercase tracking-wide">Pending</p><p class="text-2xl font-extrabold text-ink-900 dark:text-white mt-1">9</p><span class="badge-warning mt-2 inline-flex"><i class="ri-time-line"></i> Awaiting</span></div>
+          <div class="card p-5"><p class="text-xs text-ink-400 font-semibold uppercase tracking-wide">Approved</p><p class="text-2xl font-extrabold text-ink-900 dark:text-white mt-1">42</p><span class="badge-success mt-2 inline-flex"><i class="ri-check-line"></i> This year</span></div>
+          <div class="card p-5"><p class="text-xs text-ink-400 font-semibold uppercase tracking-wide">Monthly Rent</p><p class="text-2xl font-extrabold text-ink-900 dark:text-white mt-1">$48.2K</p><span class="badge-brand mt-2 inline-flex"><i class="ri-arrow-up-line"></i> +6%</span></div>
+        </div>
+        <div class="card overflow-hidden">
+          <table class="w-full text-sm">
+            <thead><tr class="text-left text-ink-400 border-b border-ink-200 dark:border-ink-800"><th class="th">Tenant</th><th class="th">Property</th><th class="th">Amount</th><th class="th">Duration</th><th class="th">Status</th><th class="th text-right">Action</th></tr></thead>
+            <tbody id="rent-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'seller/js/billing.js' %}"></script>
+{% endblock %}

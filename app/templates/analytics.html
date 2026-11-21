@@ -1,0 +1,28 @@
+{% extends "admin_base.html" %}
+
+{% block title %}REAL PRICE — Analytics{% endblock %}
+{% block breadcrumb %}Insights{% endblock %}
+
+{% block content %}
+<section class="space-y-6 animate-fade-in-up">
+  <div>
+    <p class="text-xs uppercase tracking-wider mb-1 text-ink-400">ADMIN › INSIGHTS</p>
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-ink-900 dark:text-white tracking-tight">Analytics</h2>
+    <p class="text-sm mt-1 text-ink-500 dark:text-ink-400">Platform performance metrics and business intelligence</p>
+  </div>
+
+  <!-- Coming Soon Card -->
+  <div class="card p-12 text-center animate-fade-in-up stagger-1">
+    <div class="empty-ic mx-auto mb-6">
+      <i class="ri-bar-chart-2-line text-3xl relative"></i>
+    </div>
+    <h3 class="text-2xl font-extrabold text-ink-900 dark:text-white mb-2">Coming Soon</h3>
+    <p class="text-sm text-ink-500 dark:text-ink-400 max-w-md mx-auto">The analytics dashboard is under development. You'll have access to detailed charts, trends, revenue breakdowns, and user engagement metrics from this page.</p>
+    <div class="mt-8 flex items-center justify-center gap-3">
+      <a href="{% url 'admin_dashboard' %}" class="btn-primary">
+        <i class="ri-arrow-left-line"></i> Back to Dashboard
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}

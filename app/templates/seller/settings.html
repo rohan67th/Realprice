@@ -1,0 +1,35 @@
+{% extends "seller/base.html" %}
+{% load static %}
+
+{% block content %}
+      <!-- =========================================================
+           PAGE: SETTINGS
+      ========================================================== -->
+      <section id="page-settings" class="page active">
+        <h2 class="text-xl font-extrabold text-ink-900 dark:text-white mb-6">Settings</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <!-- tabs -->
+          <div class="card p-3 h-fit lg:sticky lg:top-20">
+            <button class="set-tab active" data-tab="profile"><i class="ri-user-3-line"></i> Profile</button>
+            <button class="set-tab" data-tab="notif"><i class="ri-notification-3-line"></i> Notifications</button>
+            <button class="set-tab" data-tab="appearance"><i class="ri-palette-line"></i> Appearance</button>
+            <button class="set-tab" data-tab="privacy"><i class="ri-lock-line"></i> Privacy</button>
+            <button class="set-tab" data-tab="security"><i class="ri-shield-keyhole-line"></i> Security</button>
+            <button class="set-tab" data-tab="password"><i class="ri-key-2-line"></i> Password</button>
+          </div>
+          <!-- panels -->
+          <div class="lg:col-span-3 space-y-6">
+            <div class="set-panel" data-panel="profile"><div class="card p-6"><h3 class="font-bold text-ink-900 dark:text-white mb-4">Profile Settings</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label class="lbl">Full Name</label><input class="input" value="Daniel Cooper"/></div><div><label class="lbl">Email</label><input class="input" value="daniel.cooper@estately.com"/></div><div><label class="lbl">Phone</label><input class="input" value="+1 (415) 555-0182"/></div><div><label class="lbl">Location</label><input class="input" value="San Francisco, CA"/></div><div class="sm:col-span-2"><label class="lbl">Bio</label><textarea class="input" rows="3">Premium real estate seller specializing in luxury properties across the Bay Area.</textarea></div></div><div class="mt-5 flex justify-end gap-3"><button class="btn-outline">Cancel</button><button class="btn-primary"><i class="ri-save-line"></i> Save Changes</button></div></div></div>
+            <div class="set-panel hidden" data-panel="notif"><div class="card p-6"><h3 class="font-bold text-ink-900 dark:text-white mb-4">Notification Settings</h3><div class="space-y-1" id="set-notif-list"></div></div></div>
+            <div class="set-panel hidden" data-panel="appearance"><div class="card p-6"><h3 class="font-bold text-ink-900 dark:text-white mb-4">Appearance</h3><div class="grid grid-cols-2 gap-4"><button onclick="setTheme('light')" class="theme-opt"><div class="h-20 rounded-xl bg-white border-2 border-ink-200 mb-2"></div><p class="text-sm font-semibold text-ink-700 dark:text-ink-200">Light</p></button><button onclick="setTheme('dark')" class="theme-opt"><div class="h-20 rounded-xl bg-ink-900 border-2 border-ink-700 mb-2"></div><p class="text-sm font-semibold text-ink-700 dark:text-ink-200">Dark</p></button></div></div></div>
+            <div class="set-panel hidden" data-panel="privacy"><div class="card p-6"><h3 class="font-bold text-ink-900 dark:text-white mb-4">Privacy</h3><div class="space-y-1" id="set-privacy-list"></div></div></div>
+            <div class="set-panel hidden" data-panel="security"><div class="card p-6"><h3 class="font-bold text-ink-900 dark:text-white mb-4">Security</h3><div class="space-y-4"><div class="flex items-center justify-between p-4 rounded-xl bg-ink-50 dark:bg-ink-800/50"><div><p class="font-semibold text-ink-900 dark:text-white text-sm">Two-Factor Authentication</p><p class="text-xs text-ink-400">Add an extra layer of security</p></div><button class="btn-primary">Enable</button></div><div class="flex items-center justify-between p-4 rounded-xl bg-ink-50 dark:bg-ink-800/50"><div><p class="font-semibold text-ink-900 dark:text-white text-sm">Active Sessions</p><p class="text-xs text-ink-400">2 devices currently signed in</p></div><button class="btn-outline">Manage</button></div></div></div></div>
+            <div class="set-panel hidden" data-panel="password"><div class="card p-6"><h3 class="font-bold text-ink-900 dark:text-white mb-4">Change Password</h3><div class="space-y-4 max-w-md"><div><label class="lbl">Current Password</label><input type="password" class="input" placeholder="••••••••"/></div><div><label class="lbl">New Password</label><input type="password" class="input" placeholder="••••••••"/></div><div><label class="lbl">Confirm Password</label><input type="password" class="input" placeholder="••••••••"/></div><button class="btn-primary mt-2"><i class="ri-lock-line"></i> Update Password</button></div></div></div>
+          </div>
+        </div>
+      </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'seller/js/settings.js' %}"></script>
+{% endblock %}

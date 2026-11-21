@@ -1,0 +1,312 @@
+{% extends 'buyer/base_buyer.html' %}
+{% load buyer_tags %}
+
+{% block title %}RealtyFlow — Your Dashboard{% endblock %}
+{% block meta_description %}Your personalized RealtyFlow dashboard — curated homes, saved searches, and market insight.{% endblock %}
+
+{% block content %}
+
+{# Hidden CSRF token for heart toggle #}
+<form style="display:none;">{% csrf_token %}</form>
+
+<div id="bl-progress"></div>
+
+<!-- ═════════ HERO ═════════ -->
+<section class="relative pt-24 sm:pt-28 pb-4 px-4 md:px-8">
+  <div class="bl-hero-frame">
+    <img id="blHeroImg" class="bl-hero-img"
+      src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=2200&q=88"
+      alt="">
+    <div class="bl-hero-overlay"></div>
+
+    <div class="bl-hero-inner">
+      <!-- Left: greeting + search -->
+      <div>
+        <span class="fade-up inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold text-emerald-200 glass mb-5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> {{ new_matches }} new match{{ new_matches|pluralize:"es" }} this week
+        </span>
+        <p class="fade-up text-xs uppercase tracking-wider text-indigo-300 font-semibold mb-3" style="transition-delay:.05s;">
+          Welcome back{% if buyer.name %}, {{ buyer.name }}{% endif %}
+        </p>
+        <h1 class="fade-up font-clash font-bold text-4xl md:text-5xl lg:text-6xl leading-[1.02] text-white max-w-2xl" style="transition-delay:.15s;">
+          Homes picked around <span class="gradient-text">how you live</span>.
+        </h1>
+        <p class="fade-up mt-5 max-w-lg text-gray-300 text-sm md:text-base" style="transition-delay:.3s;">
+          Your saved criteria are working in the background. Search or jump back into what you were viewing.
+        </p>
+
+        <form id="blHeroSearch" method="get" action="{% url 'buyer_listings' 'buy' %}"
+          class="fade-up glass-strong rounded-2xl p-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-1 max-w-xl mt-8"
+          style="transition-delay:.45s;">
+          <div class="flex-1 flex items-center gap-3 px-4 py-3">
+            <i class="ri-search-line text-gray-400"></i>
+            <input id="blHeroInput" name="q" placeholder="Try &ldquo;3 bed house in Malibu under 15M&rdquo;" class="bl-search-input text-sm" autocomplete="off">
+          </div>
+          <button type="submit" class="clay-cta px-6 py-3 text-sm font-semibold shrink-0">Search</button>
+        </form>
+      </div>
+
+      <!-- Right: glance cards (desktop only) -->
+      <div class="hidden lg:flex flex-col gap-3 items-end">
+        <div class="bl-hero-stat glass-strong rounded-2xl p-5 w-72 fade-up" style="transition-delay:.3s;">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl grid place-items-center bg-gradient-to-br from-indigo-500 to-blue-500"><i class="ri-sparkling-2-line text-white"></i></div>
+            <div>
+              <p class="text-xs uppercase tracking-widest text-gray-400">Match score</p>
+              <p class="font-clash font-bold text-2xl text-white">94%</p> {# TODO(backend) #}
+            </div>
+          </div>
+        </div>
+        <div class="bl-hero-stat glass-strong rounded-2xl p-5 w-72 fade-up" style="transition-delay:.4s;">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl grid place-items-center bg-gradient-to-br from-violet-500 to-purple-500"><i class="ri-price-tag-3-line text-white"></i></div>
+            <div>
+              <p class="text-xs uppercase tracking-widest text-gray-400">Price drops</p>
+              <p class="font-clash font-bold text-2xl text-white">{{ saved_drop_count }} saved home{{ saved_drop_count|pluralize:"s" }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="bl-hero-stat glass-strong rounded-2xl p-5 w-72 fade-up" style="transition-delay:.5s;">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl grid place-items-center bg-gradient-to-br from-emerald-500 to-teal-500"><i class="ri-calendar-check-line text-white"></i></div>
+            <div>
+              <p class="text-xs uppercase tracking-widest text-gray-400">Next tour</p>
+              <p class="font-clash font-bold text-2xl text-white">
+                {% if next_tour %}{{ next_tour.scheduled_date|date:"D" }} · {{ next_tour.scheduled_time|time:"g:i A" }}{% else %}No tours yet{% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ QUICK FILTERS BAR ═════════ -->
+<section id="blFilters" class="px-4 md:px-8 mt-4 scroll-mt-24">
+  <div class="glass-strong rounded-2xl p-2 flex items-center gap-1 overflow-x-auto" style="scrollbar-width:none;">
+    <a href="{% url 'buyer_listings' 'buy' %}" class="bn-link shrink-0 active"><i class="ri-sparkling-2-line"></i><span>For you</span></a>
+    <a href="{% url 'buyer_listings' 'buy' %}?type=house" class="bn-link shrink-0"><i class="ri-home-5-line"></i><span>Houses</span></a>
+    <a href="{% url 'buyer_listings' 'buy' %}?type=apartment" class="bn-link shrink-0"><i class="ri-building-4-line"></i><span>Apartments</span></a>
+    <a href="{% url 'buyer_listings' 'buy' %}?sort=new" class="bn-link shrink-0"><i class="ri-line-chart-line"></i><span>Just listed</span></a>
+    <a href="{% url 'buyer_listings' 'buy' %}?drops=1" class="bn-link shrink-0"><i class="ri-arrow-down-line"></i><span>Price drops</span></a>
+  </div>
+</section>
+
+<!-- ═════════ FEATURED SALE ═════════ -->
+<section class="px-4 md:px-8 mt-10 md:mt-14 scroll-mt-40" id="blPropSection">
+  <div class="mb-10 flex items-end justify-between gap-4">
+    <div>
+      <p class="fade-up text-indigo-400 text-sm font-semibold tracking-wider uppercase">Homes for sale</p>
+      <h2 class="fade-up font-clash font-bold text-3xl md:text-4xl text-white mt-2 max-w-2xl" style="transition-delay:.1s;">Homes we think you'll love</h2>
+    </div>
+    <a href="{% url 'buyer_listings' 'buy' %}" class="text-sm text-gray-400 hover:text-white transition-colors shrink-0">View all <i class="ri-arrow-right-s-line"></i></a>
+  </div>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
+    {% for p in featured_sale %}
+      {% include 'buyer/partials/property_card.html' with p=p saved_ids=saved_ids card_delay=forloop.counter0|divisibleby:3|yesno:"0s,0.08s,0.16s" %}
+    {% empty %}
+      <div class="sm:col-span-2 lg:col-span-3 glass rounded-3xl p-12 text-center">
+        <i class="ri-search-eye-line text-3xl text-indigo-300"></i>
+        <p class="text-white font-clash font-semibold text-xl mt-3">No homes for sale yet</p>
+        <p class="text-gray-400 text-sm mt-1">Check back soon for new listings.</p>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- ═════════ FEATURED RENTALS ═════════ -->
+<section class="px-4 md:px-8 mt-16 md:mt-20 scroll-mt-40">
+  <div class="mb-10 flex items-end justify-between gap-4">
+    <div>
+      <p class="fade-up text-indigo-400 text-sm font-semibold tracking-wider uppercase">Rentals</p>
+      <h2 class="fade-up font-clash font-bold text-3xl md:text-4xl text-white mt-2 max-w-2xl" style="transition-delay:.1s;">Rentals we think you'll love</h2>
+    </div>
+    <a href="{% url 'buyer_listings' 'rent' %}" class="text-sm text-gray-400 hover:text-white transition-colors shrink-0">View all <i class="ri-arrow-right-s-line"></i></a>
+  </div>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
+    {% for p in featured_rent %}
+      {% include 'buyer/partials/property_card.html' with p=p saved_ids=saved_ids %}
+    {% empty %}
+      <div class="sm:col-span-2 lg:col-span-3 glass rounded-3xl p-12 text-center">
+        <i class="ri-search-eye-line text-3xl text-indigo-300"></i>
+        <p class="text-white font-clash font-semibold text-xl mt-3">No rentals yet</p>
+        <p class="text-gray-400 text-sm mt-1">Check back soon for new listings.</p>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- ═════════ CONTINUE JOURNEY ═════════ -->
+<section class="px-4 md:px-8 mt-24 md:mt-32">
+  <div class="flex items-end justify-between mb-8">
+    <div>
+      <p class="fade-up text-indigo-400 text-sm font-semibold tracking-wider uppercase">Pick up where you left off</p>
+      <h2 class="fade-up font-clash font-bold text-3xl md:text-4xl text-white mt-2" style="transition-delay:.1s;">
+        Continue your journey</h2>
+    </div>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-5">
+    <div class="glass-card glass rounded-3xl p-7 fade-up">
+      <div class="icon-glow w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center mb-5 border border-blue-400/20">
+        <i class="ri-eye-line text-xl text-blue-300"></i></div>
+      <p class="text-xs uppercase tracking-widest text-gray-500">Recently viewed</p>
+      <p class="font-clash font-bold text-3xl text-white mt-2">{{ recently_viewed_count }} propert{{ recently_viewed_count|pluralize:"y,ies" }}</p>
+      <p class="text-sm text-gray-500 mt-2">In your browsing history</p>
+    </div>
+    <a href="{% url 'buyer_saved' %}" class="glass-card glass rounded-3xl p-7 fade-up block" style="transition-delay:.1s;">
+      <div class="icon-glow w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center mb-5 border border-violet-400/20">
+        <i class="ri-heart-2-line text-xl text-violet-300"></i></div>
+      <p class="text-xs uppercase tracking-widest text-gray-500">Saved for later</p>
+      <p class="font-clash font-bold text-3xl text-white mt-2">{{ saved_count }} favorite{{ saved_count|pluralize:"s" }}</p>
+      <p class="text-sm text-gray-500 mt-2">{{ saved_drop_count }} dropped in price</p>
+      <div class="mt-6 inline-flex items-center gap-1 text-sm font-medium text-indigo-300">Open <i class="ri-arrow-right-up-line"></i></div>
+    </a>
+    <a href="{% url 'buyer_tours' %}" id="tours" class="glass-card glass rounded-3xl p-7 fade-up block scroll-mt-28" style="transition-delay:.2s;">
+      <div class="icon-glow w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center mb-5 border border-emerald-400/20">
+        <i class="ri-calendar-check-line text-xl text-emerald-300"></i></div>
+      <p class="text-xs uppercase tracking-widest text-gray-500">Scheduled tours</p>
+      <p class="font-clash font-bold text-3xl text-white mt-2">{{ tours_count }} upcoming</p>
+      <p class="text-sm text-gray-500 mt-2">{% if next_tour %}Next: {{ next_tour.scheduled_date|date:"D" }}, {{ next_tour.scheduled_time|time:"g:i A" }}{% else %}No tours scheduled{% endif %}</p>
+      <div class="mt-6 inline-flex items-center gap-1 text-sm font-medium text-indigo-300">Open <i class="ri-arrow-right-up-line"></i></div>
+    </a>
+
+    <a href="{% url 'price_prediction_page' %}"
+      class="glass-card glass rounded-3xl p-7 md:col-span-3 fade-up group relative overflow-hidden"
+      style="transition-delay:.3s;">
+      <div class="absolute -top-20 -right-20 w-64 h-64 rounded-full blur-3xl"
+        style="background: radial-gradient(circle, rgba(99,102,241,.25), rgba(139,92,246,.15));"></div>
+      <div class="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+        <div class="flex items-center gap-5">
+          <div class="w-14 h-14 rounded-2xl grid place-items-center bg-gradient-to-br from-indigo-500 to-blue-500 text-white shrink-0">
+            <i class="ri-brain-line text-2xl"></i></div>
+          <div>
+            <p class="text-xs uppercase tracking-widest text-indigo-400">AI-Powered Tool</p>
+            <p class="font-clash font-semibold text-2xl text-white mt-1">Price Prediction</p>
+            <p class="text-sm text-gray-400 mt-1">Get instant AI-powered property valuations based on real market data</p>
+          </div>
+        </div>
+        <div class="w-11 h-11 rounded-full grid place-items-center text-white shrink-0 bg-gradient-to-br from-indigo-500 to-blue-500 group-hover:scale-110 transition-transform">
+          <i class="ri-arrow-right-up-line"></i></div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- ═════════ NEIGHBORHOODS ═════════ -->
+<section class="px-4 md:px-8 mt-24 md:mt-32">
+  <div class="mb-10">
+    <p class="fade-up text-indigo-400 text-sm font-semibold tracking-wider uppercase">Explore</p>
+    <h2 class="fade-up font-clash font-bold text-3xl md:text-4xl text-white mt-2" style="transition-delay:.1s;">
+      Neighborhoods worth a look</h2>
+  </div>
+  <div class="grid md:grid-cols-3 gap-5" id="blNbhdGrid"></div>
+</section>
+
+<!-- ═════════ MARKET INSIGHT ═════════ -->
+<section class="mt-24 md:mt-32 mb-24 px-4 md:px-8">
+  <div class="glass-strong rounded-3xl p-8 md:p-16 relative overflow-hidden fade-up">
+    <div class="bl-orb-a absolute -top-32 -right-32 w-96 h-96 rounded-full blur-3xl" style="background:rgba(99,102,241,.35);"></div>
+    <div class="bl-orb-b absolute -bottom-32 -left-32 w-96 h-96 rounded-full blur-3xl" style="background:rgba(139,92,246,.3);"></div>
+
+    <div class="relative grid md:grid-cols-2 gap-10 items-center">
+      <div>
+        <p class="text-indigo-400 text-sm font-semibold tracking-wider uppercase">Market pulse</p>
+        <h2 class="font-clash font-bold text-3xl md:text-5xl text-white mt-3 leading-tight">
+          Prices in your saved areas dropped <span class="gradient-text">2.4%</span> this week. {# TODO(backend) #}
+        </h2>
+        <p class="mt-6 text-gray-400 max-w-md">Now might be the moment. Get personalized market briefs the second something moves.</p>
+        <button class="clay-cta mt-8 px-7 py-3.5 text-sm font-semibold inline-flex items-center gap-2">Enable smart alerts <i class="ri-arrow-right-up-line"></i></button>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="rounded-2xl border border-white/10 p-5">
+          <p class="text-xs uppercase tracking-widest text-gray-500">Avg. price</p>
+          <p class="font-clash font-bold text-3xl text-white mt-2">$1.82M</p> {# TODO(backend) #}
+          <p class="text-xs text-indigo-400 mt-1">-2.4%</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 p-5">
+          <p class="text-xs uppercase tracking-widest text-gray-500">New listings</p>
+          <p class="font-clash font-bold text-3xl text-white mt-2">{{ new_matches }}</p>
+          <p class="text-xs text-indigo-400 mt-1">this week</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 p-5">
+          <p class="text-xs uppercase tracking-widest text-gray-500">Days on market</p>
+          <p class="font-clash font-bold text-3xl text-white mt-2">21</p> {# TODO(backend) #}
+          <p class="text-xs text-indigo-400 mt-1">-3d</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 p-5">
+          <p class="text-xs uppercase tracking-widest text-gray-500">Match score</p>
+          <p class="font-clash font-bold text-3xl text-white mt-2">94%</p> {# TODO(backend) #}
+          <p class="text-xs text-indigo-400 mt-1">+6%</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# Floating AI chatbot — fixed bottom-right #}
+{% include 'buyer_chatbot_widget.html' %}
+
+{% endblock %}
+
+{% block buyer_scripts %}
+{% include 'buyer/partials/heart_toggle.html' %}
+<script>
+(function () {
+  /* ── HERO PARALLAX ── */
+  const heroImg = document.getElementById('blHeroImg');
+  const progress = document.getElementById('bl-progress');
+  function onScroll() {
+    const y = window.pageYOffset, vh = window.innerHeight;
+    const p = Math.min(y / vh, 1);
+    if (heroImg) heroImg.style.transform = `translateY(${p * 30}px) scale(${1.1 + p * 0.05})`;
+    if (progress) {
+      const total = document.documentElement.scrollHeight - vh;
+      progress.style.width = (total > 0 ? (y / total) * 100 : 0) + '%';
+    }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* ── ROTATING PLACEHOLDER ── */
+  const heroInput = document.getElementById('blHeroInput');
+  const hints = [
+    'Try \u201c3 bed house in Malibu under 15M\u201d',
+    'Try \u201c2 bed apartment for rent under 4000\u201d',
+  ];
+  let hintIdx = 0;
+  if (heroInput) {
+    setInterval(() => {
+      hintIdx = (hintIdx + 1) % hints.length;
+      heroInput.setAttribute('placeholder', hints[hintIdx]);
+    }, 5000);
+  }
+
+  /* ── NEIGHBORHOODS (static for now) ── */
+  const nbhds = [
+    { img: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1000&q=80", name: "Willow Heights", meta: "128 homes · $1.2M avg" },
+    { img: "https://images.unsplash.com/photo-1444723121867-7a241cacace9?w=1000&q=80", name: "Metro Skyline", meta: "84 homes · $2.8M avg" },
+    { img: "https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?w=1000&q=80", name: "Coastal Palms", meta: "56 homes · $3.4M avg" },
+  ];
+  const nbhdGrid = document.getElementById('blNbhdGrid');
+  if (nbhdGrid) {
+    nbhds.forEach((n, i) => {
+      nbhdGrid.insertAdjacentHTML('beforeend', `
+        <div class="bl-tilt ${i % 2 === 1 ? 'alt' : ''} relative overflow-hidden rounded-3xl cursor-pointer" style="aspect-ratio:4/5;">
+            <img src="${n.img}" alt="${n.name}" loading="lazy" class="absolute inset-0 w-full h-full object-cover">
+            <div class="absolute inset-0" style="background:linear-gradient(to top, rgba(6,6,20,.9), rgba(6,6,20,.25), transparent);"></div>
+            <div class="absolute inset-0 p-6 flex flex-col justify-end text-white">
+                <h3 class="font-clash font-semibold text-2xl">${n.name}</h3>
+                <p class="text-sm text-gray-300 mt-1">${n.meta}</p>
+            </div>
+        </div>`);
+    });
+    document.querySelectorAll('.bl-tilt').forEach(el => window.blObserver.observe(el));
+  }
+
+  /* ── Observe server-rendered cards ── */
+  document.querySelectorAll('.bl-fade').forEach(el => window.blObserver.observe(el));
+})();
+</script>
+{% endblock %}

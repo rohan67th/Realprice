@@ -1,0 +1,22 @@
+{% extends "seller/base.html" %}
+{% load static %}
+
+{% block content %}
+      <!-- =========================================================
+           PAGE: NOTIFICATIONS
+      ========================================================== -->
+      <section id="page-notifications" class="page active space-y-6">
+        <div class="flex items-center justify-between">
+          <div><h2 class="text-xl font-extrabold text-ink-900 dark:text-white">Notifications</h2><p class="text-sm text-ink-400">Stay on top of every update</p></div>
+          <div class="flex gap-2">
+            <button class="btn-outline"><i class="ri-check-double-line"></i> Mark all read</button>
+            <button class="btn-secondary"><i class="ri-settings-3-line"></i> Preferences</button>
+          </div>
+        </div>
+        <div id="notif-list" class="card divide-y divide-ink-100 dark:divide-ink-800"></div>
+      </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'seller/js/notifications.js' %}"></script>
+{% endblock %}

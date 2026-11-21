@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}RealtyFlow — Find Your Dream Home{% endblock %}</title>
+    <meta name="description"
+        content="{% block meta_description %}RealtyFlow — AI-powered real estate platform for buying, selling, and renting properties.{% endblock %}">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Fonts: Clash Display (headings) + Plus Jakarta Sans (body) -->
+    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@200,300,400,500,600,700&display=swap"
+        rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Remixicon CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+
+    <!-- Lenis Smooth Scroll -->
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'clash': ['Clash Display', 'sans-serif'],
+                        'jakarta': ['Plus Jakarta Sans', 'sans-serif'],
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#f0f0ff',
+                            100: '#e0e0fe',
+                            200: '#c0c0fd',
+                            300: '#9f9ffc',
+                            400: '#7f7ffb',
+                            500: '#5f5ff9',
+                            600: '#4f4ff7',
+                            700: '#3f3ff5',
+                            800: '#2f2ff3',
+                            900: '#1f1ff1',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        html,
+        body {
+            font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+            scroll-behavior: auto;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        .font-clash {
+            font-family: 'Clash Display', 'Inter', sans-serif;
+        }
+
+        /* Glassmorphism base */
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-strong {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        /* Claymorphism */
+        .clay {
+            background: rgba(255, 255, 255, 0.85);
+            box-shadow:
+                inset 0 4px 8px rgba(255, 255, 255, 0.5),
+                inset 0 -4px 8px rgba(0, 0, 0, 0.05),
+                0 8px 24px rgba(0, 0, 0, 0.15),
+                0 2px 4px rgba(0, 0, 0, 0.05);
+            border-radius: 9999px;
+        }
+
+        .clay-dark {
+            background: rgba(30, 30, 50, 0.85);
+            box-shadow:
+                inset 0 4px 8px rgba(255, 255, 255, 0.08),
+                inset 0 -4px 8px rgba(0, 0, 0, 0.2),
+                0 8px 24px rgba(0, 0, 0, 0.3),
+                0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 9999px;
+        }
+
+        .clay-btn {
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow:
+                inset 0 4px 8px rgba(255, 255, 255, 0.6),
+                inset 0 -4px 8px rgba(0, 0, 0, 0.08),
+                0 6px 16px rgba(0, 0, 0, 0.12),
+                0 2px 4px rgba(0, 0, 0, 0.05);
+            border-radius: 9999px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .clay-btn:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                inset 0 4px 8px rgba(255, 255, 255, 0.7),
+                inset 0 -4px 8px rgba(0, 0, 0, 0.05),
+                0 12px 28px rgba(0, 0, 0, 0.18),
+                0 4px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .clay-btn:active {
+            transform: translateY(0);
+            box-shadow:
+                inset 0 2px 6px rgba(0, 0, 0, 0.08),
+                inset 0 -2px 6px rgba(255, 255, 255, 0.4),
+                0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        .clay-cta {
+            background: rgba(59, 130, 246, 0.9);
+            color: white;
+            box-shadow:
+                inset 0 4px 8px rgba(255, 255, 255, 0.25),
+                inset 0 -4px 8px rgba(0, 0, 0, 0.15),
+                0 8px 24px rgba(59, 130, 246, 0.35),
+                0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 9999px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .clay-cta:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                inset 0 4px 8px rgba(255, 255, 255, 0.3),
+                inset 0 -4px 8px rgba(0, 0, 0, 0.1),
+                0 12px 32px rgba(59, 130, 246, 0.45),
+                0 4px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(135deg, #a5b4fc 0%, #818cf8 30%, #6366f1 60%, #4f46e5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Card hover effects */
+        .glass-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-12px);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow:
+                0 20px 40px rgba(0, 0, 0, 0.2),
+                0 0 60px rgba(99, 102, 241, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        /* Fade up animation */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .fade-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Text reveal */
+        .text-reveal {
+            overflow: hidden;
+        }
+
+        .text-reveal-inner {
+            display: inline-block;
+            transform: translateY(100%);
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .text-reveal.visible .text-reveal-inner {
+            transform: translateY(0);
+        }
+
+        /* Particle canvas */
+        #particle-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Content layers */
+        .content-layer {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Mobile menu */
+        .mobile-menu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .mobile-menu.open {
+            max-height: 400px;
+        }
+
+        /* Stat counter animation */
+        .stat-number {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Smooth underline for links */
+        .link-underline {
+            position: relative;
+        }
+
+        .link-underline::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: currentColor;
+            transition: width 0.3s ease;
+        }
+
+        .link-underline:hover::after {
+            width: 100%;
+        }
+
+        /* Icon glow box */
+        .icon-glow {
+            position: relative;
+        }
+
+        .icon-glow::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: inherit;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.15));
+            filter: blur(12px);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .glass-card:hover .icon-glow::before {
+            opacity: 1;
+        }
+
+        /* Page background system */
+        .page-bg-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .page-bg-image {
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        .page-bg-overlay {
+            position: absolute;
+            inset: 0;
+        }
+
+        /* Login / Form specific reusable styles */
+        .login-input {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+
+        .login-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: rgba(99, 102, 241, 0.6);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .login-input:-webkit-autofill,
+        .login-input:-webkit-autofill:hover,
+        .login-input:-webkit-autofill:focus {
+            -webkit-text-fill-color: #fff;
+            -webkit-box-shadow: 0 0 0px 1000px rgba(30, 30, 60, 0.95) inset;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow:
+                0 25px 50px rgba(0, 0, 0, 0.25),
+                0 0 80px rgba(99, 102, 241, 0.08);
+        }
+
+        .login-submit {
+            background: linear-gradient(135deg, #6366f1, #3b82f6);
+            box-shadow:
+                0 10px 25px rgba(99, 102, 241, 0.4),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3),
+                inset 0 -3px 6px rgba(49, 46, 129, 0.5);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .login-submit:hover {
+            transform: translateY(2px);
+            box-shadow:
+                0 5px 15px rgba(99, 102, 241, 0.4),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3),
+                inset 0 -2px 4px rgba(49, 46, 129, 0.5);
+        }
+
+        .login-submit:active {
+            transform: translateY(4px);
+            box-shadow:
+                0 2px 8px rgba(99, 102, 241, 0.3),
+                inset 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Password toggle */
+        .pass-toggle {
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .pass-toggle:hover {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Forgot password links */
+        .forgot-links a {
+            position: relative;
+        }
+
+        .forgot-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: currentColor;
+            transition: width 0.3s ease;
+        }
+
+        .forgot-links a:hover::after {
+            width: 100%;
+        }
+    </style>
+
+    {% block head_extra %}{% endblock %}
+    {% block page_styles %}{% endblock %}
+</head>
+
+<body class="antialiased text-white overflow-x-hidden">
+
+    <!-- Page Background Layer -->
+    <div class="page-bg-layer">
+        {% block page_bg %}
+        <!-- Default dark gradient background -->
+        <div class="w-full h-full bg-gradient-to-b from-[#0a0a1e] via-[#121230] to-[#0a0a1e]"></div>
+        {% endblock %}
+    </div>
+
+    <!-- Particle Background Canvas -->
+    <canvas id="particle-bg"></canvas>
+
+    <!-- Navigation -->
+    {% block nav %}
+    <nav class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl" id="main-nav">
+        <div class="clay px-4 py-3 flex items-center justify-between">
+            <!-- Logo -->
+            <a href="{% url 'landingpage' %}" class="flex items-center gap-2.5 group">
+                <div
+                    class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <i class="ri-home-smile-fill text-white text-lg"></i>
+                </div>
+                <span class="font-clash font-semibold text-lg text-gray-800 tracking-tight">REAL PRICE</span>
+            </a>
+
+            <!-- Desktop Nav -->
+            <div class="hidden md:flex items-center gap-1">
+                <a href="{% url 'landingpage' %}"
+                    class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 rounded-full hover:bg-white/60 transition-all duration-300">Home</a>
+                <a href="{% url 'about' %}"
+                    class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 rounded-full hover:bg-white/60 transition-all duration-300">About</a>
+                <a href="{% url 'login' %}"
+                    class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 rounded-full hover:bg-white/60 transition-all duration-300">Login</a>
+                <a href="{% url 'register_choice' %}"
+                    class="clay-cta ml-2 px-5 py-2.5 text-sm font-semibold">Register</a>
+            </div>
+
+            <!-- Mobile Hamburger -->
+            <button id="mobile-toggle" class="md:hidden clay-btn w-10 h-10 flex items-center justify-center"
+                aria-label="Toggle menu">
+                <i class="ri-menu-line text-gray-700 text-lg" id="menu-icon"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="mobile-menu mt-2 mx-2">
+            <div class="clay px-4 py-4 flex flex-col gap-1">
+                <a href="{% url 'landingpage' %}"
+                    class="px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-xl hover:bg-white/60 transition-all">Home</a>
+                <a href="{% url 'about' %}"
+                    class="px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-xl hover:bg-white/60 transition-all">About</a>
+                <a href="{% url 'login' %}"
+                    class="px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-xl hover:bg-white/60 transition-all">Login</a>
+                <a href="{% url 'register_choice' %}"
+                    class="clay-cta mt-2 px-5 py-3 text-sm font-semibold text-center">Register</a>
+            </div>
+        </div>
+    </nav>
+    {% endblock %}
+
+    <!-- Page Content -->
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="relative bg-[#060614] pt-16 pb-8" style="z-index: 2;">
+        <div class="content-layer max-w-7xl mx-auto px-6">
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+                <!-- About -->
+                <div>
+                    <div class="flex items-center gap-2.5 mb-5">
+                        <div
+                            class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                            <i class="ri-home-smile-fill text-white text-sm"></i>
+                        </div>
+                        <span class="font-clash font-semibold text-white">RealtyFlow</span>
+                    </div>
+                    <p class="text-gray-500 text-sm leading-relaxed mb-5">Revolutionizing real estate with AI-powered
+                        matching, transparent pricing, and a secure, seamless experience for buyers and sellers alike.
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <a href="#"
+                            class="w-9 h-9 rounded-full glass flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+                            aria-label="Twitter">
+                            <i class="ri-twitter-x-line"></i>
+                        </a>
+                        <a href="#"
+                            class="w-9 h-9 rounded-full glass flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+                            aria-label="LinkedIn">
+                            <i class="ri-linkedin-fill"></i>
+                        </a>
+                        <a href="#"
+                            class="w-9 h-9 rounded-full glass flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+                            aria-label="Instagram">
+                            <i class="ri-instagram-line"></i>
+                        </a>
+                        <a href="#"
+                            class="w-9 h-9 rounded-full glass flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+                            aria-label="Facebook">
+                            <i class="ri-facebook-fill"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Contact -->
+                <div>
+                    <h4 class="font-clash font-semibold text-white mb-5">Contact</h4>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-3 text-gray-500 text-sm">
+                            <i class="ri-map-pin-line text-blue-400 mt-0.5"></i>
+                            <span>123 Innovation Drive, Suite 400<br>San Francisco, CA 94105</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-500 text-sm">
+                            <i class="ri-mail-line text-blue-400"></i>
+                            <a href="mailto:hello@realtyflow.com"
+                                class="hover:text-white transition-colors">hello@realtyflow.com</a>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-500 text-sm">
+                            <i class="ri-phone-line text-blue-400"></i>
+                            <a href="tel:+14155551234" class="hover:text-white transition-colors">+1 (415) 555-1234</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Terms -->
+                <div>
+                    <h4 class="font-clash font-semibold text-white mb-5">Terms</h4>
+                    <ul class="space-y-2.5">
+                        <li><a href="#"
+                                class="text-gray-500 text-sm hover:text-white transition-colors link-underline">Terms of
+                                Service</a></li>
+                        <li><a href="#"
+                                class="text-gray-500 text-sm hover:text-white transition-colors link-underline">User
+                                Agreement</a></li>
+                        <li><a href="#"
+                                class="text-gray-500 text-sm hover:text-white transition-colors link-underline">Agent
+                                Terms</a></li>
+                        <li><a href="#"
+                                class="text-gray-500 text-sm hover:text-white transition-colors link-underline">Listing
+                                Policy</a></li>
+                        <li><a href="#"
+                                class="text-gray-500 text-sm hover:text-white transition-colors link-underline">Cookie
+                                Policy</a></li>
+                    </ul>
+                </div>
+
+                <!-- Privacy -->
+                <div>
+                    <h4 class="font-clash font-semibold text-white mb-5">Privacy</h4>
+                    <ul class="space-y-2.5">
+                        <li><a href="#"
+                                class="text-gray-500 text-sm hover:text-white transition-colors link-underline">Privacy
+                                Policy</a></li>
+                        <li><a href="#"
+                                class="text-gray-500 text-sm hover:text-white transition-colors link-underline">Data
+                                Protection</a></li>
+                        <li><a href="#"
+                                class="text-gray-500 text-sm hover:text-white transition-colors link-underline">GDPR
+                                Compliance</a></li>
+                        <li><a href="#"
+                                class="text-gray-500 text-sm hover:text-white transition-colors link-underline">CCPA
+                                Rights</a></li>
+                        <li><a href="#"
+                                class="text-gray-500 text-sm hover:text-white transition-colors link-underline">Security
+                                Measures</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Bottom bar -->
+            <div class="border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+                <p class="text-gray-600 text-sm">&copy; 2024 RealtyFlow. All rights reserved.</p>
+                <div class="flex items-center gap-6">
+                    <a href="#" class="text-gray-600 text-sm hover:text-white transition-colors">Sitemap</a>
+                    <a href="#" class="text-gray-600 text-sm hover:text-white transition-colors">Accessibility</a>
+                    <a href="#" class="text-gray-600 text-sm hover:text-white transition-colors">Support</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Global Scripts -->
+    <script>
+        // ===== Lenis Smooth Scroll =====
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',
+            gestureDirection: 'vertical',
+            smooth: true,
+            smoothTouch: false,
+            touchMultiplier: 2,
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        // ===== Mobile Menu Toggle =====
+        const mobileToggle = document.getElementById('mobile-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const menuIcon = document.getElementById('menu-icon');
+        let menuOpen = false;
+
+        if (mobileToggle && mobileMenu && menuIcon) {
+            mobileToggle.addEventListener('click', () => {
+                menuOpen = !menuOpen;
+                mobileMenu.classList.toggle('open', menuOpen);
+                menuIcon.className = menuOpen ? 'ri-close-line text-gray-700 text-lg' : 'ri-menu-line text-gray-700 text-lg';
+            });
+
+            // Close mobile menu on link click
+            mobileMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    menuOpen = false;
+                    mobileMenu.classList.remove('open');
+                    menuIcon.className = 'ri-menu-line text-gray-700 text-lg';
+                });
+            });
+        }
+
+        // ===== IntersectionObserver for fade-up animations =====
+        const fadeObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    fadeObserver.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        });
+
+        document.querySelectorAll('.fade-up').forEach(el => {
+            fadeObserver.observe(el);
+        });
+
+        // ===== Stat Counter Animation =====
+        const statObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const el = entry.target;
+                    const target = parseInt(el.dataset.target);
+                    const duration = 2000;
+                    const start = performance.now();
+
+                    function update(currentTime) {
+                        const elapsed = currentTime - start;
+                        const progress = Math.min(elapsed / duration, 1);
+                        const eased = 1 - Math.pow(1 - progress, 3);
+                        const current = Math.floor(eased * target);
+                        el.textContent = current.toLocaleString() + (target === 98 ? '%' : '+');
+                        if (progress < 1) {
+                            requestAnimationFrame(update);
+                        }
+                    }
+                    requestAnimationFrame(update);
+                    statObserver.unobserve(el);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        document.querySelectorAll('.stat-number').forEach(el => {
+            statObserver.observe(el);
+        });
+
+        // ===== Particle System =====
+        (function () {
+            const canvas = document.getElementById('particle-bg');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            const PARTICLE_COUNT = 100;
+            const CONNECTION_DIST = 140;
+            const MOUSE_REPEL_DIST = 110;
+            let mouse = { x: null, y: null };
+            let animationId;
+            let isActive = true;
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            // Colors in purple/blue/indigo tones
+            const colors = [
+                'rgba(99, 102, 241, ',   // indigo
+                'rgba(139, 92, 246, ',   // violet
+                'rgba(59, 130, 246, ',   // blue
+                'rgba(168, 85, 247, ',   // purple
+                'rgba(79, 70, 229, ',    // indigo dark
+            ];
+
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.vx = (Math.random() - 0.5) * 0.6;
+                    this.vy = (Math.random() - 0.5) * 0.6;
+                    this.size = Math.random() * 2.5 + 1;
+                    this.colorBase = colors[Math.floor(Math.random() * colors.length)];
+                    this.opacity = Math.random() * 0.4 + 0.2;
+                }
+
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    // Bounce off edges
+                    if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                    if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+
+                    // Mouse repulsion
+                    if (mouse.x !== null && mouse.y !== null) {
+                        const dx = this.x - mouse.x;
+                        const dy = this.y - mouse.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < MOUSE_REPEL_DIST && dist > 0) {
+                            const force = (MOUSE_REPEL_DIST - dist) / MOUSE_REPEL_DIST;
+                            const angle = Math.atan2(dy, dx);
+                            this.vx += Math.cos(angle) * force * 0.5;
+                            this.vy += Math.sin(angle) * force * 0.5;
+                        }
+                    }
+
+                    // Damping
+                    this.vx *= 0.99;
+                    this.vy *= 0.99;
+                }
+
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fillStyle = this.colorBase + this.opacity + ')';
+                    ctx.fill();
+                }
+            }
+
+            function initParticles() {
+                particles = [];
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    particles.push(new Particle());
+                }
+            }
+            initParticles();
+
+            function drawConnections() {
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+
+                        if (dist < CONNECTION_DIST) {
+                            const opacity = (1 - dist / CONNECTION_DIST) * 0.12;
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.strokeStyle = 'rgba(139, 92, 246, ' + opacity + ')';
+                            ctx.lineWidth = 0.8;
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+
+            function animate() {
+                if (!isActive) return;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                particles.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+
+                drawConnections();
+                animationId = requestAnimationFrame(animate);
+            }
+            animate();
+
+            // Mouse tracking
+            window.addEventListener('mousemove', (e) => {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+            });
+
+            window.addEventListener('mouseleave', () => {
+                mouse.x = null;
+                mouse.y = null;
+            });
+
+            // Pause when tab hidden
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    isActive = false;
+                    cancelAnimationFrame(animationId);
+                } else {
+                    isActive = true;
+                    animate();
+                }
+            });
+        })();
+
+        // ===== Navbar scroll behavior =====
+        let lastScroll = 0;
+        const nav = document.getElementById('main-nav');
+
+        if (nav) {
+            window.addEventListener('scroll', () => {
+                const currentScroll = window.pageYOffset;
+                if (currentScroll > 100) {
+                    nav.style.transform = currentScroll > lastScroll ? 'translateX(-50%) translateY(-120%)' : 'translateX(-50%) translateY(0)';
+                } else {
+                    nav.style.transform = 'translateX(-50%) translateY(0)';
+                }
+                lastScroll = currentScroll;
+            });
+
+            // Smooth transition for navbar
+            nav.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+        }
+    </script>
+
+    {% block scripts_extra %}{% endblock %}
+</body>
+
+</html>

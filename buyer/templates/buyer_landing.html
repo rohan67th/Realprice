@@ -1,0 +1,889 @@
+{% extends 'base.html' %}
+
+{# ─────────────────────────────────────────────────────────────
+TODO (backend wiring):
+- Logo link: replace "#" with {% url 'buyer_home' %} when defined.
+- Profile: replace "#" with {% url 'profile' %} when defined.
+- Settings: replace "#" with {% url 'settings' %} when defined.
+- Logout: assumes a URL named 'logout' (POST-only in Django 5+).
+- Properties / stats are still static JS + HTML. Replace with context data.
+───────────────────────────────────────────────────────────── #}
+
+{% block title %}RealtyFlow — Your Dashboard{% endblock %}
+{% block meta_description %}Your personalized RealtyFlow dashboard — curated homes, saved searches, and market insight.{% endblock %}
+
+{% block page_bg %}
+<div class="w-full h-full"
+  style="background-image: url('https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=2200&q=85'); background-size: cover; background-position: center; background-attachment: fixed;">
+</div>
+<div class="page-bg-overlay"
+  style="background: linear-gradient(180deg, rgba(8,10,28,0.93) 0%, rgba(12,15,38,0.88) 52%, rgba(7,9,24,0.96) 100%);">
+</div>
+{% endblock %}
+
+{% block page_styles %}
+<style>
+  /* ── Buyer marketplace navbar ── */
+  .buyer-nav-bar {
+    background: rgba(31, 34, 57, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 1.25rem;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+  }
+  .buyer-nav-shell { position: relative; }
+
+  /* Nav links */
+  .bn-link {
+    padding: .55rem .8rem; font-size: .82rem; font-weight: 500;
+    color: rgba(229, 231, 235, .72); border-radius: .85rem;
+    transition: all .22s ease; display: inline-flex; align-items: center;
+    gap: .4rem; white-space: nowrap; border: 1px solid transparent;
+    background: transparent; cursor: pointer; text-decoration: none;
+  }
+  .bn-link:hover { color: #fff; background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.07); }
+  .bn-link.active {
+    color: #fff; background: linear-gradient(135deg, #4f7df3, #3f73e8);
+    border-color: rgba(143, 178, 255, .18);
+    box-shadow: 0 10px 26px rgba(63, 115, 232, .28), inset 0 1px 0 rgba(255,255,255,.14);
+  }
+  .bn-link i { font-size: .95rem; }
+
+  /* Buy / Rent toggle */
+  .bn-mode-toggle {
+    display: inline-flex; padding: 3px; border-radius: .75rem;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+  }
+  .bn-mode-btn {
+    padding: .4rem .8rem; font-size: .78rem; font-weight: 600;
+    border-radius: .6rem; color: rgba(229,231,235,.55);
+    transition: all .22s ease; cursor: pointer; border: none; background: transparent;
+  }
+  .bn-mode-btn.active {
+    background: linear-gradient(135deg, #4f7df3, #3f73e8); color: #fff;
+    box-shadow: 0 4px 14px rgba(63,115,232,.35);
+  }
+
+  /* Avatar & dropdown */
+  .bn-avatar {
+    background: linear-gradient(135deg, #5b7df4, #6a48d9);
+    box-shadow: 0 6px 18px rgba(88, 113, 244, .25);
+    cursor: pointer; border: 2px solid rgba(255,255,255,.12);
+    transition: border-color .2s ease, box-shadow .2s ease;
+  }
+  .bn-avatar:hover { border-color: rgba(255,255,255,.25); }
+  .bn-avatar-wrap { position: relative; }
+  .bn-avatar-menu {
+    position: absolute; top: calc(100% + .65rem); right: 0;
+    min-width: 240px; padding: .5rem; border-radius: 1rem;
+    background: rgba(27, 30, 50, .96); border: 1px solid rgba(255,255,255,.10);
+    box-shadow: 0 24px 50px rgba(0,0,0,.34);
+    backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+    opacity: 0; transform: translateY(-6px) scale(.98); pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease; z-index: 80;
+  }
+  .bn-avatar-menu.open {
+    opacity: 1; transform: translateY(0) scale(1); pointer-events: auto;
+  }
+
+  .bn-menu-item {
+    width: 100%; display: flex; align-items: center; gap: .65rem;
+    padding: .7rem .75rem; border-radius: .8rem;
+    color: rgba(229,231,235,.76); font-size: .85rem;
+    transition: all .18s ease; text-align: left; text-decoration: none;
+    border: none; background: transparent; cursor: pointer;
+  }
+  .bn-menu-item:hover { background: rgba(255,255,255,.06); color: #fff; }
+  .bn-menu-item.danger { color: rgba(248,113,113,.7); }
+  .bn-menu-item.danger:hover { color: #fca5a5; background: rgba(239,68,68,.08); }
+
+  /* Mobile menu */
+  .mobile-menu {
+    max-height: 0; overflow: hidden; opacity: 0;
+    transform: translateY(-4px);
+    transition: max-height .28s ease, opacity .2s ease, transform .2s ease;
+  }
+  .mobile-menu.open { max-height: 600px; opacity: 1; transform: translateY(0); }
+
+  /* Mobile logout styling */
+  .bn-link.danger { color: rgba(248,113,113,.8); }
+  .bn-link.danger:hover { color: #fca5a5; background: rgba(239,68,68,.08); }
+
+  /* ── Hero ── */
+  .bl-hero-frame {
+    border-radius: 2rem; overflow: hidden; position: relative;
+    height: clamp(560px, 78vh, 760px);
+  }
+  .bl-hero-img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; transform: scale(1.1); will-change: transform;
+  }
+  .bl-hero-overlay {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(100deg, rgba(6,6,20,.88) 0%, rgba(6,6,20,.55) 45%, rgba(6,6,20,.15) 100%),
+      linear-gradient(to top, rgba(6,6,20,.7) 0%, transparent 45%);
+  }
+  .bl-hero-inner {
+    position: relative; z-index: 2; height: 100%;
+    display: grid; align-items: center; gap: 2rem;
+    padding: clamp(1.5rem, 4vw, 4rem);
+  }
+  @media (min-width: 1024px) { .bl-hero-inner { grid-template-columns: 1.35fr 1fr; } }
+  @media (max-width: 1023px)  { .bl-hero-inner { align-items: end; } }
+
+  .bl-search-input { background: transparent; border: 0; color: #fff; width: 100%; }
+  .bl-search-input::placeholder { color: rgba(255,255,255,0.45); }
+  .bl-search-input:focus { outline: none; }
+
+  .bl-hero-stat { transition: transform .4s cubic-bezier(.16,1,.3,1); }
+  .bl-hero-stat:hover { transform: translateX(-6px); }
+
+  /* ── Property cards ── */
+  .prop-card {
+    transition: transform 0.5s cubic-bezier(0.16,1,0.3,1), box-shadow 0.5s ease,
+                border-color 0.5s ease, background 0.4s ease;
+  }
+  .prop-card:hover {
+    transform: translateY(-14px);
+    background: rgba(255,255,255,0.08) !important;
+    border-color: rgba(255,255,255,0.18) !important;
+    box-shadow: 0 32px 64px rgba(0,0,0,0.4), 0 0 60px rgba(99,102,241,0.1);
+  }
+  .prop-img { transition: transform 0.7s cubic-bezier(0.16,1,0.3,1); }
+  .prop-card:hover .prop-img { transform: scale(1.08); }
+  .bl-heart-btn i { transition: all 0.25s ease; }
+  .bl-heart-btn.active i { color: #f87171 !important; transform: scale(1.15); }
+
+  /* ── Neighborhood tilt cards ── */
+  .bl-tilt {
+    opacity: 0; transform: translateY(60px) rotate(-2deg);
+    transition: opacity .9s cubic-bezier(.22,1,.36,1), transform .9s cubic-bezier(.22,1,.36,1);
+  }
+  .bl-tilt.alt { transform: translateY(60px) rotate(2deg); }
+  .bl-tilt.visible { opacity: 1; transform: translateY(0) rotate(0deg); }
+  .bl-tilt img { transition: transform .8s cubic-bezier(.22,1,.36,1); }
+  .bl-tilt:hover img { transform: scale(1.08); }
+
+  .bl-fade {
+    opacity: 0; transform: translateY(40px);
+    transition: opacity .8s cubic-bezier(.4,0,.2,1), transform .8s cubic-bezier(.4,0,.2,1);
+  }
+  .bl-fade.visible { opacity: 1; transform: translateY(0); }
+
+  @keyframes bl-float {
+    0%,100% { transform: scale(1); opacity: .5; }
+    50%     { transform: scale(1.2); opacity: .8; }
+  }
+  .bl-orb-a { animation: bl-float 8s ease-in-out infinite; }
+  .bl-orb-b { animation: bl-float 10s ease-in-out infinite reverse; }
+
+  #bl-progress {
+    position: fixed; top: 0; left: 0; height: 2px;
+    background: linear-gradient(90deg,#6366f1,#3b82f6);
+    width: 0%; z-index: 60; transition: width .1s linear;
+  }
+</style>
+{% endblock %}
+
+{# Buyer marketplace navbar — IDs prefixed buyer- to avoid collision with base.html #}
+{% block nav %}
+<nav id="buyer-nav"
+     class="fixed top-3 left-1/2 -translate-x-1/2 z-[70] w-[calc(100%-1rem)] md:w-[calc(100%-2rem)] max-w-[1600px]">
+  <div class="buyer-nav-shell">
+    <div class="buyer-nav-bar px-2 sm:px-3 py-2 flex items-center gap-2">
+
+      {# ── Logo ── #}
+      {# TODO: replace "#" with {% url 'buyer_home' %} #}
+      <a href="#" class="flex items-center gap-2 shrink-0 group">
+        <div class="w-9 h-9 rounded-xl bg-[#1e2140] grid place-items-center group-hover:scale-105 transition-transform border border-white/10">
+          <i class="ri-home-5-line text-white text-lg"></i>
+        </div>
+        <span class="hidden md:inline font-clash font-semibold text-white text-[.95rem] tracking-tight">REALPRICE</span>
+      </a>
+
+      <div class="hidden sm:block w-px h-7 bg-white/10 shrink-0"></div>
+
+      {# ── Buy / Rent toggle ── #}
+      <div class="bn-mode-toggle shrink-0">
+        <button type="button" class="bn-mode-btn active" data-mode="buy">Buy</button>
+        <button type="button" class="bn-mode-btn" data-mode="rent">Rent</button>
+      </div>
+
+      {# ── Right-side actions (desktop / tablet) ── #}
+      <div class="hidden sm:flex items-center gap-1.5 ml-auto">
+        <button type="button" class="bn-link shrink-0" data-nav-action="saved">
+          <i class="ri-heart-line"></i><span>Saved</span>
+        </button>
+        <button type="button" class="bn-link shrink-0" data-nav-action="tours">
+          <i class="ri-compass-3-line"></i><span>Tours</span>
+        </button>
+        <a href="{% url 'price_prediction_page' %}" class="bn-link shrink-0">
+          <i class="ri-brain-line"></i>
+          <span class="hidden md:inline">Price Prediction</span>
+          <span class="md:hidden">Predict</span>
+        </a>
+        {# TODO: add chat redirect later #}
+        <a href="#" onclick="event.preventDefault();" class="bn-link shrink-0" title="Chat">
+          <i class="ri-chat-3-line"></i><span>Chat</span>
+        </a>
+
+        {# ── Avatar dropdown ── #}
+        <div class="bn-avatar-wrap shrink-0">
+          <button type="button" id="buyer-avatar-toggle"
+                  class="bn-avatar w-9 h-9 rounded-full grid place-items-center text-white text-sm font-bold"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="{{ request.user.get_full_name|default:request.user.username }}">
+            {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+          </button>
+          <div id="buyer-avatar-menu" class="bn-avatar-menu">
+            <div class="px-3 py-2.5">
+              <p class="text-sm font-semibold text-white truncate">
+                {% if request.user.get_full_name %}{{ request.user.get_full_name }}{% else %}{{ request.user.username }}{% endif %}
+              </p>
+              <p class="text-xs text-gray-400 truncate">{{ request.user.email|default:"" }}</p>
+            </div>
+            <div class="h-px bg-white/10 my-1"></div>
+            {# TODO: replace "#" with {% url 'profile' %} #}
+            <a href="#" class="bn-menu-item"><i class="ri-user-3-line"></i><span>Profile</span></a>
+            {# TODO: replace "#" with {% url 'settings' %} #}
+            <a href="#" class="bn-menu-item"><i class="ri-settings-4-line"></i><span>Settings</span></a>
+            <div class="h-px bg-white/10 my-1"></div>
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button type="submit" class="bn-menu-item danger"><i class="ri-logout-box-r-line"></i><span>Logout</span></button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {# ── Mobile hamburger ── #}
+      <button id="buyer-mobile-toggle"
+              class="sm:hidden ml-auto w-10 h-10 shrink-0 grid place-items-center rounded-xl border border-white/10 bg-white/5 text-white"
+              aria-label="Toggle menu" aria-expanded="false">
+        <i class="ri-menu-line text-lg" id="buyer-menu-icon"></i>
+      </button>
+    </div>
+
+    {# ── Mobile menu ── #}
+    <div id="buyer-mobile-menu" class="mobile-menu mt-2">
+      <div class="buyer-nav-bar px-3 py-3 flex flex-col gap-1">
+        {# Buy / Rent toggle #}
+        <div class="flex justify-center pb-2 mb-1 border-b border-white/10">
+          <div class="bn-mode-toggle">
+            <button type="button" class="bn-mode-btn active" data-mode="buy">Buy</button>
+            <button type="button" class="bn-mode-btn" data-mode="rent">Rent</button>
+          </div>
+        </div>
+        {# Actions #}
+        <button type="button" class="bn-link justify-start" data-nav-action="saved">
+          <i class="ri-heart-line"></i><span>Saved</span>
+        </button>
+        <button type="button" class="bn-link justify-start" data-nav-action="tours">
+          <i class="ri-compass-3-line"></i><span>Tours</span>
+        </button>
+        <a href="{% url 'price_prediction_page' %}" class="bn-link justify-start">
+          <i class="ri-brain-line"></i><span>Price Prediction</span>
+        </a>
+        {# TODO: add chat redirect later #}
+        <a href="#" onclick="event.preventDefault();" class="bn-link justify-start">
+          <i class="ri-chat-3-line"></i><span>Chat</span>
+        </a>
+        {# Account section #}
+        <div class="h-px bg-white/10 my-1"></div>
+        {# TODO: replace "#" with {% url 'profile' %} #}
+        <a href="#" class="bn-link justify-start"><i class="ri-user-3-line"></i> Profile</a>
+        {# TODO: replace "#" with {% url 'settings' %} #}
+        <a href="#" class="bn-link justify-start"><i class="ri-settings-4-line"></i> Settings</a>
+        <div class="h-px bg-white/10 my-1"></div>
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="bn-link danger justify-start w-full"><i class="ri-logout-box-r-line"></i> Logout</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+
+<div id="bl-progress"></div>
+
+<!-- ═════════ HERO ═════════ -->
+<section class="relative pt-24 sm:pt-28 pb-4 px-4 md:px-8">
+  <div class="bl-hero-frame">
+    <img id="blHeroImg" class="bl-hero-img"
+      src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=2200&q=88"
+      alt="">
+    <div class="bl-hero-overlay"></div>
+
+    <div class="bl-hero-inner">
+      <!-- Left: greeting + search -->
+      <div>
+        <span class="fade-up inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold text-emerald-200 glass mb-5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> 12 new matches this week
+        </span>
+        <p class="fade-up text-xs uppercase tracking-wider text-indigo-300 font-semibold mb-3" style="transition-delay:.05s;">
+          Welcome back{% if request.user.first_name %}, {{ request.user.first_name }}{% endif %}
+        </p>
+        <h1 class="fade-up font-clash font-bold text-4xl md:text-5xl lg:text-6xl leading-[1.02] text-white max-w-2xl" style="transition-delay:.15s;">
+          Homes picked around <span class="gradient-text">how you live</span>.
+        </h1>
+        <p class="fade-up mt-5 max-w-lg text-gray-300 text-sm md:text-base" style="transition-delay:.3s;">
+          Your saved criteria are working in the background. Search or jump back into what you were viewing.
+        </p>
+
+        <form id="blHeroSearch"
+          class="fade-up glass-strong rounded-2xl p-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-1 max-w-xl mt-8"
+          style="transition-delay:.45s;">
+          <div class="flex-1 flex items-center gap-3 px-4 py-3">
+            <i class="ri-search-line text-gray-400"></i>
+            <input id="blHeroInput" placeholder="Try &ldquo;3 bed house in Malibu under 15M&rdquo;" class="bl-search-input text-sm" autocomplete="off">
+          </div>
+          <button type="submit" class="clay-cta px-6 py-3 text-sm font-semibold shrink-0">Search</button>
+        </form>
+      </div>
+
+      <!-- Right: glance cards (desktop only) -->
+      <div class="hidden lg:flex flex-col gap-3 items-end">
+        <div class="bl-hero-stat glass-strong rounded-2xl p-5 w-72 fade-up" style="transition-delay:.3s;">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl grid place-items-center bg-gradient-to-br from-indigo-500 to-blue-500"><i class="ri-sparkling-2-line text-white"></i></div>
+            <div>
+              <p class="text-xs uppercase tracking-widest text-gray-400">Match score</p>
+              <p class="font-clash font-bold text-2xl text-white">94%</p>
+            </div>
+          </div>
+        </div>
+        <div class="bl-hero-stat glass-strong rounded-2xl p-5 w-72 fade-up" style="transition-delay:.4s;">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl grid place-items-center bg-gradient-to-br from-violet-500 to-purple-500"><i class="ri-price-tag-3-line text-white"></i></div>
+            <div>
+              <p class="text-xs uppercase tracking-widest text-gray-400">Price drops</p>
+              <p class="font-clash font-bold text-2xl text-white">3 saved homes</p>
+            </div>
+          </div>
+        </div>
+        <div class="bl-hero-stat glass-strong rounded-2xl p-5 w-72 fade-up" style="transition-delay:.5s;">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl grid place-items-center bg-gradient-to-br from-emerald-500 to-teal-500"><i class="ri-calendar-check-line text-white"></i></div>
+            <div>
+              <p class="text-xs uppercase tracking-widest text-gray-400">Next tour</p>
+              <p class="font-clash font-bold text-2xl text-white">Sat · 10:00 AM</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ QUICK FILTERS BAR ═════════ -->
+<section id="blFilters" class="px-4 md:px-8 mt-4 scroll-mt-24">
+  <div class="glass-strong rounded-2xl p-2 flex items-center gap-1 overflow-x-auto" style="scrollbar-width:none;">
+    <button type="button" class="bn-link shrink-0 active" data-filter-nav="all"><i class="ri-sparkling-2-line"></i><span>For you</span></button>
+    <button type="button" class="bn-link shrink-0" data-filter-nav="house"><i class="ri-home-5-line"></i><span>Houses</span></button>
+    <button type="button" class="bn-link shrink-0" data-filter-nav="apartment"><i class="ri-building-4-line"></i><span>Apartments</span></button>
+    <button type="button" class="bn-link shrink-0" data-filter-nav="new"><i class="ri-line-chart-line"></i><span>Just listed</span></button>
+    <button type="button" class="bn-link shrink-0" data-filter-nav="drops"><i class="ri-arrow-down-line"></i><span>Price drops</span></button>
+  </div>
+</section>
+
+<!-- ═════════ FEATURED PROPERTIES ═════════ -->
+<section class="px-4 md:px-8 mt-10 md:mt-14 scroll-mt-40" id="blPropSection">
+  <div class="mb-10 flex items-end justify-between gap-4">
+    <div>
+      <p class="fade-up text-indigo-400 text-sm font-semibold tracking-wider uppercase">Curated for you</p>
+      <h2 id="blPropHeading" class="fade-up font-clash font-bold text-3xl md:text-4xl text-white mt-2 max-w-2xl" style="transition-delay:.1s;">Homes we think you'll love</h2>
+    </div>
+    <p id="blCount" class="text-sm text-gray-400 shrink-0"></p>
+  </div>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7" id="blPropGrid"></div>
+</section>
+
+<!-- ═════════ CONTINUE JOURNEY ═════════ -->
+<section class="px-4 md:px-8 mt-24 md:mt-32">
+  <div class="flex items-end justify-between mb-8">
+    <div>
+      <p class="fade-up text-indigo-400 text-sm font-semibold tracking-wider uppercase">Pick up where you left off</p>
+      <h2 class="fade-up font-clash font-bold text-3xl md:text-4xl text-white mt-2" style="transition-delay:.1s;">
+        Continue your journey</h2>
+    </div>
+    <a href="#" class="hidden md:flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors link-underline">
+      View all activity <i class="ri-arrow-right-s-line"></i>
+    </a>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-5">
+    <div class="glass-card glass rounded-3xl p-7 fade-up">
+      <div class="icon-glow w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center mb-5 border border-blue-400/20">
+        <i class="ri-eye-line text-xl text-blue-300"></i></div>
+      <p class="text-xs uppercase tracking-widest text-gray-500">Recently viewed</p>
+      <p class="font-clash font-bold text-3xl text-white mt-2">18 homes</p>
+      <p class="text-sm text-gray-500 mt-2">Last visit · 2h ago</p>
+      <div class="mt-6 inline-flex items-center gap-1 text-sm font-medium text-indigo-300">Open <i class="ri-arrow-right-up-line"></i></div>
+    </div>
+    <div class="glass-card glass rounded-3xl p-7 fade-up" style="transition-delay:.1s;">
+      <div class="icon-glow w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center mb-5 border border-violet-400/20">
+        <i class="ri-heart-2-line text-xl text-violet-300"></i></div>
+      <p class="text-xs uppercase tracking-widest text-gray-500">Saved for later</p>
+      <p class="font-clash font-bold text-3xl text-white mt-2">7 favorites</p>
+      <p class="text-sm text-gray-500 mt-2">3 dropped in price</p>
+      <div class="mt-6 inline-flex items-center gap-1 text-sm font-medium text-indigo-300">Open <i class="ri-arrow-right-up-line"></i></div>
+    </div>
+    <div id="tours" class="glass-card glass rounded-3xl p-7 fade-up scroll-mt-28" style="transition-delay:.2s;">
+      <div class="icon-glow w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center mb-5 border border-emerald-400/20">
+        <i class="ri-calendar-check-line text-xl text-emerald-300"></i></div>
+      <p class="text-xs uppercase tracking-widest text-gray-500">Scheduled tours</p>
+      <p class="font-clash font-bold text-3xl text-white mt-2">2 upcoming</p>
+      <p class="text-sm text-gray-500 mt-2">Next: Sat, 10:00 AM</p>
+      <div class="mt-6 inline-flex items-center gap-1 text-sm font-medium text-indigo-300">Open <i class="ri-arrow-right-up-line"></i></div>
+    </div>
+
+    <a href="{% url 'price_prediction_page' %}"
+      class="glass-card glass rounded-3xl p-7 md:col-span-3 fade-up group relative overflow-hidden"
+      style="transition-delay:.3s;">
+      <div class="absolute -top-20 -right-20 w-64 h-64 rounded-full blur-3xl"
+        style="background: radial-gradient(circle, rgba(99,102,241,.25), rgba(139,92,246,.15));"></div>
+      <div class="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+        <div class="flex items-center gap-5">
+          <div class="w-14 h-14 rounded-2xl grid place-items-center bg-gradient-to-br from-indigo-500 to-blue-500 text-white shrink-0">
+            <i class="ri-brain-line text-2xl"></i></div>
+          <div>
+            <p class="text-xs uppercase tracking-widest text-indigo-400">AI-Powered Tool</p>
+            <p class="font-clash font-semibold text-2xl text-white mt-1">Price Prediction</p>
+            <p class="text-sm text-gray-400 mt-1">Get instant AI-powered property valuations based on real market data</p>
+          </div>
+        </div>
+        <div class="w-11 h-11 rounded-full grid place-items-center text-white shrink-0 bg-gradient-to-br from-indigo-500 to-blue-500 group-hover:scale-110 transition-transform">
+          <i class="ri-arrow-right-up-line"></i></div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- ═════════ NEIGHBORHOODS ═════════ -->
+<section class="px-4 md:px-8 mt-24 md:mt-32">
+  <div class="mb-10">
+    <p class="fade-up text-indigo-400 text-sm font-semibold tracking-wider uppercase">Explore</p>
+    <h2 class="fade-up font-clash font-bold text-3xl md:text-4xl text-white mt-2" style="transition-delay:.1s;">
+      Neighborhoods worth a look</h2>
+  </div>
+  <div class="grid md:grid-cols-3 gap-5" id="blNbhdGrid"></div>
+</section>
+
+<!-- ═════════ MARKET INSIGHT ═════════ -->
+<section class="mt-24 md:mt-32 mb-24 px-4 md:px-8">
+  <div class="glass-strong rounded-3xl p-8 md:p-16 relative overflow-hidden fade-up">
+    <div class="bl-orb-a absolute -top-32 -right-32 w-96 h-96 rounded-full blur-3xl" style="background:rgba(99,102,241,.35);"></div>
+    <div class="bl-orb-b absolute -bottom-32 -left-32 w-96 h-96 rounded-full blur-3xl" style="background:rgba(139,92,246,.3);"></div>
+
+    <div class="relative grid md:grid-cols-2 gap-10 items-center">
+      <div>
+        <p class="text-indigo-400 text-sm font-semibold tracking-wider uppercase">Market pulse</p>
+        <h2 class="font-clash font-bold text-3xl md:text-5xl text-white mt-3 leading-tight">
+          Prices in your saved areas dropped <span class="gradient-text">2.4%</span> this week.
+        </h2>
+        <p class="mt-6 text-gray-400 max-w-md">Now might be the moment. Get personalized market briefs the second something moves.</p>
+        <button class="clay-cta mt-8 px-7 py-3.5 text-sm font-semibold inline-flex items-center gap-2">Enable smart alerts <i class="ri-arrow-right-up-line"></i></button>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="rounded-2xl border border-white/10 p-5">
+          <p class="text-xs uppercase tracking-widest text-gray-500">Avg. price</p>
+          <p class="font-clash font-bold text-3xl text-white mt-2">$1.82M</p>
+          <p class="text-xs text-indigo-400 mt-1">-2.4%</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 p-5">
+          <p class="text-xs uppercase tracking-widest text-gray-500">New listings</p>
+          <p class="font-clash font-bold text-3xl text-white mt-2">48</p>
+          <p class="text-xs text-indigo-400 mt-1">+12</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 p-5">
+          <p class="text-xs uppercase tracking-widest text-gray-500">Days on market</p>
+          <p class="font-clash font-bold text-3xl text-white mt-2">21</p>
+          <p class="text-xs text-indigo-400 mt-1">-3d</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 p-5">
+          <p class="text-xs uppercase tracking-widest text-gray-500">Match score</p>
+          <p class="font-clash font-bold text-3xl text-white mt-2">94%</p>
+          <p class="text-xs text-indigo-400 mt-1">+6%</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% include 'buyer_chatbot_widget.html' %}
+
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+(function () {
+  /* ───────── DATA ─────────
+     listing: 'sale' | 'rent'
+     priceDropped: bool
+     rentPrice: per-month dollars (only for rent listings) */
+  const properties = [
+    /* ── Sale listings ── */
+    { img: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&q=80", type: "house", fresh: true, listing: "sale", priceDropped: false, tag: "New", tagColor: "rgba(99,102,241,0.25)", tagBorder: "rgba(99,102,241,0.3)", tagText: "text-indigo-200", title: "Serene Modern Villa", loc: "Palm Grove, Beverly Hills", price: "$4.2M", priceNum: 4.2, grad: "linear-gradient(135deg,#a5b4fc,#818cf8,#6366f1)", beds: 5, baths: 4, sqft: "6,200" },
+    { img: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=80", type: "apartment", fresh: false, listing: "sale", priceDropped: true, tag: "Price Drop", tagColor: "rgba(239,68,68,0.25)", tagBorder: "rgba(239,68,68,0.3)", tagText: "text-red-200", title: "Sky Loft Penthouse", loc: "Downtown, Manhattan", price: "$8.9M", priceNum: 8.9, grad: "linear-gradient(135deg,#c4b5fd,#a78bfa,#8b5cf6)", beds: 3, baths: 3, sqft: "3,800" },
+    { img: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1200&q=80", type: "house", fresh: true, listing: "sale", priceDropped: false, tag: "Trending", tagColor: "rgba(59,130,246,0.25)", tagBorder: "rgba(59,130,246,0.3)", tagText: "text-blue-200", title: "Brick Row Townhome", loc: "West Village, NY", price: "$2.6M", priceNum: 2.6, grad: "linear-gradient(135deg,#93c5fd,#60a5fa,#3b82f6)", beds: 4, baths: 3, sqft: "2,900" },
+    { img: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=80", type: "house", fresh: false, listing: "sale", priceDropped: true, tag: "Price Drop", tagColor: "rgba(239,68,68,0.25)", tagBorder: "rgba(239,68,68,0.3)", tagText: "text-red-200", title: "Cliffside Ocean Estate", loc: "Malibu Coast", price: "$12.4M", priceNum: 12.4, grad: "linear-gradient(135deg,#a5b4fc,#818cf8,#6366f1)", beds: 6, baths: 7, sqft: "9,500" },
+    { img: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&q=80", type: "apartment", fresh: false, listing: "sale", priceDropped: true, tag: "Price Drop", tagColor: "rgba(239,68,68,0.25)", tagBorder: "rgba(239,68,68,0.3)", tagText: "text-red-200", title: "Penthouse Suite", loc: "Chicago, IL", price: "$2.4M", priceNum: 2.4, grad: "linear-gradient(135deg,#c4b5fd,#a78bfa,#8b5cf6)", beds: 4, baths: 3, sqft: "3,100" },
+    { img: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200&q=80", type: "apartment", fresh: true, listing: "sale", priceDropped: false, tag: "For Sale", tagColor: "rgba(59,130,246,0.25)", tagBorder: "rgba(59,130,246,0.3)", tagText: "text-blue-200", title: "Sky Loft", loc: "Seattle, WA", price: "$1.65M", priceNum: 1.65, grad: "linear-gradient(135deg,#93c5fd,#60a5fa,#3b82f6)", beds: 2, baths: 2, sqft: "1,600" },
+    /* ── Rental listings ── */
+    { img: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200&q=80", type: "apartment", fresh: false, listing: "rent", priceDropped: false, rentPrice: 2800, tag: "Rental", tagColor: "rgba(20,184,166,0.25)", tagBorder: "rgba(20,184,166,0.3)", tagText: "text-teal-200", title: "Modern Studio Loft", loc: "Capitol Hill, Seattle", price: "$2,800/mo", priceNum: 0, grad: "linear-gradient(135deg,#5eead4,#2dd4bf,#14b8a6)", beds: 1, baths: 1, sqft: "850" },
+    { img: "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?w=1200&q=80", type: "apartment", fresh: true, listing: "rent", priceDropped: true, rentPrice: 4500, tag: "Price Drop", tagColor: "rgba(239,68,68,0.25)", tagBorder: "rgba(239,68,68,0.3)", tagText: "text-red-200", title: "Harbor View Flat", loc: "Downtown, Manhattan", price: "$4,500/mo", priceNum: 0, grad: "linear-gradient(135deg,#a5b4fc,#818cf8,#6366f1)", beds: 2, baths: 2, sqft: "1,200" },
+    { img: "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=1200&q=80", type: "house", fresh: false, listing: "rent", priceDropped: false, rentPrice: 8200, tag: "Rental", tagColor: "rgba(20,184,166,0.25)", tagBorder: "rgba(20,184,166,0.3)", tagText: "text-teal-200", title: "Suburban Family Home", loc: "Pacific Palisades, Beverly Hills", price: "$8,200/mo", priceNum: 0, grad: "linear-gradient(135deg,#93c5fd,#60a5fa,#3b82f6)", beds: 4, baths: 3, sqft: "3,400" },
+    { img: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=1200&q=80", type: "apartment", fresh: true, listing: "rent", priceDropped: true, rentPrice: 3100, tag: "New", tagColor: "rgba(99,102,241,0.25)", tagBorder: "rgba(99,102,241,0.3)", tagText: "text-indigo-200", title: "Garden Terrace Apt", loc: "Lincoln Park, Chicago", price: "$3,100/mo", priceNum: 0, grad: "linear-gradient(135deg,#c4b5fd,#a78bfa,#8b5cf6)", beds: 2, baths: 1, sqft: "1,050" },
+  ];
+
+  /* ───────── STATE ───────── */
+  const grid     = document.getElementById('blPropGrid');
+  const countEl  = document.getElementById('blCount');
+  const heading  = document.getElementById('blPropHeading');
+  const state    = { pill: 'all', crit: null, mode: 'buy' };
+  let firstRender = true;
+
+  // Restore persisted mode
+  try { if (localStorage.getItem('rf_mode') === 'rent') state.mode = 'rent'; } catch (e) {}
+
+  // Saved properties
+  let saved = new Set();
+  try { saved = new Set(JSON.parse(localStorage.getItem('rf_saved') || '[]')); } catch (e) {}
+  const persist = () => { try { localStorage.setItem('rf_saved', JSON.stringify([...saved])); } catch (e) {} };
+
+  /* ───────── MODE TOGGLE ───────── */
+  function setMode(mode, skipRender) {
+    state.mode = mode;
+    if (!skipRender) { state.pill = 'all'; state.crit = null; }
+    try { localStorage.setItem('rf_mode', mode); } catch (e) {}
+    // Update all toggle buttons (desktop + mobile)
+    document.querySelectorAll('[data-mode]').forEach(btn =>
+      btn.classList.toggle('active', btn.dataset.mode === mode));
+    // Update heading
+    if (heading) heading.textContent = mode === 'rent'
+      ? "Rentals we think you\u2019ll love"
+      : "Homes we think you\u2019ll love";
+    if (!skipRender) { setTopNavActive('all'); render(); }
+  }
+
+  document.querySelectorAll('[data-mode]').forEach(btn =>
+    btn.addEventListener('click', () => setMode(btn.dataset.mode)));
+
+  /* ───────── FILTERING ───────── */
+  function matchesMode(p) {
+    return state.mode === 'rent' ? p.listing === 'rent' : p.listing === 'sale';
+  }
+
+  function matchesPill(p) {
+    switch (state.pill) {
+      case 'house':     return p.type === 'house';
+      case 'apartment': return p.type === 'apartment';
+      case 'new':       return p.fresh;
+      case 'drops':     return p.priceDropped;
+      case 'saved':     return saved.has(p.title);
+      default:          return true;  // 'all', 'tours'
+    }
+  }
+
+  function matchesCrit(p) {
+    const c = state.crit;
+    if (!c) return true;
+    if (c.type && p.type !== c.type) return false;
+    if (c.beds && p.beds < c.beds) return false;
+    const priceVal = state.mode === 'rent' ? (p.rentPrice || 0) : p.priceNum;
+    if (c.max != null && priceVal > c.max) return false;
+    if (c.min != null && priceVal < c.min) return false;
+    if (c.fresh && !p.fresh) return false;
+    if (c.places.length && !c.places.some(t => new RegExp('\\b' + t + '\\b').test(p.loc.toLowerCase()))) return false;
+    return true;
+  }
+
+  /* ───────── CARD HTML ───────── */
+  function cardHTML(p, i) {
+    const isSaved = saved.has(p.title);
+    return `
+      <article class="prop-card glass bl-fade rounded-3xl overflow-hidden group cursor-pointer" style="transition-delay:${(i % 3) * 0.08}s;">
+          <div class="relative overflow-hidden" style="height:220px;">
+              <img src="${p.img}" alt="${p.title}" loading="lazy" class="prop-img w-full h-full object-cover">
+              <div class="absolute top-3 left-3">
+                  <span class="px-3 py-1 rounded-full text-xs font-semibold ${p.tagText} tracking-wide" style="background:${p.tagColor};backdrop-filter:blur(8px);border:1px solid ${p.tagBorder};">${p.tag}</span>
+              </div>
+              <button data-heart data-title="${p.title}" class="bl-heart-btn ${isSaved ? 'active' : ''} absolute top-3 right-3 w-9 h-9 grid place-items-center rounded-full text-white" style="background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);">
+                  <i class="${isSaved ? 'ri-heart-fill' : 'ri-heart-line'}"></i>
+              </button>
+          </div>
+          <div class="p-5">
+              <h3 class="font-clash font-semibold text-white text-lg mb-1">${p.title}</h3>
+              <p class="text-gray-400 text-sm flex items-center gap-1.5 mb-3"><i class="ri-map-pin-2-line text-indigo-400 text-xs"></i> ${p.loc}</p>
+              <div class="font-clash font-bold text-2xl mb-4" style="background:${p.grad};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${p.price}</div>
+              <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-4 text-sm text-gray-400">
+                      <span class="flex items-center gap-1.5"><i class="ri-hotel-bed-line text-indigo-400"></i>${p.beds}</span>
+                      <span class="flex items-center gap-1.5"><i class="ri-drop-line text-indigo-400"></i>${p.baths}</span>
+                      <span class="flex items-center gap-1.5"><i class="ri-expand-diagonal-line text-indigo-400"></i>${p.sqft}</span>
+                  </div>
+                  <button class="w-9 h-9 rounded-full grid place-items-center text-white bg-gradient-to-br from-indigo-500 to-blue-500"><i class="ri-arrow-right-up-line text-sm"></i></button>
+              </div>
+          </div>
+      </article>`;
+  }
+
+  /* ───────── RENDER ───────── */
+  function render() {
+    const list = properties.filter(p => matchesMode(p) && matchesPill(p) && matchesCrit(p));
+    const unit = state.mode === 'rent'
+      ? (list.length === 1 ? 'rental' : 'rentals')
+      : (list.length === 1 ? 'home' : 'homes');
+    grid.innerHTML = list.length
+      ? list.map(cardHTML).join('')
+      : `<div class="sm:col-span-2 lg:col-span-3 glass rounded-3xl p-12 text-center">
+             <i class="ri-search-eye-line text-3xl text-indigo-300"></i>
+             <p class="text-white font-clash font-semibold text-xl mt-3">No ${unit} match yet</p>
+             <p class="text-gray-400 text-sm mt-1">Try loosening the budget or location.</p>
+         </div>`;
+    countEl.textContent = list.length + ' ' + unit;
+
+    const items = grid.querySelectorAll('.bl-fade');
+    if (firstRender) { items.forEach(el => blObserver.observe(el)); firstRender = false; }
+    else requestAnimationFrame(() => items.forEach(el => el.classList.add('visible')));
+    return list;
+  }
+
+  /* ───────── HEART ───────── */
+  grid.addEventListener('click', e => {
+    const btn = e.target.closest('[data-heart]');
+    if (!btn) return;
+    e.stopPropagation();
+    const t = btn.dataset.title;
+    saved.has(t) ? saved.delete(t) : saved.add(t);
+    persist();
+    if (state.pill === 'saved') { render(); return; }
+    btn.classList.toggle('active', saved.has(t));
+    btn.querySelector('i').className = saved.has(t) ? 'ri-heart-fill' : 'ri-heart-line';
+  });
+
+  /* ───────── SMART SEARCH ───────── */
+  const placeTokens = [...new Set(
+    properties.flatMap(p => p.loc.toLowerCase().split(/[,\s]+/)).filter(t => t.length > 3)
+  )];
+
+  function money(n, unit) {
+    n = parseFloat(n);
+    if (state.mode === 'rent') {
+      if (unit === 'k') return n * 1000;  // "3k" → 3000 per month
+      return n;                            // "4500" → 4500 per month
+    }
+    // Buy mode (prices in millions)
+    if (unit === 'k') return n / 1000;
+    if (unit === 'm' || unit === 'million') return n;
+    return n >= 1000 ? n / 1e6 : n;
+  }
+
+  function parseQuery(text) {
+    const q = text.toLowerCase();
+    const c = { places: [] };
+    let hit = false;
+
+    // Mode detection — switches the toggle but doesn't re-render yet (skipRender)
+    if (/\b(for\s+rent|rent(ing|als?)?)\b/.test(q))        { setMode('rent', true); hit = true; }
+    else if (/\b(for\s+sale|buy(ing)?|purchase)\b/.test(q)) { setMode('buy',  true); hit = true; }
+
+    if (/apartment|penthouse|loft|condo|flat/.test(q))            { c.type = 'apartment'; hit = true; }
+    else if (/house|villa|townhome|townhouse|estate/.test(q))     { c.type = 'house';     hit = true; }
+
+    let m = q.match(/(\d+)\s*\+?\s*(?:bed|br|bhk|bedroom)/);
+    if (m) { c.beds = +m[1]; hit = true; }
+
+    m = q.match(/(?:under|below|less than|max|up to|<)\s*\$?\s*(\d+(?:\.\d+)?)(?!\d|\s*(?:bed|br|bhk))\s*(m|million|k)?/);
+    if (m) { c.max = money(m[1], m[2]); hit = true; }
+
+    m = q.match(/(?:over|above|more than|min|at least|>)\s*\$?\s*(\d+(?:\.\d+)?)(?!\d|\s*(?:bed|br|bhk))\s*(m|million|k)?/);
+    if (m) { c.min = money(m[1], m[2]); hit = true; }
+
+    if (/just listed|new listing|newest|recent/.test(q)) { c.fresh = true; hit = true; }
+
+    placeTokens.forEach(t => {
+      if (new RegExp('\\b' + t + '\\b').test(q)) { c.places.push(t); hit = true; }
+    });
+    if (/new york|\bnyc?\b/.test(q)) { c.places.push('ny', 'manhattan'); hit = true; }
+
+    return hit ? c : null;
+  }
+
+  /* ───────── FILTER NAV ───────── */
+  function activateFilter(filter) {
+    state.pill = filter;
+    state.crit = null;
+    setTopNavActive(filter);
+    render();
+    const bar = document.getElementById('blFilters');
+    if (bar) bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function setTopNavActive(filter) {
+    document.querySelectorAll('[data-filter-nav]').forEach(btn =>
+      btn.classList.toggle('active', btn.dataset.filterNav === filter));
+  }
+
+  document.querySelectorAll('[data-filter-nav]').forEach(btn =>
+    btn.addEventListener('click', () => {
+      activateFilter(btn.dataset.filterNav);
+      closeMobileMenu();
+    }));
+
+  /* ───────── NAV ACTIONS (Saved, Tours) ───────── */
+  document.querySelectorAll('[data-nav-action]').forEach(btn =>
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.navAction;
+      if (action === 'saved') {
+        activateFilter('saved');
+      } else if (action === 'tours') {
+        const t = document.getElementById('tours');
+        if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      closeMobileMenu();
+    }));
+
+  /* ───────── MOBILE MENU ───────── */
+  const mobToggle = document.getElementById('buyer-mobile-toggle');
+  const mobMenu   = document.getElementById('buyer-mobile-menu');
+  const mobIcon   = document.getElementById('buyer-menu-icon');
+
+  function closeMobileMenu() {
+    if (!mobMenu) return;
+    mobMenu.classList.remove('open');
+    if (mobToggle) mobToggle.setAttribute('aria-expanded', 'false');
+    if (mobIcon) mobIcon.className = 'ri-menu-line text-lg';
+  }
+
+  if (mobToggle) {
+    mobToggle.addEventListener('click', e => {
+      e.stopPropagation();
+      const willOpen = !mobMenu.classList.contains('open');
+      mobMenu.classList.toggle('open', willOpen);
+      mobToggle.setAttribute('aria-expanded', String(willOpen));
+      if (mobIcon) mobIcon.className = willOpen ? 'ri-close-line text-lg' : 'ri-menu-line text-lg';
+    });
+  }
+
+  /* ───────── AVATAR DROPDOWN ───────── */
+  const avToggle = document.getElementById('buyer-avatar-toggle');
+  const avMenu   = document.getElementById('buyer-avatar-menu');
+
+  function closeAvatarMenu() {
+    if (!avMenu) return;
+    avMenu.classList.remove('open');
+    if (avToggle) avToggle.setAttribute('aria-expanded', 'false');
+  }
+
+  if (avToggle) {
+    avToggle.addEventListener('click', e => {
+      e.stopPropagation();
+      const willOpen = !avMenu.classList.contains('open');
+      avMenu.classList.toggle('open', willOpen);
+      avToggle.setAttribute('aria-expanded', String(willOpen));
+    });
+  }
+
+  /* Close menus on outside click or Escape */
+  document.addEventListener('click', e => {
+    if (avMenu && avToggle && !avMenu.contains(e.target) && !avToggle.contains(e.target)) closeAvatarMenu();
+    if (mobMenu && mobToggle && !mobMenu.contains(e.target) && !mobToggle.contains(e.target)) closeMobileMenu();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeAvatarMenu(); closeMobileMenu(); }
+  });
+
+  /* ───────── HERO SEARCH ───────── */
+  const heroForm = document.getElementById('blHeroSearch');
+  if (heroForm) {
+    heroForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const inp = document.getElementById('blHeroInput');
+      const value = inp ? inp.value.trim() : '';
+      if (!value) return;
+
+      const crit = parseQuery(value);
+      state.pill = 'all';
+      state.crit = crit;       // null if parseQuery returned null
+      setTopNavActive('all');
+      render();
+
+      inp.value = '';
+      const bar = document.getElementById('blFilters');
+      if (bar) bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  /* ───────── ROTATING PLACEHOLDER ───────── */
+  const heroInput = document.getElementById('blHeroInput');
+  const hints = [
+    'Try \u201c3 bed house in Malibu under 15M\u201d',
+    'Try \u201c2 bed apartment for rent under 4000\u201d',
+  ];
+  let hintIdx = 0;
+  if (heroInput) {
+    setInterval(() => {
+      hintIdx = (hintIdx + 1) % hints.length;
+      heroInput.setAttribute('placeholder', hints[hintIdx]);
+    }, 5000);
+  }
+
+  /* ───────── NEIGHBORHOODS ───────── */
+  const nbhds = [
+    { img: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1000&q=80", name: "Willow Heights", meta: "128 homes · $1.2M avg" },
+    { img: "https://images.unsplash.com/photo-1444723121867-7a241cacace9?w=1000&q=80", name: "Metro Skyline", meta: "84 homes · $2.8M avg" },
+    { img: "https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?w=1000&q=80", name: "Coastal Palms", meta: "56 homes · $3.4M avg" },
+  ];
+  const nbhdGrid = document.getElementById('blNbhdGrid');
+  nbhds.forEach((n, i) => {
+    nbhdGrid.insertAdjacentHTML('beforeend', `
+      <div class="bl-tilt ${i % 2 === 1 ? 'alt' : ''} relative overflow-hidden rounded-3xl cursor-pointer" style="aspect-ratio:4/5;">
+          <img src="${n.img}" alt="${n.name}" loading="lazy" class="absolute inset-0 w-full h-full object-cover">
+          <div class="absolute inset-0" style="background:linear-gradient(to top, rgba(6,6,20,.9), rgba(6,6,20,.25), transparent);"></div>
+          <div class="absolute inset-0 p-6 flex flex-col justify-end text-white">
+              <h3 class="font-clash font-semibold text-2xl">${n.name}</h3>
+              <p class="text-sm text-gray-300 mt-1">${n.meta}</p>
+          </div>
+      </div>`);
+  });
+
+  /* ───────── REVEAL OBSERVER ───────── */
+  const blObserver = new IntersectionObserver(entries => {
+    entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('visible'); blObserver.unobserve(en.target); } });
+  }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+  document.querySelectorAll('.bl-tilt').forEach(el => blObserver.observe(el));
+
+  /* ───────── INITIAL PAINT ───────── */
+  // Sync toggle UI to persisted mode (without re-render)
+  document.querySelectorAll('[data-mode]').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.mode === state.mode));
+  if (heading) heading.textContent = state.mode === 'rent'
+    ? "Rentals we think you\u2019ll love"
+    : "Homes we think you\u2019ll love";
+
+  render();
+  setTopNavActive('all');
+
+  /* ───────── HERO PARALLAX + PROGRESS ───────── */
+  const heroImg  = document.getElementById('blHeroImg');
+  const progress = document.getElementById('bl-progress');
+  function onScroll() {
+    const y = window.pageYOffset, vh = window.innerHeight;
+    const p = Math.min(y / vh, 1);
+    if (heroImg) heroImg.style.transform = `translateY(${p * 30}px) scale(${1.1 + p * 0.05})`;
+    if (progress) {
+      const total = document.documentElement.scrollHeight - vh;
+      progress.style.width = (total > 0 ? (y / total) * 100 : 0) + '%';
+    }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+})();
+</script>
+{% endblock %}

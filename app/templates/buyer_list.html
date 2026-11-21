@@ -1,0 +1,267 @@
+{% extends 'admin_base.html' %}
+{% block title %}Buyer Management — REAL PRICE Admin{% endblock %}
+{% block breadcrumb %}Buyers{% endblock %}
+
+{% block content %}
+<section class="space-y-6">
+
+  <!-- ═══ PAGE HEADER ═══ -->
+  <div class="animate-fade-in-up">
+    <p class="text-xs uppercase tracking-wider mb-1 text-ink-400">ADMIN › BUYERS</p>
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-ink-900 dark:text-white tracking-tight">Buyer Management</h2>
+    <p class="text-sm mt-1 text-ink-500 dark:text-ink-400">Manage and control all buyer accounts</p>
+  </div>
+
+  <!-- ═══ STATS BAR ═══ -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+    <!-- Total Buyers -->
+    <div class="card card-hover p-5 animate-fade-in-up stagger-1">
+      <div class="flex items-center justify-between mb-3">
+        <div class="h-10 w-10 rounded-xl bg-brand-50 dark:bg-brand-900/30 grid place-items-center">
+          <i class="ri-user-3-line text-lg text-brand-600 dark:text-brand-400"></i>
+        </div>
+      </div>
+      <p class="text-2xl font-extrabold text-ink-900 dark:text-white" id="stat-total">{{ total_buyers }}</p>
+      <p class="text-xs text-ink-400 mt-1">Total Buyers</p>
+    </div>
+
+    <!-- Active -->
+    <div class="card card-hover p-5 animate-fade-in-up stagger-2">
+      <div class="flex items-center justify-between mb-3">
+        <div class="h-10 w-10 rounded-xl bg-success-50 dark:bg-success-900/30 grid place-items-center">
+          <i class="ri-checkbox-circle-line text-lg text-success-600 dark:text-success-400"></i>
+        </div>
+      </div>
+      <p class="text-2xl font-extrabold text-ink-900 dark:text-white" id="stat-active">{{ active_buyers }}</p>
+      <p class="text-xs text-ink-400 mt-1">Active Buyers</p>
+    </div>
+
+    <!-- Suspended -->
+    <div class="card card-hover p-5 animate-fade-in-up stagger-3">
+      <div class="flex items-center justify-between mb-3">
+        <div class="h-10 w-10 rounded-xl bg-warning-50 dark:bg-warning-900/30 grid place-items-center">
+          <i class="ri-user-forbid-line text-lg text-warning-600 dark:text-warning-400"></i>
+        </div>
+      </div>
+      <p class="text-2xl font-extrabold text-ink-900 dark:text-white" id="stat-suspended">{{ suspended_buyers }}</p>
+      <p class="text-xs text-ink-400 mt-1">Suspended Buyers</p>
+    </div>
+  </div>
+
+  <!-- ═══ FILTER BAR ═══ -->
+  <div class="card px-5 py-3 animate-fade-in-up">
+    <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+      <div class="relative flex-1">
+        <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"></i>
+        <input type="text" id="searchInput" placeholder="Search by name or email..."
+          class="input pl-10 pr-4">
+      </div>
+      <select id="statusFilter" class="input w-auto min-w-[140px]">
+        <option value="all">All Status</option>
+        <option value="active">Active</option>
+        <option value="suspended">Suspended</option>
+      </select>
+      <select id="sortFilter" class="input w-auto min-w-[140px]">
+        <option value="newest">Newest</option>
+        <option value="oldest">Oldest</option>
+        <option value="name-az">Name A-Z</option>
+      </select>
+      <button class="btn-outline text-xs"><i class="ri-download-2-line"></i> Export</button>
+    </div>
+  </div>
+
+  <!-- ═══ BUYER TABLE ═══ -->
+  <div class="card overflow-hidden" id="buyerList">
+    <div class="divide-y divide-ink-100 dark:divide-ink-800">
+      {% for buyer in buyers %}
+      <div class="buyer-row flex flex-col lg:flex-row items-start lg:items-center gap-4 px-6 py-4 hover:bg-ink-50 dark:hover:bg-ink-800/50 transition"
+        data-name="{{ buyer.name|lower }}"
+        data-email="{{ buyer.email|lower }}"
+        data-status="{% if buyer.is_active %}active{% else %}suspended{% endif %}"
+        data-id="{{ buyer.id }}">
+
+        <!-- Avatar -->
+        <div class="flex items-center gap-4 min-w-[240px]">
+          <div class="relative">
+            {% if buyer.profile_pic %}
+            <img src="{{ buyer.profile_pic.url }}" alt="{{ buyer.name }}"
+              class="w-12 h-12 rounded-full object-cover border border-ink-200 dark:border-ink-700">
+            {% else %}
+            <div class="w-12 h-12 rounded-full flex items-center justify-center border border-ink-200 dark:border-ink-700 bg-ink-50 dark:bg-ink-800">
+              <i class="ri-user-line text-xl text-ink-400"></i>
+            </div>
+            {% endif %}
+          </div>
+          <div class="min-w-0">
+            <h3 class="text-ink-900 dark:text-white font-semibold text-sm truncate">{{ buyer.name }}</h3>
+            <p class="text-xs text-ink-500 dark:text-ink-400 truncate">{{ buyer.email }}</p>
+            <p class="text-xs mt-0.5 text-ink-400">Buyer ID #{{ buyer.id }}</p>
+          </div>
+        </div>
+
+        <!-- Phone -->
+        <span class="flex items-center gap-1.5 text-xs text-ink-500 dark:text-ink-400">
+          <i class="ri-phone-line text-ink-400"></i>
+          {{ buyer.phone|default:"—" }}
+        </span>
+
+        <!-- Gender Pill -->
+        <span class="badge-neutral">
+          {% if buyer.gender == 'M' %}Male{% elif buyer.gender == 'F' %}Female{% else %}Other{% endif %}
+        </span>
+
+        <!-- Address -->
+        <span class="flex items-center gap-1.5 text-xs text-ink-500 dark:text-ink-400 max-w-[180px] truncate">
+          <i class="ri-map-pin-2-line text-ink-400"></i>
+          {{ buyer.address|default:"—"|truncatewords:4 }}
+        </span>
+
+        <div class="flex-1"></div>
+
+        <!-- Status Pill -->
+        {% if buyer.is_active %}
+        <span class="badge-success">Active</span>
+        {% else %}
+        <span class="badge-warning">Suspended</span>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-2">
+          <!-- Delete -->
+          <form method="POST" action="{% url 'delete_buyer' buyer.id %}" data-confirm="Are you sure you want to delete {{ buyer.name }}? This cannot be undone." class="inline">
+            {% csrf_token %}
+            <button type="submit" class="btn-outline text-xs py-1.5 text-danger-600 dark:text-danger-400 border-danger-200 dark:border-danger-800 hover:bg-danger-50 dark:hover:bg-danger-900/30">
+              <i class="ri-delete-bin-6-line"></i> Delete
+            </button>
+          </form>
+        </div>
+      </div>
+      {% empty %}
+      <div class="px-6 py-16 text-center text-ink-400">
+        <i class="ri-user-line text-5xl mb-3 block"></i>
+        <p class="text-sm font-medium">No buyers found</p>
+        <p class="text-xs mt-1">No buyer accounts registered yet</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Empty filter state -->
+  {% if buyers %}
+  <div id="emptyFilterState" class="hidden card px-6 py-16 text-center">
+    <i class="ri-user-line text-5xl mb-3 block text-ink-400"></i>
+    <p class="text-sm font-medium text-ink-500">No buyers found</p>
+    <p class="text-xs mt-1 text-ink-400">Try adjusting your filters</p>
+    <button onclick="clearFilters()" class="btn-outline text-xs mt-3">Clear filters</button>
+  </div>
+  {% endif %}
+
+  <!-- ═══ PAGINATION ═══ -->
+  <div class="flex justify-center animate-fade-in-up" id="paginationBar">
+    <div class="inline-flex gap-1 mt-2">
+      <button class="btn-outline text-xs py-1.5" onclick="changePage(-1)">
+        <i class="ri-arrow-left-s-line"></i> Prev
+      </button>
+      <div id="pageNumbers" class="flex gap-1"></div>
+      <button class="btn-outline text-xs py-1.5" onclick="changePage(1)">
+        Next <i class="ri-arrow-right-s-line"></i>
+      </button>
+    </div>
+  </div>
+
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const rows = document.querySelectorAll('.buyer-row');
+  const searchInput = document.getElementById('searchInput');
+  const statusFilter = document.getElementById('statusFilter');
+  const sortFilter = document.getElementById('sortFilter');
+  const emptyState = document.getElementById('emptyFilterState');
+  const ITEMS_PER_PAGE = 8;
+  let currentPage = 1;
+
+  function getVisibleRows() {
+    const search = searchInput.value.toLowerCase();
+    const status = statusFilter.value;
+    const visible = [];
+    rows.forEach(row => {
+      const name = row.dataset.name;
+      const email = row.dataset.email;
+      const st = row.dataset.status;
+      const matchSearch = !search || name.includes(search) || email.includes(search);
+      const matchStatus = status === 'all' || st === status;
+      if (matchSearch && matchStatus) visible.push(row);
+    });
+    const sort = sortFilter.value;
+    if (sort === 'name-az') visible.sort((a,b) => a.dataset.name.localeCompare(b.dataset.name));
+    else if (sort === 'oldest') visible.sort((a,b) => parseInt(a.dataset.id) - parseInt(b.dataset.id));
+    else visible.sort((a,b) => parseInt(b.dataset.id) - parseInt(a.dataset.id));
+    return visible;
+  }
+
+  function render() {
+    const visible = getVisibleRows();
+    const totalPages = Math.max(1, Math.ceil(visible.length / ITEMS_PER_PAGE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    rows.forEach(r => r.style.display = 'none');
+    visible.forEach((r, i) => {
+      if (i >= start && i < end) {
+        r.style.display = '';
+      } else {
+        r.style.display = 'none';
+      }
+    });
+    if (emptyState) emptyState.classList.toggle('hidden', visible.length > 0);
+    renderPagination(totalPages);
+  }
+
+  function renderPagination(totalPages) {
+    const container = document.getElementById('pageNumbers');
+    container.innerHTML = '';
+    for (let i = 1; i <= totalPages; i++) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      btn.className = i === currentPage
+        ? 'btn-primary text-xs py-1.5 px-3'
+        : 'btn-outline text-xs py-1.5 px-3';
+      btn.addEventListener('click', () => { currentPage = i; render(); });
+      container.appendChild(btn);
+    }
+    document.getElementById('paginationBar').style.display = totalPages <= 1 ? 'none' : 'flex';
+  }
+
+  window.changePage = function(dir) {
+    const visible = getVisibleRows();
+    const totalPages = Math.max(1, Math.ceil(visible.length / ITEMS_PER_PAGE));
+    currentPage = Math.max(1, Math.min(totalPages, currentPage + dir));
+    render();
+  };
+
+  window.clearFilters = function() {
+    searchInput.value = '';
+    statusFilter.value = 'all';
+    sortFilter.value = 'newest';
+    currentPage = 1;
+    render();
+  };
+
+  searchInput.addEventListener('input', () => { currentPage = 1; render(); });
+  statusFilter.addEventListener('change', () => { currentPage = 1; render(); });
+  sortFilter.addEventListener('change', () => { currentPage = 1; render(); });
+
+  render();
+});
+
+// Delete confirmation
+document.querySelectorAll('[data-confirm]').forEach(form => {
+  form.addEventListener('submit', e => {
+    if (!confirm(form.dataset.confirm)) e.preventDefault();
+  });
+});
+</script>
+{% endblock %}

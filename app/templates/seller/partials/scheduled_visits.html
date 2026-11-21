@@ -1,0 +1,721 @@
+{% load static %}
+<!-- =========================================================
+     PARTIAL: SCHEDULED VISITS (Single-file component + Vanilla JS)
+     Design: Linear / Vercel clean light/dark aesthetic
+     Tokens: ink-50..950, brand-50..900, rounded-2xl, shadow-glow
+========================================================== -->
+
+<div id="scheduled-visits-root" class="space-y-6">
+
+  <!-- Header & Toolbar -->
+  <div class="card p-5 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 shadow-sm">
+    <!-- Filter Tabs -->
+    <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 md:pb-0" id="sv-filter-tabs">
+      <button type="button" class="tab-pill active" data-sv-filter="all" onclick="svSetFilter('all', this)">
+        <i class="ri-calendar-event-line text-sm"></i>
+        <span>All</span>
+        <span class="ml-1 px-2 py-0.5 rounded-full text-xs bg-white/20 text-white font-semibold" id="sv-badge-all">0</span>
+      </button>
+      <button type="button" class="tab-pill" data-sv-filter="pending" onclick="svSetFilter('pending', this)">
+        <i class="ri-time-line text-sm text-warning-500"></i>
+        <span>Pending</span>
+        <span class="ml-1 px-2 py-0.5 rounded-full text-xs bg-warning-100 text-warning-800 dark:bg-warning-900/60 dark:text-warning-300 font-semibold" id="sv-badge-pending">0</span>
+      </button>
+      <button type="button" class="tab-pill" data-sv-filter="approved" onclick="svSetFilter('approved', this)">
+        <i class="ri-checkbox-circle-line text-sm text-success-500"></i>
+        <span>Approved</span>
+        <span class="ml-1 px-2 py-0.5 rounded-full text-xs bg-success-100 text-success-800 dark:bg-success-900/60 dark:text-success-300 font-semibold" id="sv-badge-approved">0</span>
+      </button>
+      <button type="button" class="tab-pill" data-sv-filter="reschedule_proposed" onclick="svSetFilter('reschedule_proposed', this)">
+        <i class="ri-history-line text-sm text-purple-500"></i>
+        <span>Rescheduled</span>
+        <span class="ml-1 px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-300 font-semibold" id="sv-badge-rescheduled">0</span>
+      </button>
+      <button type="button" class="tab-pill" data-sv-filter="completed" onclick="svSetFilter('completed', this)">
+        <i class="ri-check-double-line text-sm text-blue-500"></i>
+        <span>Completed</span>
+        <span class="ml-1 px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 font-semibold" id="sv-badge-completed">0</span>
+      </button>
+      <button type="button" class="tab-pill" data-sv-filter="declined" onclick="svSetFilter('declined', this)">
+        <i class="ri-close-circle-line text-sm text-danger-500"></i>
+        <span>Declined</span>
+        <span class="ml-1 px-2 py-0.5 rounded-full text-xs bg-danger-100 text-danger-800 dark:bg-danger-900/60 dark:text-danger-300 font-semibold" id="sv-badge-declined">0</span>
+      </button>
+    </div>
+
+    <!-- Quick Search & Sort -->
+    <div class="flex items-center gap-3 shrink-0">
+      <div class="relative flex-1 md:w-56">
+        <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-ink-400 text-sm"></i>
+        <input id="sv-search-input" oninput="svOnSearch(this.value)" class="input pl-9 text-xs" placeholder="Search buyer or property…" />
+      </div>
+      <select id="sv-sort-select" onchange="svOnSort(this.value)" class="input text-xs w-36">
+        <option value="date-desc">Newest First</option>
+        <option value="date-asc">Oldest First</option>
+        <option value="name">Buyer Name</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Real Visits Dynamic Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" id="sv-cards-grid">
+    <!-- Rendered via svRenderGrid() -->
+  </div>
+
+  <!-- Decline Reason Modal (Inline) -->
+  <div id="sv-decline-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/60 backdrop-blur-sm hidden animate-fade-in">
+    <div class="card p-6 w-full max-w-md shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h4 class="font-bold text-ink-900 dark:text-white flex items-center gap-2">
+          <i class="ri-close-circle-line text-danger-500 text-lg"></i> Decline Visit Request
+        </h4>
+        <button type="button" onclick="svCloseDeclineModal()" class="text-ink-400 hover:text-ink-700 dark:hover:text-white">
+          <i class="ri-close-line text-xl"></i>
+        </button>
+      </div>
+      <p class="text-xs text-ink-500 dark:text-ink-400">
+        You are declining this inspection request. You can optionally share a note or reason with the buyer.
+      </p>
+      <div>
+        <label class="block text-xs font-semibold text-ink-700 dark:text-ink-200 mb-1">Reason for declining (Optional)</label>
+        <textarea id="sv-decline-reason" rows="3" class="input text-xs w-full" placeholder="e.g. Property unavailable at this time, tenant occupying…"></textarea>
+      </div>
+      <input type="hidden" id="sv-decline-visit-id" value="" />
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button type="button" onclick="svCloseDeclineModal()" class="btn-outline text-xs">Cancel</button>
+        <button type="button" id="sv-decline-submit-btn" onclick="svSubmitDecline()" class="btn-danger text-xs">
+          Confirm Decline
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reschedule Modal (Inline) -->
+  <div id="sv-reschedule-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/60 backdrop-blur-sm hidden animate-fade-in">
+    <div class="card p-6 w-full max-w-md shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h4 class="font-bold text-ink-900 dark:text-white flex items-center gap-2">
+          <i class="ri-calendar-2-line text-brand-600 text-lg"></i> Propose New Time
+        </h4>
+        <button type="button" onclick="svCloseRescheduleModal()" class="text-ink-400 hover:text-ink-700 dark:hover:text-white">
+          <i class="ri-close-line text-xl"></i>
+        </button>
+      </div>
+      <p class="text-xs text-ink-500 dark:text-ink-400">
+        Suggest a new inspection appointment date and time. The buyer will receive a notification to accept or cancel.
+      </p>
+      <input type="hidden" id="sv-reschedule-visit-id" value="" />
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-ink-700 dark:text-ink-200 mb-1">New Date</label>
+          <input type="date" id="sv-reschedule-date" class="input text-xs w-full" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-ink-700 dark:text-ink-200 mb-1">New Time</label>
+          <input type="time" id="sv-reschedule-time" class="input text-xs w-full" />
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button type="button" onclick="svCloseRescheduleModal()" class="btn-outline text-xs">Cancel</button>
+        <button type="button" id="sv-reschedule-submit-btn" onclick="svSubmitReschedule()" class="btn-primary text-xs shadow-glow">
+          Propose Reschedule
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Notification Banner -->
+  <div id="sv-toast" class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-glow text-xs font-semibold transition-all duration-300 opacity-0 translate-y-4 pointer-events-none">
+    <i id="sv-toast-icon" class="text-base"></i>
+    <span id="sv-toast-msg"></span>
+  </div>
+
+</div>
+
+<!-- Styles scoped to Scheduled Visits -->
+<style>
+  .tab-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    white-space: nowrap;
+    border: 1px solid transparent;
+  }
+  .tab-pill.active {
+    background: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+  }
+  .tab-pill:not(.active) {
+    background: #f8fafc;
+    color: #475569;
+    border-color: #e2e8f0;
+  }
+  html.dark .tab-pill:not(.active) {
+    background: #1e293b;
+    color: #cbd5e1;
+    border-color: #334155;
+  }
+  .tab-pill:not(.active):hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+  html.dark .tab-pill:not(.active):hover {
+    background: #283548;
+    color: #ffffff;
+  }
+</style>
+
+<!-- Single-file Vanilla JS Controller -->
+<script>
+(function() {
+  let svFilter = 'all';
+  let svSearch = '';
+  let svSort = 'date-desc';
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue || '';
+  }
+
+  function showToast(msg, type = 'success') {
+    const toast = document.getElementById('sv-toast');
+    const msgEl = document.getElementById('sv-toast-msg');
+    const iconEl = document.getElementById('sv-toast-icon');
+    if (!toast || !msgEl || !iconEl) return;
+
+    msgEl.textContent = msg;
+    if (type === 'success') {
+      toast.className = 'fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-glow text-xs font-semibold transition-all duration-300 bg-success-600 text-white opacity-100 translate-y-0';
+      iconEl.className = 'ri-checkbox-circle-fill text-base';
+    } else if (type === 'error') {
+      toast.className = 'fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-glow text-xs font-semibold transition-all duration-300 bg-danger-600 text-white opacity-100 translate-y-0';
+      iconEl.className = 'ri-error-warning-fill text-base';
+    } else {
+      toast.className = 'fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-glow text-xs font-semibold transition-all duration-300 bg-ink-900 text-white opacity-100 translate-y-0';
+      iconEl.className = 'ri-information-fill text-base';
+    }
+
+    setTimeout(() => {
+      toast.classList.replace('opacity-100', 'opacity-0');
+      toast.classList.replace('translate-y-0', 'translate-y-4');
+    }, 3500);
+  }
+
+  function getVisitsList() {
+    return window.REAL_VISITS || window.REAL_DASH_VISITS || [];
+  }
+
+  function updateBadgeCounts(counts) {
+    const visits = getVisitsList();
+    const c = counts || {
+      all: visits.length,
+      pending: visits.filter(v => v.status === 'pending').length,
+      approved: visits.filter(v => v.status === 'approved').length,
+      rescheduled: visits.filter(v => v.status === 'reschedule_proposed').length,
+      completed: visits.filter(v => v.status === 'completed').length,
+      declined: visits.filter(v => v.status === 'declined').length,
+    };
+
+    const bAll = document.getElementById('sv-badge-all');
+    const bPending = document.getElementById('sv-badge-pending');
+    const bApproved = document.getElementById('sv-badge-approved');
+    const bRescheduled = document.getElementById('sv-badge-rescheduled');
+    const bCompleted = document.getElementById('sv-badge-completed');
+    const bDeclined = document.getElementById('sv-badge-declined');
+
+    if (bAll) bAll.textContent = c.all ?? visits.length;
+    if (bPending) bPending.textContent = c.pending ?? 0;
+    if (bApproved) bApproved.textContent = c.approved ?? 0;
+    if (bRescheduled) bRescheduled.textContent = c.rescheduled ?? 0;
+    if (bCompleted) bCompleted.textContent = c.completed ?? 0;
+    if (bDeclined) bDeclined.textContent = c.declined ?? 0;
+
+    // Also sync header badge counts on main page if present
+    const extPending = document.getElementById('badge-count-pending');
+    if (extPending) extPending.textContent = c.pending ?? 0;
+    const extApproved = document.getElementById('badge-count-approved');
+    if (extApproved) extApproved.textContent = c.approved ?? 0;
+    const extAll = document.getElementById('badge-count-all');
+    if (extAll) extAll.textContent = c.all ?? visits.length;
+  }
+
+  window.svSetFilter = function(filter, btn) {
+    svFilter = filter;
+    document.querySelectorAll('#sv-filter-tabs .tab-pill').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    svRenderGrid();
+  };
+
+  window.svOnSearch = function(val) {
+    svSearch = (val || '').toLowerCase().trim();
+    svRenderGrid();
+  };
+
+  window.svOnSort = function(val) {
+    svSort = val || 'date-desc';
+    svRenderGrid();
+  };
+
+  function svRenderGrid() {
+    const grid = document.getElementById('sv-cards-grid');
+    if (!grid) return;
+
+    const visits = getVisitsList();
+
+    let filtered = visits.filter(v => {
+      if (svFilter !== 'all' && v.status !== svFilter) return false;
+      if (svSearch) {
+        const q = svSearch;
+        const bName = (v.buyer_name || v.buyer || '').toLowerCase();
+        const bEmail = (v.buyer_email || '').toLowerCase();
+        const pTitle = (v.property_title || v.property || '').toLowerCase();
+        const pAddr = (v.property_address || '').toLowerCase();
+        if (!bName.includes(q) && !bEmail.includes(q) && !pTitle.includes(q) && !pAddr.includes(q)) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    filtered.sort((a, b) => {
+      const aKey = (a.scheduled_date || '') + (a.scheduled_time || '');
+      const bKey = (b.scheduled_date || '') + (b.scheduled_time || '');
+      if (svSort === 'date-asc') return aKey.localeCompare(bKey);
+      if (svSort === 'name') return (a.buyer_name || a.buyer || '').localeCompare(b.buyer_name || b.buyer || '');
+      return bKey.localeCompare(aKey);
+    });
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `
+        <div class="col-span-full card p-12 text-center flex flex-col items-center justify-center animate-fade-in">
+          <div class="h-16 w-16 rounded-2xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 grid place-items-center text-3xl mb-4 shadow-sm">
+            <i class="ri-calendar-2-line"></i>
+          </div>
+          <h3 class="text-base font-bold text-ink-900 dark:text-white">No visits found</h3>
+          <p class="text-xs text-ink-400 mt-1 max-w-sm">No scheduled visits match your current tab or search criteria.</p>
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(v => {
+      // Status Badge
+      let badgeHtml = '';
+      if (v.status === 'approved') {
+        badgeHtml = `<span class="badge-success text-[10px]"><i class="ri-checkbox-circle-line"></i> Approved</span>`;
+      } else if (v.status === 'completed') {
+        badgeHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300"><i class="ri-check-double-line"></i> Completed</span>`;
+      } else if (v.status === 'reschedule_proposed') {
+        badgeHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300"><i class="ri-history-line"></i> Rescheduled</span>`;
+      } else if (v.status === 'declined') {
+        badgeHtml = `<span class="badge-danger text-[10px]"><i class="ri-close-circle-line"></i> Declined</span>`;
+      } else if (v.status === 'cancelled') {
+        badgeHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"><i class="ri-forbid-line"></i> Cancelled</span>`;
+      } else {
+        badgeHtml = `<span class="badge-warning text-[10px]"><i class="ri-time-line"></i> Pending</span>`;
+      }
+
+      // Buyer avatar
+      const avatarHtml = v.buyer_photo || v.photo
+        ? `<img src="${v.buyer_photo || v.photo}" class="h-10 w-10 rounded-full object-cover shrink-0 ring-2 ring-brand-100 dark:ring-ink-800"/>`
+        : `<div class="h-10 w-10 rounded-full bg-gradient-to-tr from-brand-600 to-brand-400 text-white font-bold text-xs grid place-items-center shrink-0 shadow-sm">${v.buyer_initials || v.initials || 'B'}</div>`;
+
+      // Property thumbnail
+      const propThumb = v.property_img
+        ? `<img src="${v.property_img}" class="h-10 w-10 rounded-lg object-cover shrink-0"/>`
+        : `<div class="h-10 w-10 rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 grid place-items-center shrink-0"><i class="ri-home-4-line text-lg"></i></div>`;
+
+      // Reschedule info banner
+      let rescheduleBanner = '';
+      if (v.status === 'reschedule_proposed' && (v.proposed_date_display || v.proposed_date)) {
+        rescheduleBanner = `
+          <div class="mt-3 p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/50 text-xs text-purple-900 dark:text-purple-200 flex items-center justify-between">
+            <span class="font-semibold flex items-center gap-1.5"><i class="ri-time-line text-purple-600"></i> Proposed Time:</span>
+            <span class="font-bold">${v.proposed_date_display || v.proposed_date} at ${v.proposed_time_display || v.proposed_time}</span>
+          </div>
+        `;
+      }
+
+      // Decline reason note
+      let declineNote = '';
+      if (v.status === 'declined' && v.decline_reason) {
+        declineNote = `
+          <div class="mt-2.5 p-2 rounded-lg bg-danger-50 dark:bg-danger-950/30 border border-danger-100 dark:border-danger-900/40 text-[11px] text-danger-700 dark:text-danger-300">
+            <span class="font-semibold">Reason:</span> ${v.decline_reason}
+          </div>
+        `;
+      }
+
+      // Buyer message
+      let messageNote = '';
+      if (v.message) {
+        messageNote = `
+          <div class="mt-2.5 p-2 rounded-lg bg-ink-50 dark:bg-ink-800/40 text-[11px] text-ink-600 dark:text-ink-300 italic truncate" title="${v.message}">
+            "${v.message}"
+          </div>
+        `;
+      }
+
+      // Action buttons
+      let actionButtons = '';
+      const canChat = (v.status === 'approved' || v.status === 'completed') && v.chat_url;
+
+      if (v.status === 'pending') {
+        actionButtons = `
+          <div class="flex items-center gap-2 pt-3 border-t border-ink-100 dark:border-ink-800">
+            <button type="button" onclick="svApproveVisit(${v.id})" id="sv-btn-app-${v.id}" class="btn-primary text-xs flex-1 justify-center py-2 shadow-sm">
+              <i class="ri-check-line font-bold"></i> Accept
+            </button>
+            <button type="button" onclick="svOpenRescheduleModal(${v.id})" class="btn-outline text-xs px-3 py-2" title="Propose new time">
+              <i class="ri-calendar-line"></i>
+            </button>
+            <button type="button" onclick="svOpenDeclineModal(${v.id})" class="btn-danger text-xs px-3 py-2" title="Decline visit">
+              <i class="ri-close-line"></i>
+            </button>
+          </div>
+          <div class="mt-2 text-center">
+            <span class="text-[10px] text-ink-400 inline-flex items-center gap-1 cursor-not-allowed opacity-60" title="Chat unlocks only after you accept the visit">
+              <i class="ri-lock-line"></i> Chat locked until accepted
+            </span>
+          </div>
+        `;
+      } else if (v.status === 'approved') {
+        actionButtons = `
+          <div class="flex items-center gap-2 pt-3 border-t border-ink-100 dark:border-ink-800">
+            <a href="${v.chat_url}" class="btn-primary text-xs flex-1 justify-center py-2 shadow-glow">
+              <i class="ri-chat-3-line"></i> Chat with Buyer
+            </a>
+            <button type="button" onclick="svCompleteVisit(${v.id})" id="sv-btn-comp-${v.id}" class="btn-outline text-xs px-3 py-2" title="Mark tour as completed">
+              <i class="ri-check-double-line text-blue-600"></i> Done
+            </button>
+            <button type="button" onclick="svOpenRescheduleModal(${v.id})" class="btn-outline text-xs px-3 py-2" title="Reschedule">
+              <i class="ri-calendar-line"></i>
+            </button>
+          </div>
+        `;
+      } else if (v.status === 'completed') {
+        actionButtons = `
+          <div class="flex items-center gap-2 pt-3 border-t border-ink-100 dark:border-ink-800">
+            <a href="${v.chat_url}" class="btn-outline text-xs flex-1 justify-center py-2">
+              <i class="ri-chat-3-line text-brand-600"></i> Message History
+            </a>
+            <span class="badge-success text-xs px-3 py-2"><i class="ri-check-line"></i> Finished</span>
+          </div>
+        `;
+      } else if (v.status === 'reschedule_proposed') {
+        actionButtons = `
+          <div class="flex items-center justify-between pt-3 border-t border-ink-100 dark:border-ink-800 text-xs">
+            <span class="text-ink-400 text-[11px]"><i class="ri-time-line"></i> Awaiting buyer response</span>
+            <button type="button" onclick="svOpenDeclineModal(${v.id})" class="text-danger-600 hover:text-danger-700 text-xs font-semibold">
+              Cancel request
+            </button>
+          </div>
+        `;
+      } else {
+        // declined or cancelled
+        actionButtons = `
+          <div class="flex items-center justify-between pt-3 border-t border-ink-100 dark:border-ink-800 text-xs">
+            <span class="text-ink-400 text-[11px] capitalize">${v.status}</span>
+            <span class="text-ink-400 text-[10px] inline-flex items-center gap-1 opacity-70">
+              <i class="ri-lock-line"></i> Chat disabled
+            </span>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="card card-hover p-5 flex flex-col justify-between animate-fade-in-up" id="sv-card-${v.id}">
+          <div>
+            <!-- Header: Buyer Details + Badge -->
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                ${avatarHtml}
+                <div class="min-w-0">
+                  <p class="font-bold text-ink-900 dark:text-white truncate text-sm">${v.buyer_name || v.buyer}</p>
+                  <div class="flex items-center gap-2 text-xs text-ink-400 truncate">
+                    ${v.buyer_email ? `<span class="truncate">${v.buyer_email}</span>` : ''}
+                    ${v.buyer_phone ? `<span>·</span><span>${v.buyer_phone}</span>` : ''}
+                  </div>
+                </div>
+              </div>
+              <div class="shrink-0">
+                ${badgeHtml}
+              </div>
+            </div>
+
+            <!-- Scheduled Date & Time Banner -->
+            <div class="mt-4 p-2.5 rounded-xl bg-brand-50/70 dark:bg-brand-900/20 border border-brand-100 dark:border-brand-800/40 flex items-center justify-between text-xs font-semibold text-brand-900 dark:text-brand-200">
+              <span class="flex items-center gap-1.5"><i class="ri-calendar-line text-brand-600 text-sm"></i> ${v.date_display || v.date || v.scheduled_date}</span>
+              <span class="flex items-center gap-1.5"><i class="ri-time-line text-brand-600 text-sm"></i> ${v.time_display || v.time || v.scheduled_time}</span>
+            </div>
+
+            <!-- Reschedule Banner if active -->
+            ${rescheduleBanner}
+
+            <!-- Property Preview -->
+            <div class="mt-3 p-3 rounded-xl bg-ink-50 dark:bg-ink-800/40 flex items-center gap-3">
+              ${propThumb}
+              <div class="min-w-0 flex-1">
+                <p class="text-[10px] uppercase tracking-wider text-ink-400 font-semibold">Property</p>
+                <p class="text-xs font-bold text-ink-900 dark:text-white truncate">${v.property_title || v.property}</p>
+                ${v.property_price ? `<p class="text-xs font-semibold text-brand-600 dark:text-brand-400">₹${v.property_price}</p>` : ''}
+              </div>
+            </div>
+
+            <!-- Decline reason or notes -->
+            ${declineNote}
+            ${messageNote}
+          </div>
+
+          <!-- Bottom Actions -->
+          <div class="mt-4">
+            ${actionButtons}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // --- ACTIONS ---
+
+  window.svApproveVisit = async function(visitId) {
+    const visits = getVisitsList();
+    const visit = visits.find(v => v.id === visitId);
+    if (!visit) return;
+
+    const btn = document.getElementById(`sv-btn-app-${visitId}`);
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<i class="ri-loader-4-line animate-spin"></i> Accepting…`;
+    }
+
+    try {
+      const res = await fetch(visit.approve_url || `/seller/visit/${visitId}/approve/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'ajax=true',
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        visit.status = 'approved';
+        if (data.chat_url) visit.chat_url = data.chat_url;
+        updateBadgeCounts(data.counts);
+        svRenderGrid();
+        showToast('Visit accepted! Chat is now unlocked with buyer.', 'success');
+      } else {
+        showToast(data.error || 'Failed to accept visit', 'error');
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `<i class="ri-check-line font-bold"></i> Accept`;
+        }
+      }
+    } catch (e) {
+      showToast('Network error while approving visit', 'error');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="ri-check-line font-bold"></i> Accept`;
+      }
+    }
+  };
+
+  window.svOpenDeclineModal = function(visitId) {
+    document.getElementById('sv-decline-visit-id').value = visitId;
+    document.getElementById('sv-decline-reason').value = '';
+    document.getElementById('sv-decline-modal').classList.remove('hidden');
+  };
+
+  window.svCloseDeclineModal = function() {
+    document.getElementById('sv-decline-modal').classList.add('hidden');
+  };
+
+  window.svSubmitDecline = async function() {
+    const visitId = parseInt(document.getElementById('sv-decline-visit-id').value, 10);
+    const reason = document.getElementById('sv-decline-reason').value.trim();
+    const btn = document.getElementById('sv-decline-submit-btn');
+
+    const visits = getVisitsList();
+    const visit = visits.find(v => v.id === visitId);
+    if (!visit) return;
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<i class="ri-loader-4-line animate-spin"></i> Declining…`;
+    }
+
+    try {
+      const res = await fetch(visit.decline_url || `/seller/visit/${visitId}/decline/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `ajax=true&reason=${encodeURIComponent(reason)}`,
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        visit.status = 'declined';
+        visit.decline_reason = reason;
+        updateBadgeCounts(data.counts);
+        svCloseDeclineModal();
+        svRenderGrid();
+        showToast('Visit declined.', 'info');
+      } else {
+        showToast(data.error || 'Failed to decline visit', 'error');
+      }
+    } catch (e) {
+      showToast('Network error declining visit', 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Confirm Decline';
+      }
+    }
+  };
+
+  window.svOpenRescheduleModal = function(visitId) {
+    document.getElementById('sv-reschedule-visit-id').value = visitId;
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const dateInput = document.getElementById('sv-reschedule-date');
+    dateInput.min = todayStr;
+    dateInput.value = todayStr;
+    document.getElementById('sv-reschedule-time').value = '10:00';
+    document.getElementById('sv-reschedule-modal').classList.remove('hidden');
+  };
+
+  window.svCloseRescheduleModal = function() {
+    document.getElementById('sv-reschedule-modal').classList.add('hidden');
+  };
+
+  window.svSubmitReschedule = async function() {
+    const visitId = parseInt(document.getElementById('sv-reschedule-visit-id').value, 10);
+    const date = document.getElementById('sv-reschedule-date').value;
+    const time = document.getElementById('sv-reschedule-time').value;
+    const btn = document.getElementById('sv-reschedule-submit-btn');
+
+    if (!date || !time) {
+      showToast('Please select both date and time', 'error');
+      return;
+    }
+
+    const visits = getVisitsList();
+    const visit = visits.find(v => v.id === visitId);
+    if (!visit) return;
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<i class="ri-loader-4-line animate-spin"></i> Submitting…`;
+    }
+
+    try {
+      const res = await fetch(visit.reschedule_url || `/seller/visit/${visitId}/reschedule/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `ajax=true&proposed_date=${encodeURIComponent(date)}&proposed_time=${encodeURIComponent(time)}`,
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        visit.status = 'reschedule_proposed';
+        visit.proposed_date = date;
+        visit.proposed_time = time;
+        visit.proposed_date_display = data.proposed_date || date;
+        visit.proposed_time_display = data.proposed_time || time;
+        updateBadgeCounts(data.counts);
+        svCloseRescheduleModal();
+        svRenderGrid();
+        showToast('Reschedule proposal sent to buyer!', 'success');
+      } else {
+        showToast(data.error || 'Failed to reschedule visit', 'error');
+      }
+    } catch (e) {
+      showToast('Network error proposing reschedule', 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Propose Reschedule';
+      }
+    }
+  };
+
+  window.svCompleteVisit = async function(visitId) {
+    const visits = getVisitsList();
+    const visit = visits.find(v => v.id === visitId);
+    if (!visit) return;
+
+    const btn = document.getElementById(`sv-btn-comp-${visitId}`);
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<i class="ri-loader-4-line animate-spin"></i>`;
+    }
+
+    try {
+      const res = await fetch(visit.complete_url || `/seller/visit/${visitId}/complete/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'ajax=true',
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        visit.status = 'completed';
+        updateBadgeCounts(data.counts);
+        svRenderGrid();
+        showToast('Visit marked as completed.', 'success');
+      } else {
+        showToast(data.error || 'Failed to complete visit', 'error');
+      }
+    } catch (e) {
+      showToast('Network error marking visit completed', 'error');
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  };
+
+  // Init on DOM load
+  document.addEventListener('DOMContentLoaded', function() {
+    updateBadgeCounts();
+    svRenderGrid();
+  });
+
+  // Re-run if visits data arrives after DOM load
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(() => {
+      updateBadgeCounts();
+      svRenderGrid();
+    }, 100);
+  }
+})();
+</script>

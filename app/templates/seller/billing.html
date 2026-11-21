@@ -1,0 +1,21 @@
+{% extends "seller/base.html" %}
+{% load static %}
+
+{% block content %}
+      <!-- =========================================================
+           PAGE: BILLING HISTORY (Transactions)
+      ========================================================== -->
+      <section id="page-billing" class="page active space-y-6">
+        <div><h2 class="text-xl font-extrabold text-ink-900 dark:text-white">Billing History</h2><p class="text-sm text-ink-400">Invoices and payout records</p></div>
+        <div class="card overflow-hidden">
+          <table class="w-full text-sm">
+            <thead><tr class="text-left text-ink-400 border-b border-ink-200 dark:border-ink-800"><th class="th">Invoice</th><th class="th">Date</th><th class="th">Description</th><th class="th">Amount</th><th class="th">Status</th><th class="th text-right">Download</th></tr></thead>
+            <tbody id="bill-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'seller/js/billing.js' %}"></script>
+{% endblock %}

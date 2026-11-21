@@ -1,0 +1,603 @@
+{% extends 'base.html' %}
+
+{% block title %}RealtyFlow — Find Your Dream Home{% endblock %}
+{% block meta_description %}Discover exceptional properties with AI-powered matching, transparent pricing, and a secure process that puts you first.{% endblock %}
+
+{% block page_bg %}
+<!-- Hero background image -->
+<div class="w-full h-full" style="background-image: url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80'); background-size: cover; background-position: center; background-attachment: fixed;"></div>
+<div class="page-bg-overlay" style="background: linear-gradient(135deg, rgba(10, 10, 30, 0.85) 0%, rgba(20, 20, 50, 0.75) 40%, rgba(30, 30, 60, 0.65) 70%, rgba(15, 15, 40, 0.8) 100%);"></div>
+{% endblock %}
+
+{% block page_styles %}
+<style>
+        /* ── Property Card Base ── */
+        .prop-card {
+            transition: transform 0.5s cubic-bezier(0.16,1,0.3,1),
+                        box-shadow 0.5s ease,
+                        border-color 0.5s ease,
+                        background 0.4s ease;
+        }
+        .prop-card:hover {
+            transform: translateY(-14px);
+            background: rgba(255,255,255,0.08) !important;
+            border-color: rgba(255,255,255,0.18) !important;
+            box-shadow: 0 32px 64px rgba(0,0,0,0.4),
+                        0 0 60px rgba(99,102,241,0.1);
+        }
+ 
+        /* ── Image zoom on hover ── */
+        .prop-img {
+            transition: transform 0.7s cubic-bezier(0.16,1,0.3,1);
+        }
+        .prop-card:hover .prop-img {
+            transform: scale(1.08);
+        }
+ 
+        /* ── Lock overlay: tease on hover ── */
+        .prop-lock-overlay {
+            transition: backdrop-filter 0.4s ease, background 0.4s ease;
+        }
+        .prop-card:hover .prop-lock-overlay {
+            background: rgba(10,10,30,0.4) !important;
+            backdrop-filter: blur(6px) !important;
+            -webkit-backdrop-filter: blur(6px) !important;
+        }
+ 
+        /* ── Lock icon pulse on card hover ── */
+        .prop-lock-icon {
+            transition: transform 0.3s ease;
+        }
+        .prop-card:hover .prop-lock-icon {
+            animation: lock-pulse 1s ease-in-out infinite;
+        }
+        @keyframes lock-pulse {
+            0%, 100% { transform: scale(1); }
+            50%       { transform: scale(1.18); }
+        }
+ 
+        /* ── Unlock button glow on hover ── */
+        .prop-unlock-btn:hover {
+            transform: translateY(2px);
+            filter: brightness(1.2);
+            box-shadow: 0 8px 20px rgba(99,102,241,0.35);
+        }
+ 
+        /* ── Stat items stagger up on card hover ── */
+        .prop-stats .prop-stat {
+            opacity: 0.7;
+            transform: translateY(4px);
+            transition: opacity 0.3s ease, transform 0.3s ease, color 0.3s ease;
+        }
+        .prop-card:hover .prop-stats .prop-stat:nth-child(1) { opacity:1; transform:translateY(0); transition-delay:0s; }
+        .prop-card:hover .prop-stats .prop-stat:nth-child(2) { opacity:1; transform:translateY(0); transition-delay:0.06s; }
+        .prop-card:hover .prop-stats .prop-stat:nth-child(3) { opacity:1; transform:translateY(0); transition-delay:0.12s; }
+    </style>
+    
+ 
+<style>
+    .hero-bg {
+        background-image: url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
+
+    .hero-overlay {
+        background: linear-gradient(
+            135deg,
+            rgba(10, 10, 30, 0.85) 0%,
+            rgba(20, 20, 50, 0.75) 40%,
+            rgba(30, 30, 60, 0.65) 70%,
+            rgba(15, 15, 40, 0.8) 100%
+        );
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Hero Section -->
+    <section class="hero-bg relative min-h-screen flex items-center justify-center">
+        <div class="hero-overlay absolute inset-0"></div>
+
+        <div class="content-layer relative z-10 text-center px-6 max-w-4xl mx-auto pt-24">
+            <div class="fade-up" style="transition-delay: 0.1s;">
+                <span class="inline-flex items-center gap-2 glass-strong px-4 py-2 rounded-full text-xs font-semibold tracking-wider uppercase text-blue-200 mb-8">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+                    Next-Gen Real Estate Platform
+                </span>
+            </div>
+
+            <h1 class="fade-up font-clash font-bold text-5xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight mb-6" style="transition-delay: 0.2s;">
+                Find Your
+                <span class="gradient-text">Dream</span>
+                <br>Home Today
+            </h1>
+
+            <p class="fade-up text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto mb-10 leading-relaxed font-light" style="transition-delay: 0.35s;">
+                Discover exceptional properties with AI-powered matching, transparent pricing, and a secure process that puts you first.
+            </p>
+
+            <div class="fade-up flex flex-col sm:flex-row items-center justify-center gap-4" style="transition-delay: 0.5s;">
+                <a href="{% url 'register_choice' %}" class="glass-strong px-8 py-4 rounded-full text-white font-semibold text-base hover:bg-white/10 transition-all duration-300 hover:scale-105 flex items-center gap-2 group">
+                    Get Started
+                    <i class="ri-arrow-right-line group-hover:translate-x-1 transition-transform"></i>
+                </a>
+                <a href="{% url 'about' %}" class="text-gray-300 hover:text-white font-medium text-base flex items-center gap-2 transition-colors group">
+                    <span class="w-10 h-10 rounded-full glass flex items-center justify-center group-hover:bg-white/10 transition-all">
+                        <i class="ri-play-fill text-lg"></i>
+                    </span>
+                    Learn More
+                </a>
+            </div>
+
+            <!-- Scroll indicator -->
+            <div class="fade-up absolute bottom-8 left-1/2 -translate-x-1/2" style="transition-delay: 0.7s;">
+                <div class="w-6 h-10 rounded-full border-2 border-white/20 flex items-start justify-center p-1.5">
+                    <div class="w-1 h-2.5 bg-white/60 rounded-full animate-bounce"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feature Cards Section -->
+    <section class="relative py-24 md:py-32 bg-gradient-to-b from-[#0a0a1e] via-[#121230] to-[#0a0a1e]">
+        <div class="content-layer max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16 fade-up">
+                <span class="text-blue-400 text-sm font-semibold tracking-wider uppercase mb-3 block">Features</span>
+                <h2 class="font-clash font-bold text-4xl md:text-5xl text-white mb-4">Powered by Intelligence</h2>
+                <p class="text-gray-400 max-w-xl mx-auto">Cutting-edge technology meets real estate expertise for a seamless experience.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6 lg:gap-8">
+                <!-- Card 1: AI Matching -->
+                <div class="glass-card glass rounded-3xl p-8 fade-up">
+                    <div class="icon-glow w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center mb-6 border border-blue-400/20">
+                        <i class="ri-ai-generate text-2xl text-blue-300"></i>
+                    </div>
+                    <h3 class="font-clash font-semibold text-xl text-white mb-3">AI Matching</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">Our intelligent algorithm learns your preferences and surfaces properties that truly match your lifestyle and budget.</p>
+                </div>
+
+                <!-- Card 2: Smart Pricing -->
+                <div class="glass-card glass rounded-3xl p-8 fade-up" style="transition-delay: 0.1s;">
+                    <div class="icon-glow w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center mb-6 border border-emerald-400/20">
+                        <i class="ri-line-chart-line text-2xl text-emerald-300"></i>
+                    </div>
+                    <h3 class="font-clash font-semibold text-xl text-white mb-3">Smart Pricing</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">Real-time market analysis ensures you get fair, competitive pricing with no hidden fees or surprises at closing.</p>
+                </div>
+
+                <!-- Card 3: Secure Process -->
+                <div class="glass-card glass rounded-3xl p-8 fade-up" style="transition-delay: 0.2s;">
+                    <div class="icon-glow w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center mb-6 border border-violet-400/20">
+                        <i class="ri-shield-check-line text-2xl text-violet-300"></i>
+                    </div>
+                    <h3 class="font-clash font-semibold text-xl text-white mb-3">Secure Process</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">End-to-end encryption, verified identities, and escrow protection keep every transaction safe and transparent.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Divider -->
+    <div class="relative z-10 h-px mx-6 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+ 
+    <!-- Featured Properties -->
+    <section class="relative py-24 md:py-32 bg-gradient-to-b from-[#0a0a1e] via-[#0f0f28] to-[#0a0a1e]">
+ 
+        <!-- subtle radial glow behind section -->
+        <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:800px;height:600px;background:radial-gradient(ellipse at center,rgba(99,102,241,0.07) 0%,transparent 70%);pointer-events:none;z-index:0;"></div>
+ 
+        <div class="content-layer max-w-7xl mx-auto px-6">
+ 
+            <!-- Section Header -->
+            <div class="text-center mb-16 fade-up">
+                <span class="inline-flex items-center gap-2 text-indigo-400 text-sm font-semibold tracking-wider uppercase mb-4">
+                    <i class="ri-home-heart-line text-base"></i>
+                    Featured Properties
+                </span>
+                <h2 class="font-clash font-bold text-4xl md:text-5xl text-white mb-4">Handpicked Just for You</h2>
+                <p class="text-gray-400 max-w-xl mx-auto text-sm leading-relaxed">
+                    A glimpse of what's waiting. <span class="text-indigo-300 font-medium">Sign in to unlock full details</span>, pricing breakdowns, and AI match scores.
+                </p>
+            </div>
+ 
+            <!-- Property Grid -->
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
+ 
+                <!-- Card 1: Luxury Villa -->
+                <div class="prop-card glass rounded-3xl overflow-hidden fade-up group cursor-pointer" style="transition-delay:0s;">
+                    <div class="prop-img-wrap relative overflow-hidden" style="height:220px;">
+                        <img src="https://images.unsplash.com/photo-1613977257363-707ba9348227?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                             alt="Luxury Villa Beverly Hills"
+                             class="prop-img w-full h-full object-cover">
+                        <div class="absolute top-3 left-3">
+                            <span class="prop-badge px-3 py-1 rounded-full text-xs font-semibold text-indigo-200 tracking-wide"
+                                  style="background:rgba(99,102,241,0.25);backdrop-filter:blur(8px);border:1px solid rgba(99,102,241,0.3);">
+                                For Sale
+                            </span>
+                        </div>
+                        <div class="absolute top-3 right-3">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold text-white"
+                                  style="background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);">
+                                <i class="ri-heart-line mr-1"></i>Save
+                            </span>
+                        </div>
+                    </div>
+ 
+                    <!-- Card Body -->
+                    <div class="prop-body relative p-5">
+                        <div class="mb-3">
+                            <h3 class="font-clash font-semibold text-white text-lg mb-1 group-hover:text-indigo-200 transition-colors duration-300">Luxury Villa</h3>
+                            <p class="text-gray-400 text-sm flex items-center gap-1.5">
+                                <i class="ri-map-pin-2-line text-indigo-400 text-xs"></i>
+                                Beverly Hills, CA
+                            </p>
+                        </div>
+ 
+                        <div class="prop-price font-clash font-bold text-2xl mb-4" style="background:linear-gradient(135deg,#a5b4fc,#818cf8,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+                            $4,200,000
+                        </div>
+ 
+                        <div class="prop-stats flex items-center gap-4 text-sm text-gray-400 mb-4">
+                            <span class="prop-stat flex items-center gap-1.5"><i class="ri-hotel-bed-line text-indigo-400"></i>5 Beds</span>
+                            <span class="prop-stat flex items-center gap-1.5" style="transition-delay:0.05s;"><i class="ri-drop-line text-indigo-400"></i>4 Baths</span>
+                            <span class="prop-stat flex items-center gap-1.5" style="transition-delay:0.1s;"><i class="ri-expand-diagonal-line text-indigo-400"></i>4,200 sqft</span>
+                        </div>
+ 
+                        <!-- Lock Overlay -->
+                        <div class="prop-lock-overlay absolute inset-x-0 bottom-0 rounded-b-3xl flex flex-col items-center justify-center gap-3 py-6"
+                             style="background:rgba(10,10,30,0.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,0.06);">
+                            <i class="ri-lock-line ri-xl text-white/70 prop-lock-icon"></i>
+                            <p class="text-white/60 text-xs font-medium">Sign in to view full details</p>
+                            <a href="{% url 'login' %}" class="prop-unlock-btn px-5 py-2 rounded-full text-xs font-semibold text-white"
+                               style="background:rgba(99,102,241,0.35);border:1px solid rgba(99,102,241,0.4);backdrop-filter:blur(8px);transition:all 0.3s ease;">
+                                <i class="ri-login-circle-line mr-1.5"></i>Login to Unlock
+                            </a>
+                        </div>
+                    </div>
+                </div>
+ 
+                <!-- Card 2: Modern Apartment -->
+                <div class="prop-card glass rounded-3xl overflow-hidden fade-up group cursor-pointer" style="transition-delay:0.1s;">
+                    <div class="prop-img-wrap relative overflow-hidden" style="height:220px;">
+                        <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                             alt="Modern Apartment Manhattan"
+                             class="prop-img w-full h-full object-cover">
+                        <div class="absolute top-3 left-3">
+                            <span class="prop-badge px-3 py-1 rounded-full text-xs font-semibold text-violet-200 tracking-wide"
+                                  style="background:rgba(139,92,246,0.25);backdrop-filter:blur(8px);border:1px solid rgba(139,92,246,0.3);">
+                                Hot Deal
+                            </span>
+                        </div>
+                        <div class="absolute top-3 right-3">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold text-white"
+                                  style="background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);">
+                                <i class="ri-heart-line mr-1"></i>Save
+                            </span>
+                        </div>
+                    </div>
+                    <div class="prop-body relative p-5">
+                        <div class="mb-3">
+                            <h3 class="font-clash font-semibold text-white text-lg mb-1 group-hover:text-violet-200 transition-colors duration-300">Modern Apartment</h3>
+                            <p class="text-gray-400 text-sm flex items-center gap-1.5">
+                                <i class="ri-map-pin-2-line text-violet-400 text-xs"></i>
+                                Manhattan, NY
+                            </p>
+                        </div>
+                        <div class="prop-price font-clash font-bold text-2xl mb-4" style="background:linear-gradient(135deg,#c4b5fd,#a78bfa,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+                            $1,850,000
+                        </div>
+                        <div class="prop-stats flex items-center gap-4 text-sm text-gray-400 mb-4">
+                            <span class="prop-stat flex items-center gap-1.5"><i class="ri-hotel-bed-line text-violet-400"></i>3 Beds</span>
+                            <span class="prop-stat flex items-center gap-1.5" style="transition-delay:0.05s;"><i class="ri-drop-line text-violet-400"></i>2 Baths</span>
+                            <span class="prop-stat flex items-center gap-1.5" style="transition-delay:0.1s;"><i class="ri-expand-diagonal-line text-violet-400"></i>1,800 sqft</span>
+                        </div>
+                        <div class="prop-lock-overlay absolute inset-x-0 bottom-0 rounded-b-3xl flex flex-col items-center justify-center gap-3 py-6"
+                             style="background:rgba(10,10,30,0.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,0.06);">
+                            <i class="ri-lock-line ri-xl text-white/70 prop-lock-icon"></i>
+                            <p class="text-white/60 text-xs font-medium">Sign in to view full details</p>
+                            <a href="{% url 'login' %}" class="prop-unlock-btn px-5 py-2 rounded-full text-xs font-semibold text-white"
+                               style="background:rgba(139,92,246,0.35);border:1px solid rgba(139,92,246,0.4);backdrop-filter:blur(8px);transition:all 0.3s ease;">
+                                <i class="ri-login-circle-line mr-1.5"></i>Login to Unlock
+                            </a>
+                        </div>
+                    </div>
+                </div>
+ 
+                <!-- Card 3: Beach House -->
+                <div class="prop-card glass rounded-3xl overflow-hidden fade-up group cursor-pointer" style="transition-delay:0.2s;">
+                    <div class="prop-img-wrap relative overflow-hidden" style="height:220px;">
+                        <img src="https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                             alt="Beach House Malibu"
+                             class="prop-img w-full h-full object-cover">
+                        <div class="absolute top-3 left-3">
+                            <span class="prop-badge px-3 py-1 rounded-full text-xs font-semibold text-blue-200 tracking-wide"
+                                  style="background:rgba(59,130,246,0.25);backdrop-filter:blur(8px);border:1px solid rgba(59,130,246,0.3);">
+                                New Listing
+                            </span>
+                        </div>
+                        <div class="absolute top-3 right-3">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold text-white"
+                                  style="background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);">
+                                <i class="ri-heart-line mr-1"></i>Save
+                            </span>
+                        </div>
+                    </div>
+                    <div class="prop-body relative p-5">
+                        <div class="mb-3">
+                            <h3 class="font-clash font-semibold text-white text-lg mb-1 group-hover:text-blue-200 transition-colors duration-300">Beach House</h3>
+                            <p class="text-gray-400 text-sm flex items-center gap-1.5">
+                                <i class="ri-map-pin-2-line text-blue-400 text-xs"></i>
+                                Malibu, CA
+                            </p>
+                        </div>
+                        <div class="prop-price font-clash font-bold text-2xl mb-4" style="background:linear-gradient(135deg,#93c5fd,#60a5fa,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+                            $3,100,000
+                        </div>
+                        <div class="prop-stats flex items-center gap-4 text-sm text-gray-400 mb-4">
+                            <span class="prop-stat flex items-center gap-1.5"><i class="ri-hotel-bed-line text-blue-400"></i>4 Beds</span>
+                            <span class="prop-stat flex items-center gap-1.5" style="transition-delay:0.05s;"><i class="ri-drop-line text-blue-400"></i>3 Baths</span>
+                            <span class="prop-stat flex items-center gap-1.5" style="transition-delay:0.1s;"><i class="ri-expand-diagonal-line text-blue-400"></i>2,900 sqft</span>
+                        </div>
+                        <div class="prop-lock-overlay absolute inset-x-0 bottom-0 rounded-b-3xl flex flex-col items-center justify-center gap-3 py-6"
+                             style="background:rgba(10,10,30,0.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,0.06);">
+                            <i class="ri-lock-line ri-xl text-white/70 prop-lock-icon"></i>
+                            <p class="text-white/60 text-xs font-medium">Sign in to view full details</p>
+                            <a href="{% url 'login' %}" class="prop-unlock-btn px-5 py-2 rounded-full text-xs font-semibold text-white"
+                               style="background:rgba(59,130,246,0.35);border:1px solid rgba(59,130,246,0.4);backdrop-filter:blur(8px);transition:all 0.3s ease;">
+                                <i class="ri-login-circle-line mr-1.5"></i>Login to Unlock
+                            </a>
+                        </div>
+                    </div>
+                </div>
+ 
+                <!-- Card 4: Penthouse -->
+                <div class="prop-card glass rounded-3xl overflow-hidden fade-up group cursor-pointer" style="transition-delay:0.05s;">
+                    <div class="prop-img-wrap relative overflow-hidden" style="height:220px;">
+                        <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                             alt="Penthouse Suite Chicago"
+                             class="prop-img w-full h-full object-cover">
+                        <div class="absolute top-3 left-3">
+                            <span class="prop-badge px-3 py-1 rounded-full text-xs font-semibold text-emerald-200 tracking-wide"
+                                  style="background:rgba(16,185,129,0.25);backdrop-filter:blur(8px);border:1px solid rgba(16,185,129,0.3);">
+                                Premium
+                            </span>
+                        </div>
+                        <div class="absolute top-3 right-3">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold text-white"
+                                  style="background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);">
+                                <i class="ri-heart-line mr-1"></i>Save
+                            </span>
+                        </div>
+                    </div>
+                    <div class="prop-body relative p-5">
+                        <div class="mb-3">
+                            <h3 class="font-clash font-semibold text-white text-lg mb-1 group-hover:text-indigo-200 transition-colors duration-300">Penthouse Suite</h3>
+                            <p class="text-gray-400 text-sm flex items-center gap-1.5">
+                                <i class="ri-map-pin-2-line text-indigo-400 text-xs"></i>
+                                Chicago, IL
+                            </p>
+                        </div>
+                        <div class="prop-price font-clash font-bold text-2xl mb-4" style="background:linear-gradient(135deg,#a5b4fc,#818cf8,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+                            $2,400,000
+                        </div>
+                        <div class="prop-stats flex items-center gap-4 text-sm text-gray-400 mb-4">
+                            <span class="prop-stat flex items-center gap-1.5"><i class="ri-hotel-bed-line text-indigo-400"></i>4 Beds</span>
+                            <span class="prop-stat flex items-center gap-1.5" style="transition-delay:0.05s;"><i class="ri-drop-line text-indigo-400"></i>3 Baths</span>
+                            <span class="prop-stat flex items-center gap-1.5" style="transition-delay:0.1s;"><i class="ri-expand-diagonal-line text-indigo-400"></i>3,100 sqft</span>
+                        </div>
+                        <div class="prop-lock-overlay absolute inset-x-0 bottom-0 rounded-b-3xl flex flex-col items-center justify-center gap-3 py-6"
+                             style="background:rgba(10,10,30,0.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,0.06);">
+                            <i class="ri-lock-line ri-xl text-white/70 prop-lock-icon"></i>
+                            <p class="text-white/60 text-xs font-medium">Sign in to view full details</p>
+                            <a href="{% url 'login' %}" class="prop-unlock-btn px-5 py-2 rounded-full text-xs font-semibold text-white"
+                               style="background:rgba(99,102,241,0.35);border:1px solid rgba(99,102,241,0.4);backdrop-filter:blur(8px);transition:all 0.3s ease;">
+                                <i class="ri-login-circle-line mr-1.5"></i>Login to Unlock
+                            </a>
+                        </div>
+                    </div>
+                </div>
+ 
+                <!-- Card 5: Garden Villa -->
+                <div class="prop-card glass rounded-3xl overflow-hidden fade-up group cursor-pointer" style="transition-delay:0.15s;">
+                    <div class="prop-img-wrap relative overflow-hidden" style="height:220px;">
+                        <img src="https://images.unsplash.com/photo-1570129477492-45c003edd2be?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                             alt="Garden Villa Austin"
+                             class="prop-img w-full h-full object-cover">
+                        <div class="absolute top-3 left-3">
+                            <span class="prop-badge px-3 py-1 rounded-full text-xs font-semibold text-amber-200 tracking-wide"
+                                  style="background:rgba(245,158,11,0.25);backdrop-filter:blur(8px);border:1px solid rgba(245,158,11,0.3);">
+                                Great Value
+                            </span>
+                        </div>
+                        <div class="absolute top-3 right-3">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold text-white"
+                                  style="background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);">
+                                <i class="ri-heart-line mr-1"></i>Save
+                            </span>
+                        </div>
+                    </div>
+                    <div class="prop-body relative p-5">
+                        <div class="mb-3">
+                            <h3 class="font-clash font-semibold text-white text-lg mb-1 group-hover:text-violet-200 transition-colors duration-300">Garden Villa</h3>
+                            <p class="text-gray-400 text-sm flex items-center gap-1.5">
+                                <i class="ri-map-pin-2-line text-violet-400 text-xs"></i>
+                                Austin, TX
+                            </p>
+                        </div>
+                        <div class="prop-price font-clash font-bold text-2xl mb-4" style="background:linear-gradient(135deg,#c4b5fd,#a78bfa,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+                            $980,000
+                        </div>
+                        <div class="prop-stats flex items-center gap-4 text-sm text-gray-400 mb-4">
+                            <span class="prop-stat flex items-center gap-1.5"><i class="ri-hotel-bed-line text-violet-400"></i>3 Beds</span>
+                            <span class="prop-stat flex items-center gap-1.5" style="transition-delay:0.05s;"><i class="ri-drop-line text-violet-400"></i>2 Baths</span>
+                            <span class="prop-stat flex items-center gap-1.5" style="transition-delay:0.1s;"><i class="ri-expand-diagonal-line text-violet-400"></i>2,100 sqft</span>
+                        </div>
+                        <div class="prop-lock-overlay absolute inset-x-0 bottom-0 rounded-b-3xl flex flex-col items-center justify-center gap-3 py-6"
+                             style="background:rgba(10,10,30,0.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,0.06);">
+                            <i class="ri-lock-line ri-xl text-white/70 prop-lock-icon"></i>
+                            <p class="text-white/60 text-xs font-medium">Sign in to view full details</p>
+                            <a href="{% url 'login' %}" class="prop-unlock-btn px-5 py-2 rounded-full text-xs font-semibold text-white"
+                               style="background:rgba(139,92,246,0.35);border:1px solid rgba(139,92,246,0.4);backdrop-filter:blur(8px);transition:all 0.3s ease;">
+                                <i class="ri-login-circle-line mr-1.5"></i>Login to Unlock
+                            </a>
+                        </div>
+                    </div>
+                </div>
+ 
+                <!-- Card 6: Sky Loft -->
+                <div class="prop-card glass rounded-3xl overflow-hidden fade-up group cursor-pointer" style="transition-delay:0.25s;">
+                    <div class="prop-img-wrap relative overflow-hidden" style="height:220px;">
+                        <img src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                             alt="Sky Loft Seattle"
+                             class="prop-img w-full h-full object-cover">
+                        <div class="absolute top-3 left-3">
+                            <span class="prop-badge px-3 py-1 rounded-full text-xs font-semibold text-blue-200 tracking-wide"
+                                  style="background:rgba(59,130,246,0.25);backdrop-filter:blur(8px);border:1px solid rgba(59,130,246,0.3);">
+                                For Sale
+                            </span>
+                        </div>
+                        <div class="absolute top-3 right-3">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold text-white"
+                                  style="background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);">
+                                <i class="ri-heart-line mr-1"></i>Save
+                            </span>
+                        </div>
+                    </div>
+                    <div class="prop-body relative p-5">
+                        <div class="mb-3">
+                            <h3 class="font-clash font-semibold text-white text-lg mb-1 group-hover:text-blue-200 transition-colors duration-300">Sky Loft</h3>
+                            <p class="text-gray-400 text-sm flex items-center gap-1.5">
+                                <i class="ri-map-pin-2-line text-blue-400 text-xs"></i>
+                                Seattle, WA
+                            </p>
+                        </div>
+                        <div class="prop-price font-clash font-bold text-2xl mb-4" style="background:linear-gradient(135deg,#93c5fd,#60a5fa,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+                            $1,650,000
+                        </div>
+                        <div class="prop-stats flex items-center gap-4 text-sm text-gray-400 mb-4">
+                            <span class="prop-stat flex items-center gap-1.5"><i class="ri-hotel-bed-line text-blue-400"></i>2 Beds</span>
+                            <span class="prop-stat flex items-center gap-1.5" style="transition-delay:0.05s;"><i class="ri-drop-line text-blue-400"></i>2 Baths</span>
+                            <span class="prop-stat flex items-center gap-1.5" style="transition-delay:0.1s;"><i class="ri-expand-diagonal-line text-blue-400"></i>1,600 sqft</span>
+                        </div>
+                        <div class="prop-lock-overlay absolute inset-x-0 bottom-0 rounded-b-3xl flex flex-col items-center justify-center gap-3 py-6"
+                             style="background:rgba(10,10,30,0.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,0.06);">
+                            <i class="ri-lock-line ri-xl text-white/70 prop-lock-icon"></i>
+                            <p class="text-white/60 text-xs font-medium">Sign in to view full details</p>
+                            <a href="{% url 'login' %}" class="prop-unlock-btn px-5 py-2 rounded-full text-xs font-semibold text-white"
+                               style="background:rgba(59,130,246,0.35);border:1px solid rgba(59,130,246,0.4);backdrop-filter:blur(8px);transition:all 0.3s ease;">
+                                <i class="ri-login-circle-line mr-1.5"></i>Login to Unlock
+                            </a>
+                        </div>
+                    </div>
+                </div>
+ 
+            </div><!-- /grid -->
+ 
+            <!-- Bottom CTA -->
+            <div class="text-center mt-16 fade-up">
+                <p class="text-gray-500 text-sm mb-6">
+                    Showing 6 of <span class="text-white font-semibold">50,000+</span> properties — sign up for full access
+                </p>
+                
+            </div>
+ 
+        </div>
+    </section>
+ 
+    <!-- Divider -->
+    <div class="relative z-10 h-px mx-6 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+
+    <!-- Why Choose Us Section -->
+    <section class="relative py-24 md:py-32 bg-[#0a0a1e]">
+        <div class="content-layer max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16 fade-up">
+                <span class="text-blue-400 text-sm font-semibold tracking-wider uppercase mb-3 block">Why Us</span>
+                <h2 class="font-clash font-bold text-4xl md:text-5xl text-white mb-4">The RealtyFlow Difference</h2>
+                <p class="text-gray-400 max-w-xl mx-auto">We have reimagined the home buying experience from the ground up.</p>
+            </div>
+
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Item 1 -->
+                <div class="glass-card glass rounded-2xl p-6 text-center fade-up">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center mx-auto mb-4 border border-blue-400/20">
+                        <i class="ri-building-4-line text-xl text-blue-300"></i>
+                    </div>
+                    <h4 class="font-clash font-semibold text-lg text-white mb-2">Extensive Selection</h4>
+                    <p class="text-gray-400 text-sm">Access over 50,000 verified listings across every neighborhood and price range.</p>
+                </div>
+
+                <!-- Item 2 -->
+                <div class="glass-card glass rounded-2xl p-6 text-center fade-up" style="transition-delay: 0.1s;">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-500/20 flex items-center justify-center mx-auto mb-4 border border-emerald-400/20">
+                        <i class="ri-verified-badge-line text-xl text-emerald-300"></i>
+                    </div>
+                    <h4 class="font-clash font-semibold text-lg text-white mb-2">Verified Listings</h4>
+                    <p class="text-gray-400 text-sm">Every property is personally inspected and verified before it goes live on our platform.</p>
+                </div>
+
+                <!-- Item 3 -->
+                <div class="glass-card glass rounded-2xl p-6 text-center fade-up" style="transition-delay: 0.2s;">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center mx-auto mb-4 border border-amber-400/20">
+                        <i class="ri-user-star-line text-xl text-amber-300"></i>
+                    </div>
+                    <h4 class="font-clash font-semibold text-lg text-white mb-2">Expert Agents</h4>
+                    <p class="text-gray-400 text-sm">Work with top-rated local agents who know the market inside and out.</p>
+                </div>
+
+                <!-- Item 4 -->
+                <div class="glass-card glass rounded-2xl p-6 text-center fade-up" style="transition-delay: 0.3s;">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500/20 to-pink-500/20 flex items-center justify-center mx-auto mb-4 border border-rose-400/20">
+                        <i class="ri-price-tag-3-line text-xl text-rose-300"></i>
+                    </div>
+                    <h4 class="font-clash font-semibold text-lg text-white mb-2">Transparent Pricing</h4>
+                    <p class="text-gray-400 text-sm">No hidden costs. See exactly what you pay for with detailed breakdowns.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Statistics Bar -->
+    <section class="relative py-16 bg-gradient-to-r from-[#0f0f2e] via-[#1a1a40] to-[#0f0f2e]">
+        <div class="content-layer max-w-7xl mx-auto px-6">
+            <div class="glass-strong rounded-3xl px-8 py-10 md:px-12 md:py-14 fade-up">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4">
+                    <div class="text-center">
+                        <div class="stat-number font-clash font-bold text-4xl md:text-5xl text-white mb-2" data-target="50000">0</div>
+                        <div class="text-gray-400 text-sm font-medium">Properties Listed</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="stat-number font-clash font-bold text-4xl md:text-5xl text-white mb-2" data-target="12000">0</div>
+                        <div class="text-gray-400 text-sm font-medium">Happy Clients</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="stat-number font-clash font-bold text-4xl md:text-5xl text-white mb-2" data-target="350">0</div>
+                        <div class="text-gray-400 text-sm font-medium">Expert Agents</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="stat-number font-clash font-bold text-4xl md:text-5xl text-white mb-2" data-target="98">0</div>
+                        <div class="text-gray-400 text-sm font-medium">% Satisfaction</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="relative py-24 md:py-32 bg-gradient-to-b from-[#0a0a1e] to-[#0d0d28]">
+        <div class="content-layer max-w-4xl mx-auto px-6 text-center fade-up">
+            <h2 class="font-clash font-bold text-4xl md:text-5xl lg:text-6xl text-white mb-6">Ready to Find Your Home?</h2>
+            <p class="text-gray-400 text-lg mb-10 max-w-2xl mx-auto">Join thousands of satisfied homeowners who found their perfect match with RealtyFlow. It takes less than 2 minutes to get started.</p>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="{% url 'register_choice' %}" class="clay-cta px-8 py-4 text-base font-semibold flex items-center gap-2">
+                    Create Free Account
+                    <i class="ri-arrow-right-line"></i>
+                </a>
+                <a href="{% url 'login' %}" class="glass px-8 py-4 rounded-full text-white font-medium hover:bg-white/10 transition-all duration-300">
+                    Sign In
+                </a>
+            </div>
+        </div>
+    </section>
+{% endblock %}

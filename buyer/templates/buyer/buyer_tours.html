@@ -1,0 +1,152 @@
+{% extends 'buyer/base_buyer.html' %}
+{% load buyer_tags %}
+
+{% block title %}RealtyFlow — Your Tours{% endblock %}
+{% block meta_description %}Manage your scheduled property tours on RealtyFlow.{% endblock %}
+
+{% block content %}
+
+<div id="bl-progress"></div>
+
+<section class="px-4 md:px-8 pt-24 sm:pt-28">
+  <div class="mb-10">
+    <p class="fade-up text-indigo-400 text-sm font-semibold tracking-wider uppercase">Your schedule</p>
+    <h2 class="fade-up font-clash font-bold text-3xl md:text-4xl text-white mt-2" style="transition-delay:.1s;">Property Tours</h2>
+  </div>
+
+  {# ── Upcoming Tours ── #}
+  <div class="mb-12">
+    <h3 class="font-clash font-semibold text-xl text-white mb-6 flex items-center gap-2">
+      <i class="ri-calendar-check-line text-emerald-400"></i> Upcoming
+    </h3>
+
+    {% if upcoming %}
+    <div class="space-y-4">
+      {% for tour in upcoming %}
+      <div class="glass rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 bl-fade">
+        {# Mini property card #}
+        <div class="flex items-center gap-4 flex-1 min-w-0">
+          <div class="w-16 h-16 rounded-xl overflow-hidden shrink-0">
+            {% if tour.property.main_image %}
+            <img src="{{ tour.property.main_image.url }}" alt="" class="w-full h-full object-cover">
+            {% else %}
+            <div class="w-full h-full bg-gradient-to-br from-indigo-900 to-gray-900 flex items-center justify-center">
+              <i class="ri-home-5-line text-gray-600"></i>
+            </div>
+            {% endif %}
+          </div>
+          <div class="min-w-0">
+            <p class="text-white font-semibold truncate">{{ tour.property.property_type }} at {{ tour.property.location }}</p>
+            <p class="text-gray-400 text-sm truncate">{{ tour.property.address|truncatechars:40 }}</p>
+          </div>
+        </div>
+
+        {# Date & Time #}
+        <div class="flex items-center gap-3 shrink-0">
+          <div class="text-center">
+            <p class="text-xs text-gray-400 uppercase tracking-wider">Date</p>
+            <p class="text-white font-semibold">{{ tour.scheduled_date|date:"M d, Y" }}</p>
+          </div>
+          <div class="w-px h-8 bg-white/10"></div>
+          <div class="text-center">
+            <p class="text-xs text-gray-400 uppercase tracking-wider">Time</p>
+            <p class="text-white font-semibold">{{ tour.scheduled_time|time:"g:i A" }}</p>
+          </div>
+        </div>
+
+        {# Status badge #}
+        <div class="shrink-0">
+          {% if tour.status == 'approved' %}
+          <span class="px-3 py-1 rounded-full text-xs font-semibold text-emerald-200 bg-emerald-500/25 border border-emerald-500/30">Confirmed</span>
+          {% elif tour.status == 'completed' %}
+          <span class="px-3 py-1 rounded-full text-xs font-semibold text-blue-200 bg-blue-500/25 border border-blue-500/30">Completed</span>
+          {% elif tour.status == 'reschedule_proposed' %}
+          <span class="px-3 py-1 rounded-full text-xs font-semibold text-amber-200 bg-amber-500/25 border border-amber-500/30">Rescheduled</span>
+          {% elif tour.status == 'declined' %}
+          <span class="px-3 py-1 rounded-full text-xs font-semibold text-red-200 bg-red-500/25 border border-red-500/30">Declined</span>
+          {% elif tour.status == 'cancelled' %}
+          <span class="px-3 py-1 rounded-full text-xs font-semibold text-gray-300 bg-gray-500/25 border border-gray-500/30">Cancelled</span>
+          {% else %}
+          <span class="px-3 py-1 rounded-full text-xs font-semibold text-yellow-200 bg-yellow-500/25 border border-yellow-500/30">Pending</span>
+          {% endif %}
+        </div>
+
+        {# Actions #}
+        <div class="flex items-center gap-2 shrink-0">
+          <a href="{% url 'property_detail_buyer' buyer.id tour.property.pk %}" class="bn-link text-xs"><i class="ri-eye-line"></i> View</a>
+          {% if tour.status == 'approved' or tour.status == 'completed' %}
+          <a href="{% url 'chat' tour.id 'buyer' buyer.id %}" class="bn-link text-xs active"><i class="ri-chat-3-line"></i> Chat</a>
+          {% elif tour.status == 'reschedule_proposed' %}
+          <a href="{% url 'buyer_notifications' buyer.id %}" class="bn-link text-xs active" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i class="ri-time-line"></i> Respond</a>
+          {% else %}
+          <span class="bn-link text-xs opacity-50 cursor-not-allowed" title="Chat locked until seller approves"><i class="ri-lock-line"></i> Chat locked</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="glass rounded-3xl p-12 text-center">
+      <i class="ri-calendar-line text-4xl text-indigo-300"></i>
+      <p class="text-white font-clash font-semibold text-xl mt-4">No upcoming tours</p>
+      <p class="text-gray-400 text-sm mt-2">Schedule a tour from any property page.</p>
+      <a href="{% url 'buyer_listings' 'buy' %}" class="clay-cta mt-6 px-6 py-3 text-sm font-semibold inline-flex items-center gap-2">
+        Browse listings <i class="ri-arrow-right-up-line"></i>
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  {# ── Past Tours ── #}
+  {% if past %}
+  <div class="mb-12">
+    <h3 class="font-clash font-semibold text-xl text-white mb-6 flex items-center gap-2">
+      <i class="ri-history-line text-gray-400"></i> Past
+    </h3>
+    <div class="space-y-4">
+      {% for tour in past %}
+      <div class="glass rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 opacity-70 bl-fade">
+        <div class="flex items-center gap-4 flex-1 min-w-0">
+          <div class="w-16 h-16 rounded-xl overflow-hidden shrink-0">
+            {% if tour.property.main_image %}
+            <img src="{{ tour.property.main_image.url }}" alt="" class="w-full h-full object-cover">
+            {% else %}
+            <div class="w-full h-full bg-gradient-to-br from-indigo-900 to-gray-900 flex items-center justify-center">
+              <i class="ri-home-5-line text-gray-600"></i>
+            </div>
+            {% endif %}
+          </div>
+          <div class="min-w-0">
+            <p class="text-white font-semibold truncate">{{ tour.property.property_type }} at {{ tour.property.location }}</p>
+            <p class="text-gray-400 text-sm truncate">{{ tour.property.address|truncatechars:40 }}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+          <p class="text-gray-400 text-sm">{{ tour.scheduled_date|date:"M d, Y" }} · {{ tour.scheduled_time|time:"g:i A" }}</p>
+        </div>
+        <div class="shrink-0">
+          {% if tour.status == 'approved' %}
+          <span class="px-3 py-1 rounded-full text-xs font-semibold text-gray-300 bg-gray-500/25 border border-gray-500/30">Completed</span>
+          {% elif tour.status == 'declined' %}
+          <span class="px-3 py-1 rounded-full text-xs font-semibold text-red-200 bg-red-500/25 border border-red-500/30">Declined</span>
+          {% endif %}
+        </div>
+        <a href="{% url 'property_detail_buyer' buyer.id tour.property.pk %}" class="bn-link text-xs shrink-0"><i class="ri-eye-line"></i> View</a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+<div class="mb-24"></div>
+
+{% endblock %}
+
+{% block buyer_scripts %}
+<script>
+(function() {
+  document.querySelectorAll('.bl-fade').forEach(el => window.blObserver.observe(el));
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,1061 @@
+{% extends 'buyer/base_buyer.html' %}
+{% load buyer_tags humanize %}
+
+{% block title %}{{ property.property_type }} in {{ property.location }} — RealtyFlow{% endblock %}
+{% block meta_description %}{{ property.description|default:"Discover this premier property on RealtyFlow."|truncatewords:25 }}{% endblock %}
+
+{% block head_extra %}
+<meta property="og:title" content="{{ property.property_type }} in {{ property.location }} — RealtyFlow">
+<meta property="og:description" content="{{ property.description|default:'Explore this property listing on RealtyFlow.'|truncatewords:25 }}">
+{% if gallery.0 %}
+<meta property="og:image" content="{{ gallery.0 }}">
+{% endif %}
+<meta property="og:type" content="website">
+
+{% if property.latitude and property.longitude %}
+<!-- Leaflet CSS & JS (wrapped for fallback resilience) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLvvZFWtCyp427++abeZGIvXvGAQMB593g9QIZUebd1SIA005rGOey92U8UwnNwGOQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYd9IfhAI54BJEaWUMloG7voYiKeQ45lHrTrI3WIFFTZBnoG77/ZYsEQgkqldK53dmJ7hXKSwrLQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+{% endif %}
+{% endblock %}
+
+{% block buyer_page_styles %}
+<style>
+  /* Elevate chatbot widget above sticky mobile action bar on this page only */
+  @media (max-width: 1023px) {
+    #chatbot-widget-wrapper {
+      bottom: 5.5rem !important;
+    }
+  }
+
+  /* Gallery styles */
+  .prop-hero-img {
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .prop-hero-wrap:hover .prop-hero-img {
+    transform: scale(1.03);
+  }
+
+  /* Description clamp */
+  .desc-collapsed {
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    position: relative;
+  }
+  .desc-collapsed::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3rem;
+    background: linear-gradient(to top, rgba(17, 20, 44, 0.95), transparent);
+    pointer-events: none;
+  }
+
+  /* Dark mode filter for Leaflet OSM tiles */
+  .leaflet-layer,
+  .leaflet-control-zoom-in,
+  .leaflet-control-zoom-out,
+  .leaflet-control-attribution {
+    filter: brightness(0.8) invert(1) contrast(1.2) hue-rotate(190deg) saturate(0.5);
+  }
+
+  /* Custom scrollbar for mobile swipe */
+  .gallery-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  .gallery-scroll {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .prop-hero-img, .fade-up, .bl-fade {
+      transition: none !important;
+      animation: none !important;
+      transform: none !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="bl-progress"></div>
+
+<!-- Safe JSON data carriers for client scripts — eliminates template tags inside JavaScript -->
+{{ gallery|json_script:"gallery-data" }}
+<div id="property-meta"
+     data-title="{{ property.property_type }} in {{ property.location }}"
+     data-address="{{ property.address }}"
+     class="hidden"
+     aria-hidden="true"></div>
+
+<!-- Page container with extra bottom padding for mobile sticky bar -->
+<div class="px-4 md:px-8 pt-24 sm:pt-28 pb-28 lg:pb-16 max-w-7xl mx-auto">
+
+  <!-- ═════════ BREADCRUMBS ═════════ -->
+  <nav class="flex items-center gap-2 text-xs md:text-sm text-gray-400 mb-6 flex-wrap" aria-label="Breadcrumb">
+    <a href="{% url 'buyer_landing' %}" class="hover:text-white transition-colors flex items-center gap-1">
+      <i class="ri-home-4-line text-sm"></i> Home
+    </a>
+    <i class="ri-arrow-right-s-line text-gray-600"></i>
+    <a href="{% url 'buyer_listings' mode %}" class="hover:text-white transition-colors">
+      {% if mode == 'rent' %}For Rent{% else %}For Sale{% endif %}
+    </a>
+    <i class="ri-arrow-right-s-line text-gray-600"></i>
+    <span class="text-gray-300">{{ property.location }}</span>
+    <i class="ri-arrow-right-s-line text-gray-600"></i>
+    <span class="text-indigo-300 font-medium truncate max-w-[200px] sm:max-w-xs">{{ property.property_type }}</span>
+  </nav>
+
+  <!-- ═════════ GALLERY SECTION ═════════ -->
+  <section class="mb-8" aria-label="Property gallery">
+    <!-- Desktop Airbnb-style Gallery (Hidden on Mobile) -->
+    <div class="hidden md:block">
+      {% if gallery|length == 1 %}
+      <!-- Single image layout -->
+      <div class="prop-hero-wrap relative h-[460px] rounded-3xl overflow-hidden glass cursor-pointer group" onclick="openLightbox(0)">
+        <img src="{{ gallery.0 }}" alt="{{ property.property_type }} in {{ property.location }}" class="prop-hero-img w-full h-full object-cover">
+        <button type="button" class="absolute bottom-5 right-5 glass-strong px-4 py-2 rounded-xl text-white text-xs font-semibold flex items-center gap-2 shadow-lg group-hover:scale-105 transition-transform" onclick="openLightbox(0)">
+          <i class="ri-fullscreen-line"></i> View photo
+        </button>
+      </div>
+      {% else %}
+      <!-- Multi-image 1 + 2x2 grid layout -->
+      <div class="relative h-[480px] rounded-3xl overflow-hidden grid grid-cols-4 gap-3">
+        <!-- Main Large Image -->
+        <div class="prop-hero-wrap col-span-2 h-full rounded-2xl overflow-hidden glass cursor-pointer group relative" onclick="openLightbox(0)">
+          <img src="{{ gallery.0 }}" alt="{{ property.property_type }} in {{ property.location }} - Cover" class="prop-hero-img w-full h-full object-cover">
+          <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+        </div>
+
+        <!-- Thumbnails Column -->
+        <div class="col-span-2 grid grid-cols-2 gap-3 h-full">
+          {% for img_url in gallery|slice:"1:5" %}
+          <div class="prop-hero-wrap relative rounded-2xl overflow-hidden glass cursor-pointer group h-full" onclick="openLightbox({{ forloop.counter }})">
+            <img src="{{ img_url }}" alt="{{ property.property_type }} in {{ property.location }} - Photo {{ forloop.counter|add:1 }}" class="prop-hero-img w-full h-full object-cover">
+            <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+          </div>
+          {% endfor %}
+          {% if gallery|length == 2 %}
+          <div class="rounded-2xl glass opacity-30 border border-white/5 flex items-center justify-center text-gray-500 text-xs">
+            <i class="ri-image-line text-2xl opacity-40"></i>
+          </div>
+          <div class="rounded-2xl glass opacity-30 border border-white/5 flex items-center justify-center text-gray-500 text-xs">
+            <i class="ri-image-line text-2xl opacity-40"></i>
+          </div>
+          <div class="rounded-2xl glass opacity-30 border border-white/5 flex items-center justify-center text-gray-500 text-xs">
+            <i class="ri-image-line text-2xl opacity-40"></i>
+          </div>
+          {% elif gallery|length == 3 %}
+          <div class="rounded-2xl glass opacity-30 border border-white/5 flex items-center justify-center text-gray-500 text-xs">
+            <i class="ri-image-line text-2xl opacity-40"></i>
+          </div>
+          <div class="rounded-2xl glass opacity-30 border border-white/5 flex items-center justify-center text-gray-500 text-xs">
+            <i class="ri-image-line text-2xl opacity-40"></i>
+          </div>
+          {% elif gallery|length == 4 %}
+          <div class="rounded-2xl glass opacity-30 border border-white/5 flex items-center justify-center text-gray-500 text-xs">
+            <i class="ri-image-line text-2xl opacity-40"></i>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Show all photos Button -->
+        <button type="button" class="absolute bottom-5 right-5 glass-strong px-4 py-2.5 rounded-xl text-white text-xs font-semibold flex items-center gap-2 shadow-2xl hover:scale-105 transition-all z-10" onclick="openLightbox(0)">
+          <i class="ri-layout-grid-line text-indigo-400"></i> Show all photos ({{ gallery|length }})
+        </button>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Mobile Swipeable Carousel (Shown on Mobile only) -->
+    <div class="md:hidden relative rounded-3xl overflow-hidden glass">
+      <div id="mobile-gallery-scroll" class="gallery-scroll flex overflow-x-auto snap-x snap-mandatory">
+        {% for img_url in gallery %}
+        <div class="snap-center shrink-0 w-full h-72 sm:h-80 relative cursor-pointer" onclick="openLightbox({{ forloop.counter0 }})">
+          <img src="{{ img_url }}" alt="{{ property.property_type }} - Photo {{ forloop.counter }}" class="w-full h-full object-cover">
+        </div>
+        {% endfor %}
+      </div>
+      <!-- Mobile image counter -->
+      <div id="mobile-counter" class="absolute bottom-3 right-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-medium z-10 border border-white/10">
+        1 / {{ gallery|length }}
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ TWO-COLUMN DETAIL LAYOUT ═════════ -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+    <!-- ────────────────────────────────────────── -->
+    <!-- LEFT COLUMN (2/3 width)                    -->
+    <!-- ────────────────────────────────────────── -->
+    <div class="lg:col-span-8 space-y-8">
+
+      <!-- Title & Badges Block -->
+      <div class="glass-card glass rounded-3xl p-6 sm:p-8">
+        <!-- Badges row -->
+        <div class="flex items-center gap-2 flex-wrap mb-4">
+          {% if property.listing_type == 'rent' %}
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-teal-500/20 text-teal-300 border border-teal-500/30">
+            For Rent
+          </span>
+          {% else %}
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+            For Sale
+          </span>
+          {% endif %}
+
+          {% if property.status == 'Available' %}
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>Available
+          </span>
+          {% elif property.status == 'Sold' %}
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30">
+            Sold
+          </span>
+          {% elif property.status == 'Rented' %}
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
+            Rented
+          </span>
+          {% endif %}
+
+          {% if is_new %}
+          <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-500/30">
+            <i class="ri-sparkling-fill text-xs"></i> New
+          </span>
+          {% endif %}
+
+          {% if has_price_drop %}
+          <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30">
+            <i class="ri-arrow-down-line"></i> Price Drop
+          </span>
+          {% endif %}
+        </div>
+
+        <h1 class="font-clash font-bold text-3xl sm:text-4xl md:text-5xl text-white leading-tight">
+          {{ property.property_type }} in {{ property.location }}
+        </h1>
+
+        <p class="text-gray-400 text-sm sm:text-base flex items-center gap-2 mt-3">
+          <i class="ri-map-pin-2-line text-indigo-400 text-lg shrink-0"></i>
+          <span>{{ property.address }}</span>
+        </p>
+
+        <!-- Key Stats Row -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-white/8">
+          {% if property.bedrooms %}
+          <div class="glass rounded-2xl p-4 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/20 grid place-items-center text-indigo-400 shrink-0">
+              <i class="ri-hotel-bed-line text-lg"></i>
+            </div>
+            <div>
+              <p class="text-xs text-gray-400">Bedrooms</p>
+              <p class="text-base font-bold text-white font-clash">{{ property.bedrooms }} Beds</p>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if property.bathrooms %}
+          <div class="glass rounded-2xl p-4 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/20 grid place-items-center text-blue-400 shrink-0">
+              <i class="ri-drop-line text-lg"></i>
+            </div>
+            <div>
+              <p class="text-xs text-gray-400">Bathrooms</p>
+              <p class="text-base font-bold text-white font-clash">{{ property.bathrooms }} Baths</p>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if property.area_sqft %}
+          <div class="glass rounded-2xl p-4 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-teal-500/15 border border-teal-500/20 grid place-items-center text-teal-400 shrink-0">
+              <i class="ri-ruler-2-line text-lg"></i>
+            </div>
+            <div>
+              <p class="text-xs text-gray-400">Living Area</p>
+              <p class="text-base font-bold text-white font-clash">{{ property.area_sqft|floatformat:0 }} sq ft</p>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if property.garage %}
+          <div class="glass rounded-2xl p-4 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/20 grid place-items-center text-purple-400 shrink-0">
+              <i class="ri-car-line text-lg"></i>
+            </div>
+            <div>
+              <p class="text-xs text-gray-400">Garage</p>
+              <p class="text-base font-bold text-white font-clash">{{ property.garage }}</p>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Description Block -->
+      <div class="glass-card glass rounded-3xl p-6 sm:p-8">
+        <h2 class="font-clash font-bold text-xl sm:text-2xl text-white mb-4 flex items-center gap-2">
+          <i class="ri-file-text-line text-indigo-400"></i> Property Overview
+        </h2>
+
+        <div class="prose max-w-none text-gray-300 text-sm sm:text-base leading-relaxed">
+          <div id="desc-content" class="{% if property.description|length > 600 %}desc-collapsed{% endif %}">
+            {{ property.description|default:"No detailed description provided for this listing."|linebreaks }}
+          </div>
+          {% if property.description|length > 600 %}
+          <button type="button" id="desc-toggle-btn" class="mt-3 text-indigo-400 hover:text-indigo-300 font-semibold text-sm inline-flex items-center gap-1 transition-colors">
+            <span>Read more</span> <i class="ri-arrow-down-s-line"></i>
+          </button>
+          {% endif %}
+        </div>
+
+        {% if property.features %}
+        <div class="mt-6 pt-6 border-t border-white/8">
+          <p class="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">Features & Highlights</p>
+          <p class="text-sm text-gray-300 leading-relaxed">{{ property.features }}</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Property Details List -->
+      <div class="glass-card glass rounded-3xl p-6 sm:p-8">
+        <h2 class="font-clash font-bold text-xl sm:text-2xl text-white mb-6 flex items-center gap-2">
+          <i class="ri-list-check-2 text-indigo-400"></i> Listing Facts
+        </h2>
+
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+          <div class="flex items-center justify-between py-2.5 border-b border-white/5">
+            <dt class="text-sm text-gray-400">Listing ID</dt>
+            <dd class="text-sm font-semibold text-white">#{{ property.id }}</dd>
+          </div>
+
+          <div class="flex items-center justify-between py-2.5 border-b border-white/5">
+            <dt class="text-sm text-gray-400">Property Type</dt>
+            <dd class="text-sm font-semibold text-white">{{ property.get_property_type_display|default:property.property_type }}</dd>
+          </div>
+
+          <div class="flex items-center justify-between py-2.5 border-b border-white/5">
+            <dt class="text-sm text-gray-400">Listing Type</dt>
+            <dd class="text-sm font-semibold text-white">
+              {% if property.listing_type == 'rent' %}For Rent{% else %}For Sale{% endif %}
+            </dd>
+          </div>
+
+          <div class="flex items-center justify-between py-2.5 border-b border-white/5">
+            <dt class="text-sm text-gray-400">Availability Status</dt>
+            <dd class="text-sm font-semibold text-white">{{ property.status }}</dd>
+          </div>
+
+          {% if property.bedrooms %}
+          <div class="flex items-center justify-between py-2.5 border-b border-white/5">
+            <dt class="text-sm text-gray-400">Bedrooms</dt>
+            <dd class="text-sm font-semibold text-white">{{ property.bedrooms }}</dd>
+          </div>
+          {% endif %}
+
+          {% if property.bathrooms %}
+          <div class="flex items-center justify-between py-2.5 border-b border-white/5">
+            <dt class="text-sm text-gray-400">Bathrooms</dt>
+            <dd class="text-sm font-semibold text-white">{{ property.bathrooms }}</dd>
+          </div>
+          {% endif %}
+
+          {% if property.area_sqft %}
+          <div class="flex items-center justify-between py-2.5 border-b border-white/5">
+            <dt class="text-sm text-gray-400">Square Footage</dt>
+            <dd class="text-sm font-semibold text-white">{{ property.area_sqft|floatformat:0 }} sq ft</dd>
+          </div>
+          {% endif %}
+
+          {% if property.garage %}
+          <div class="flex items-center justify-between py-2.5 border-b border-white/5">
+            <dt class="text-sm text-gray-400">Garage</dt>
+            <dd class="text-sm font-semibold text-white">{{ property.garage }}</dd>
+          </div>
+          {% endif %}
+
+          {% if price_per_sqft %}
+          <div class="flex items-center justify-between py-2.5 border-b border-white/5">
+            <dt class="text-sm text-gray-400">Price per Sq Ft</dt>
+            <dd class="text-sm font-semibold text-emerald-400">${{ price_per_sqft|floatformat:0 }} / sq ft</dd>
+          </div>
+          {% endif %}
+
+          <div class="flex items-center justify-between py-2.5 border-b border-white/5">
+            <dt class="text-sm text-gray-400">Listed</dt>
+            <dd class="text-sm font-semibold text-white">{{ property.posted_at|timesince }} ago</dd>
+          </div>
+        </dl>
+      </div>
+
+      <!-- Location Card -->
+      <div class="glass-card glass rounded-3xl p-6 sm:p-8">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div>
+            <h2 class="font-clash font-bold text-xl sm:text-2xl text-white flex items-center gap-2">
+              <i class="ri-compass-3-line text-indigo-400"></i> Location & Map
+            </h2>
+            <p class="text-xs text-gray-400 mt-1">{{ property.address }}</p>
+          </div>
+
+          <a href="https://www.google.com/maps/search/?api=1&query={{ property.address|urlencode }}" target="_blank" rel="noopener noreferrer" class="bn-link text-xs">
+            <i class="ri-external-link-line"></i> Open in Maps
+          </a>
+        </div>
+
+        {% if property.latitude and property.longitude %}
+        <div id="property-map" class="w-full h-72 sm:h-80 rounded-2xl overflow-hidden glass border border-white/10 relative z-0" data-lat="{{ property.latitude }}" data-lng="{{ property.longitude }}">
+          <div class="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+            <i class="ri-loader-4-line animate-spin mr-2"></i> Loading map...
+          </div>
+        </div>
+        {% else %}
+        <div class="w-full h-44 rounded-2xl glass border border-white/8 flex flex-col items-center justify-center p-6 text-center">
+          <div class="w-12 h-12 rounded-full bg-indigo-500/20 text-indigo-400 grid place-items-center mb-3">
+            <i class="ri-map-pin-line text-2xl"></i>
+          </div>
+          <p class="text-white font-semibold text-sm">{{ property.location }}</p>
+          <p class="text-gray-400 text-xs mt-1">{{ property.address }}</p>
+          <a href="https://www.google.com/maps/search/?api=1&query={{ property.address|urlencode }}" target="_blank" rel="noopener noreferrer" class="mt-3 text-xs text-indigo-400 hover:text-indigo-300 font-semibold inline-flex items-center gap-1">
+            View on Google Maps <i class="ri-arrow-right-up-line"></i>
+          </a>
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <!-- ────────────────────────────────────────── -->
+    <!-- RIGHT COLUMN (1/3 width, sticky)           -->
+    <!-- ────────────────────────────────────────── -->
+    <div class="lg:col-span-4 space-y-6 lg:sticky lg:top-24 self-start">
+
+      <!-- Owner Listing Banner -->
+      {% if is_owner %}
+      <div class="glass-card glass rounded-3xl p-6 border border-indigo-500/40 bg-gradient-to-br from-indigo-500/15 to-purple-500/10">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-indigo-500/25 border border-indigo-500/30 text-indigo-300 grid place-items-center shrink-0">
+            <i class="ri-shield-user-line text-xl"></i>
+          </div>
+          <div>
+            <h3 class="font-clash font-bold text-white text-lg">Your Listing</h3>
+            <p class="text-xs text-indigo-200">You are the seller of this property.</p>
+          </div>
+        </div>
+        <a href="{% url 'seller_edit_property' property.id %}" class="clay-cta w-full flex items-center justify-center gap-2 py-3 mt-4 text-sm font-semibold rounded-2xl text-white shadow-lg">
+          <i class="ri-edit-line"></i> Edit Property Listing
+        </a>
+      </div>
+      {% endif %}
+
+      <!-- Price & Actions Card -->
+      <div class="glass-strong rounded-3xl p-6 sm:p-7 relative overflow-hidden border border-white/12 shadow-2xl">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-xs uppercase tracking-wider text-gray-400 font-semibold">
+              {% if property.listing_type == 'rent' %}Rental Rate{% else %}Asking Price{% endif %}
+            </p>
+            <div class="flex items-baseline gap-2 mt-1">
+              <span class="font-clash font-bold text-3xl sm:text-4xl text-white">
+                {{ property|format_detail_price }}
+              </span>
+            </div>
+            {% if has_price_drop %}
+            <p class="text-xs text-gray-400 line-through mt-1">
+              Original: ${{ property.previous_price|floatformat:0 }}
+            </p>
+            {% endif %}
+          </div>
+
+          <!-- Top-right Heart & Share buttons -->
+          <div class="flex items-center gap-2">
+            <button type="button"
+                    class="w-10 h-10 rounded-xl glass border border-white/10 grid place-items-center text-gray-300 hover:text-white hover:scale-105 transition-all"
+                    id="share-btn"
+                    title="Share property">
+              <i class="ri-share-line text-lg"></i>
+            </button>
+            <button type="button"
+                    class="w-10 h-10 rounded-xl glass border border-white/10 grid place-items-center text-gray-300 hover:text-red-400 hover:scale-105 transition-all {% if is_saved %}active text-red-500{% endif %}"
+                    data-heart
+                    data-pk="{{ property.pk }}"
+                    title="Save property">
+              <i class="{% if is_saved %}ri-heart-fill text-red-500{% else %}ri-heart-line{% endif %} text-lg"></i>
+            </button>
+          </div>
+        </div>
+
+        {% if price_per_sqft %}
+        <p class="text-xs text-gray-400 mt-2">
+          Est. <span class="text-gray-200 font-medium">${{ price_per_sqft|floatformat:0 }} / sq ft</span>
+        </p>
+        {% endif %}
+
+        <!-- Primary Actions (Buyers only) -->
+        {% if not is_owner %}
+        <div class="mt-6 space-y-3 pt-6 border-t border-white/8">
+          <!-- 1. Tour action -->
+          {% if existing_tour %}
+          <div class="glass rounded-2xl p-4 border border-emerald-500/20 bg-emerald-500/10">
+            <div class="flex items-center gap-2 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
+              <i class="ri-calendar-check-fill"></i> Tour Scheduled
+            </div>
+            <p class="text-white font-semibold text-sm mt-1">
+              {{ existing_tour.scheduled_date|date:"l, M d, Y" }}
+            </p>
+            <p class="text-xs text-gray-300">
+              {{ existing_tour.scheduled_time|time:"g:i A" }} • Status: <span class="capitalize text-emerald-300">{{ existing_tour.status }}</span>
+            </p>
+            <a href="{% url 'buyer_tours' %}" class="mt-3 text-xs text-indigo-300 hover:text-white font-medium inline-flex items-center gap-1">
+              View your tours <i class="ri-arrow-right-line"></i>
+            </a>
+          </div>
+          {% else %}
+          <button type="button"
+                  id="open-tour-modal-btn"
+                  class="clay-cta w-full py-3.5 px-5 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-xl hover:scale-[1.02] transition-transform">
+            <i class="ri-calendar-event-line text-lg"></i> Schedule a Tour
+          </button>
+          {% endif %}
+
+          <!-- 2. Message seller -->
+          <a href="{% url 'buyer_chat' %}?property={{ property.pk }}"
+             class="w-full py-3 px-5 rounded-2xl glass hover:bg-white/10 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all border border-white/10">
+            <i class="ri-chat-1-line text-lg text-indigo-400"></i> Message Seller
+          </a>
+          {% comment %}
+          TODO(fastapi): chat page reads ?property= and opens/creates the conversation
+          {% endcomment %}
+
+          <!-- 3. Show Interest secondary action -->
+          {% if has_interested %}
+          <button disabled class="w-full py-2.5 px-4 rounded-xl glass text-emerald-400 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-default border border-emerald-500/20">
+            <i class="ri-checkbox-circle-fill text-sm"></i> Interest Sent to Seller
+          </button>
+          {% else %}
+          <form method="POST" action="{% url 'buyer_interest' property.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="w-full py-2.5 px-4 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors">
+              <i class="ri-hand-heart-line text-sm text-indigo-400"></i> I'm Interested in this Home
+            </button>
+          </form>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Seller Profile Card -->
+      <div class="glass-card glass rounded-3xl p-6 border border-white/8">
+        <p class="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-4">Listed By</p>
+        <div class="flex items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-500 grid place-items-center text-white font-clash font-bold text-xl shadow-lg shrink-0 overflow-hidden">
+            {% if property.seller.profile_picture %}
+            <img src="{{ property.seller.profile_picture.url }}" alt="Seller" class="w-full h-full object-cover">
+            {% else %}
+            <span>{{ property.seller.first_name|default:property.seller.username|slice:":1"|upper }}</span>
+            {% endif %}
+          </div>
+          <div class="min-w-0">
+            <h4 class="font-clash font-bold text-white text-base truncate">
+              {% if property.seller.first_name %}
+                {{ property.seller.first_name }} {{ property.seller.last_name }}
+              {% else %}
+                {{ property.seller.username }}
+              {% endif %}
+            </h4>
+            <p class="text-xs text-indigo-300 mt-0.5">Verified RealtyFlow Seller</p>
+            {% if property.seller.date_joined %}
+            <p class="text-[11px] text-gray-400 mt-1">
+              Member since {{ property.seller.date_joined|date:"M Y" }}
+            </p>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="mt-4 pt-4 border-t border-white/8 flex items-center gap-2 text-xs text-gray-400">
+          <i class="ri-shield-check-line text-emerald-400 text-sm shrink-0"></i>
+          <span>Contact details are shared after your tour is confirmed.</span>
+          {% comment %}
+          TODO: contact reveal logic after visit approval
+          {% endcomment %}
+        </div>
+      </div>
+
+      <!-- AI Price Insight Card (Sale listings only) -->
+      {% if property.listing_type == 'sale' %}
+        {% if prediction %}
+        <div class="glass-card glass rounded-3xl p-6 border border-indigo-500/20 bg-gradient-to-br from-indigo-950/40 to-slate-900/40 relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-semibold tracking-wider uppercase text-indigo-400 flex items-center gap-1.5">
+              <i class="ri-brain-line"></i> RealtyFlow AI Estimate
+            </span>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold {{ prediction.verdict_class }}">
+              {{ prediction.verdict }}
+            </span>
+          </div>
+
+          <div class="flex items-baseline justify-between mt-2">
+            <div>
+              <p class="text-xs text-gray-400">Predicted Market Value</p>
+              <p class="font-clash font-bold text-2xl text-white mt-0.5">
+                ${{ prediction.estimated_price|floatformat:0|intcomma }}
+              </p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-gray-400">Listed At</p>
+              <p class="font-clash font-semibold text-lg text-gray-300 mt-0.5">
+                ${{ prediction.listed_price|floatformat:0|intcomma }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Position meter bar -->
+          <div class="mt-4">
+            <div class="relative w-full h-2 rounded-full bg-white/10 overflow-hidden">
+              <div class="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 rounded-full"
+                   style="width: {{ prediction.bar_pos }}%;"></div>
+            </div>
+            <div class="flex justify-between text-[10px] text-gray-500 mt-1">
+              <span>Underpriced</span>
+              <span>Fair Value</span>
+              <span>Premium</span>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-4 border-t border-white/8 flex items-center justify-between">
+            <a href="{% url 'price_prediction_page' %}" class="text-xs text-indigo-300 hover:text-white font-medium inline-flex items-center gap-1 transition-colors">
+              Run your own estimate <i class="ri-arrow-right-up-line"></i>
+            </a>
+            <span class="text-[10px] text-gray-500">ML Model v2.4</span>
+          </div>
+        </div>
+        {% else %}
+        <!-- Fallback link card to price prediction -->
+        <a href="{% url 'price_prediction_page' %}" class="glass-card glass rounded-3xl p-6 border border-white/8 block hover:border-indigo-500/30 transition-all group">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/20 text-indigo-400 grid place-items-center">
+                <i class="ri-brain-line text-lg"></i>
+              </div>
+              <div>
+                <p class="font-clash font-bold text-white text-sm group-hover:text-indigo-300 transition-colors">AI Price Predictor</p>
+                <p class="text-xs text-gray-400">Estimate market value with ML</p>
+              </div>
+            </div>
+            <i class="ri-arrow-right-line text-gray-400 group-hover:text-white group-hover:translate-x-1 transition-all"></i>
+          </div>
+        </a>
+        {% comment %}
+        TODO: automatic AI price prediction card server inference
+        {% endcomment %}
+        {% endif %}
+      {% endif %}
+
+    </div>
+
+  </div>
+
+  <!-- ═════════ SIMILAR PROPERTIES ═════════ -->
+  {% if similar %}
+  <section class="mt-20 pt-12 border-t border-white/8">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <p class="text-indigo-400 text-xs font-semibold uppercase tracking-wider">Explore Options</p>
+        <h2 class="font-clash font-bold text-2xl sm:text-3xl text-white mt-1">
+          Similar Properties
+        </h2>
+      </div>
+      <a href="{% url 'buyer_listings' mode %}" class="bn-link text-xs">
+        View all {{ mode }} listings <i class="ri-arrow-right-line"></i>
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for sim_p in similar %}
+        {% include 'buyer/partials/property_card.html' with p=sim_p card_delay="0.08s" %}
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+</div>
+
+<!-- ═════════ MOBILE STICKY BOTTOM ACTION BAR ═════════ -->
+<aside class="lg:hidden fixed bottom-0 left-0 right-0 z-40 glass-strong border-t border-white/10 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center justify-between gap-3 shadow-2xl backdrop-blur-2xl">
+  <div class="min-w-0">
+    <p class="text-[11px] text-gray-400 uppercase tracking-wider">
+      {% if property.listing_type == 'rent' %}Rent{% else %}Price{% endif %}
+    </p>
+    <p class="font-clash font-bold text-xl text-white truncate">
+      {{ property|format_detail_price }}
+    </p>
+  </div>
+
+  <div class="flex items-center gap-2 shrink-0">
+    {% if is_owner %}
+    <a href="{% url 'seller_edit_property' property.id %}" class="clay-cta py-2.5 px-4 rounded-xl text-white text-xs font-semibold flex items-center gap-1.5">
+      <i class="ri-edit-line"></i> Edit
+    </a>
+    {% else %}
+    <a href="{% url 'buyer_chat' %}?property={{ property.pk }}"
+       class="w-10 h-10 rounded-xl glass border border-white/10 grid place-items-center text-white"
+       title="Message seller">
+      <i class="ri-chat-1-line text-lg text-indigo-400"></i>
+    </a>
+    {% if existing_tour %}
+    <a href="{% url 'buyer_tours' %}" class="py-2.5 px-4 rounded-xl glass text-emerald-400 border border-emerald-500/30 text-xs font-semibold flex items-center gap-1">
+      <i class="ri-calendar-check-fill"></i> View Tour
+    </a>
+    {% else %}
+    <button type="button"
+            id="mobile-open-tour-btn"
+            class="clay-cta py-2.5 px-4 rounded-xl text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg">
+      <i class="ri-calendar-event-line"></i> Schedule Tour
+    </button>
+    {% endif %}
+    {% endif %}
+  </div>
+</aside>
+
+<!-- ═════════ TOUR REQUEST MODAL ═════════ -->
+<div id="tour-modal" class="fixed inset-0 z-[90] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
+  <!-- Backdrop -->
+  <div id="tour-backdrop" class="absolute inset-0 bg-black/80 backdrop-blur-md"></div>
+
+  <!-- Dialog Window -->
+  <div class="relative w-full max-w-lg glass-strong border border-white/12 rounded-3xl p-6 sm:p-8 shadow-2xl z-10 scale-95 transition-transform duration-300 overflow-hidden" id="tour-dialog">
+    <div class="flex items-center justify-between pb-4 border-b border-white/8">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 grid place-items-center">
+          <i class="ri-calendar-check-line text-xl"></i>
+        </div>
+        <div>
+          <h3 class="font-clash font-bold text-white text-lg sm:text-xl">Request a Home Tour</h3>
+          <p class="text-xs text-gray-400">Select your preferred date & time</p>
+        </div>
+      </div>
+      <button type="button" id="close-tour-modal-btn" class="w-8 h-8 rounded-full glass border border-white/10 text-gray-400 hover:text-white grid place-items-center transition-colors">
+        <i class="ri-close-line text-lg"></i>
+      </button>
+    </div>
+
+    <form method="POST" action="{% url 'buyer_tour_request' property.pk %}" class="mt-6 space-y-4">
+      {% csrf_token %}
+
+      <div>
+        <label for="tour-date" class="block text-xs uppercase tracking-wider text-gray-300 font-semibold mb-1.5">
+          Tour Date <span class="text-rose-400">*</span>
+        </label>
+        <input type="date"
+               name="scheduled_date"
+               id="tour-date"
+               min="{{ tomorrow_date }}"
+               value="{{ tomorrow_date }}"
+               required
+               class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors">
+      </div>
+
+      <div>
+        <label for="tour-time" class="block text-xs uppercase tracking-wider text-gray-300 font-semibold mb-1.5">
+          Tour Time <span class="text-rose-400">*</span>
+        </label>
+        <input type="time"
+               name="scheduled_time"
+               id="tour-time"
+               value="11:00"
+               required
+               class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors">
+      </div>
+
+      <div>
+        <label for="tour-message" class="block text-xs uppercase tracking-wider text-gray-300 font-semibold mb-1.5">
+          Note to Seller (Optional)
+        </label>
+        <textarea name="message"
+                  id="tour-message"
+                  rows="3"
+                  placeholder="e.g. Any questions or specific features you would like to inspect..."
+                  class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-gray-500 resize-none"></textarea>
+      </div>
+
+      <div class="pt-3">
+        <button type="submit" class="clay-cta w-full py-3.5 px-6 rounded-2xl text-white font-semibold text-sm shadow-xl flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform">
+          <i class="ri-check-line"></i> Confirm & Send Tour Request
+        </button>
+        <p class="text-[11px] text-gray-500 text-center mt-2">
+          The seller will review and confirm your visit schedule.
+        </p>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═════════ LIGHTBOX MODAL ═════════ -->
+<div id="lightbox-modal"
+     class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl hidden opacity-0 transition-opacity duration-300 flex flex-col justify-between p-4 md:p-6"
+     role="dialog"
+     aria-modal="true"
+     aria-label="Image gallery lightbox">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between text-white z-10">
+    <div class="flex items-center gap-3">
+      <span id="lb-counter" class="px-3 py-1 rounded-full bg-white/10 text-xs font-semibold">1 / {{ gallery|length }}</span>
+      <span class="text-xs sm:text-sm text-gray-400 truncate max-w-[200px] sm:max-w-md">{{ property.property_type }} in {{ property.location }}</span>
+    </div>
+    <button type="button" id="close-lb-btn" class="w-10 h-10 rounded-full glass border border-white/10 hover:bg-white/20 text-white grid place-items-center text-xl transition-all" aria-label="Close lightbox">
+      <i class="ri-close-line"></i>
+    </button>
+  </div>
+
+  <!-- Center Stage -->
+  <div class="relative flex-1 flex items-center justify-center my-4 overflow-hidden" id="lb-stage">
+    <button type="button" id="lb-prev-btn" class="absolute left-2 sm:left-6 w-12 h-12 rounded-full glass border border-white/10 hover:bg-white/20 text-white grid place-items-center text-2xl transition-all z-20" aria-label="Previous photo">
+      <i class="ri-arrow-left-s-line"></i>
+    </button>
+
+    <div class="max-w-5xl max-h-[75vh] flex items-center justify-center select-none">
+      <img id="lb-img" src="{{ gallery.0 }}" alt="{{ property.property_type }} photo" class="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl transition-all duration-200">
+    </div>
+
+    <button type="button" id="lb-next-btn" class="absolute right-2 sm:right-6 w-12 h-12 rounded-full glass border border-white/10 hover:bg-white/20 text-white grid place-items-center text-2xl transition-all z-20" aria-label="Next photo">
+      <i class="ri-arrow-right-s-line"></i>
+    </button>
+  </div>
+
+  <!-- Footer Help -->
+  <div class="text-center text-[11px] text-gray-500 z-10">
+    Use arrow keys <kbd class="px-1.5 py-0.5 rounded bg-white/10 text-gray-300">←</kbd> <kbd class="px-1.5 py-0.5 rounded bg-white/10 text-gray-300">→</kbd> to browse, <kbd class="px-1.5 py-0.5 rounded bg-white/10 text-gray-300">Esc</kbd> to close.
+  </div>
+</div>
+
+<!-- ═════════ COPY LINK TOAST ═════════ -->
+<div id="copy-toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-[80] glass-strong border border-emerald-500/30 text-emerald-300 px-4 py-2 rounded-xl text-xs font-semibold shadow-2xl hidden opacity-0 transition-opacity duration-200 flex items-center gap-1.5">
+  <i class="ri-checkbox-circle-fill"></i> Link copied to clipboard!
+</div>
+
+{% endblock %}
+
+{% block buyer_scripts %}
+<script>
+/* Pure valid JavaScript with zero template brackets inside this script block */
+(function() {
+  /* Read data from safe JSON and DOM elements */
+  var galleryDataEl = document.getElementById('gallery-data');
+  var gallery = [];
+  try {
+    gallery = JSON.parse(galleryDataEl ? galleryDataEl.textContent : '[]');
+  } catch (err) {
+    gallery = [];
+  }
+
+  var metaEl = document.getElementById('property-meta');
+  var propTitle = metaEl ? (metaEl.getAttribute('data-title') || '') : '';
+  var propAddress = metaEl ? (metaEl.getAttribute('data-address') || '') : '';
+
+  var curIndex = 0;
+
+  /* ── Lightbox Logic ── */
+  var lbModal = document.getElementById('lightbox-modal');
+  var lbImg = document.getElementById('lb-img');
+  var lbCounter = document.getElementById('lb-counter');
+  var lbStage = document.getElementById('lb-stage');
+  var closeLbBtn = document.getElementById('close-lb-btn');
+  var lbPrevBtn = document.getElementById('lb-prev-btn');
+  var lbNextBtn = document.getElementById('lb-next-btn');
+
+  window.openLightbox = function(idx) {
+    if (!gallery.length) return;
+    curIndex = (idx >= 0 && idx < gallery.length) ? idx : 0;
+    updateLightbox();
+    if (lbModal) {
+      lbModal.classList.remove('hidden');
+      requestAnimationFrame(function() {
+        lbModal.classList.remove('opacity-0');
+        document.body.style.overflow = 'hidden';
+        if (closeLbBtn) closeLbBtn.focus();
+      });
+    }
+  };
+
+  function closeLightbox() {
+    if (!lbModal) return;
+    lbModal.classList.add('opacity-0');
+    setTimeout(function() {
+      lbModal.classList.add('hidden');
+      document.body.style.overflow = '';
+    }, 250);
+  }
+
+  function updateLightbox() {
+    if (!lbImg || !lbCounter) return;
+    lbImg.src = gallery[curIndex];
+    lbImg.alt = propTitle + ' - Photo ' + (curIndex + 1);
+    lbCounter.textContent = (curIndex + 1) + ' / ' + gallery.length;
+  }
+
+  function nextPhoto() {
+    if (!gallery.length) return;
+    curIndex = (curIndex + 1) % gallery.length;
+    updateLightbox();
+  }
+
+  function prevPhoto() {
+    if (!gallery.length) return;
+    curIndex = (curIndex - 1 + gallery.length) % gallery.length;
+    updateLightbox();
+  }
+
+  if (closeLbBtn) closeLbBtn.addEventListener('click', closeLightbox);
+  if (lbNextBtn) lbNextBtn.addEventListener('click', nextPhoto);
+  if (lbPrevBtn) lbPrevBtn.addEventListener('click', prevPhoto);
+
+  if (lbStage) {
+    lbStage.addEventListener('click', function(e) {
+      if (e.target === lbStage || e.target.parentElement === lbStage) {
+        closeLightbox();
+      }
+    });
+  }
+
+  /* Keyboard Navigation for Lightbox */
+  document.addEventListener('keydown', function(e) {
+    if (!lbModal || lbModal.classList.contains('hidden')) return;
+    if (e.key === 'Escape') closeLightbox();
+    else if (e.key === 'ArrowRight') nextPhoto();
+    else if (e.key === 'ArrowLeft') prevPhoto();
+  });
+
+  /* ── Mobile Gallery Scroll Counter ── */
+  var mobScroll = document.getElementById('mobile-gallery-scroll');
+  var mobCounter = document.getElementById('mobile-counter');
+  if (mobScroll && mobCounter) {
+    mobScroll.addEventListener('scroll', function() {
+      var idx = Math.round(mobScroll.scrollLeft / mobScroll.offsetWidth) + 1;
+      mobCounter.textContent = Math.min(idx, gallery.length) + ' / ' + gallery.length;
+    }, { passive: true });
+  }
+
+  /* ── Description Read More Toggle ── */
+  var descToggleBtn = document.getElementById('desc-toggle-btn');
+  var descContent = document.getElementById('desc-content');
+  if (descToggleBtn && descContent) {
+    descToggleBtn.addEventListener('click', function() {
+      var isCollapsed = descContent.classList.contains('desc-collapsed');
+      if (isCollapsed) {
+        descContent.classList.remove('desc-collapsed');
+        descToggleBtn.innerHTML = '<span>Read less</span> <i class="ri-arrow-up-s-line"></i>';
+      } else {
+        descContent.classList.add('desc-collapsed');
+        descToggleBtn.innerHTML = '<span>Read more</span> <i class="ri-arrow-down-s-line"></i>';
+      }
+    });
+  }
+
+  /* ── Tour Request Modal ── */
+  var tourModal = document.getElementById('tour-modal');
+  var tourDialog = document.getElementById('tour-dialog');
+  var tourBackdrop = document.getElementById('tour-backdrop');
+  var openTourBtn = document.getElementById('open-tour-modal-btn');
+  var mobOpenTourBtn = document.getElementById('mobile-open-tour-btn');
+  var closeTourBtn = document.getElementById('close-tour-modal-btn');
+
+  function openTourModal() {
+    if (!tourModal || !tourDialog) return;
+    tourModal.classList.remove('hidden');
+    requestAnimationFrame(function() {
+      tourModal.classList.remove('opacity-0');
+      tourDialog.classList.remove('scale-95');
+      document.body.style.overflow = 'hidden';
+    });
+  }
+
+  function closeTourModal() {
+    if (!tourModal || !tourDialog) return;
+    tourModal.classList.add('opacity-0');
+    tourDialog.classList.add('scale-95');
+    setTimeout(function() {
+      tourModal.classList.add('hidden');
+      document.body.style.overflow = '';
+    }, 250);
+  }
+
+  if (openTourBtn) openTourBtn.addEventListener('click', openTourModal);
+  if (mobOpenTourBtn) mobOpenTourBtn.addEventListener('click', openTourModal);
+  if (closeTourBtn) closeTourBtn.addEventListener('click', closeTourModal);
+  if (tourBackdrop) tourBackdrop.addEventListener('click', closeTourModal);
+
+  /* ── Web Share API + Copy Link ── */
+  var shareBtn = document.getElementById('share-btn');
+  var toast = document.getElementById('copy-toast');
+
+  function copyLinkFallback() {
+    navigator.clipboard.writeText(window.location.href).then(function() {
+      if (toast) {
+        toast.classList.remove('hidden');
+        requestAnimationFrame(function() { toast.classList.remove('opacity-0'); });
+        setTimeout(function() {
+          toast.classList.add('opacity-0');
+          setTimeout(function() { toast.classList.add('hidden'); }, 200);
+        }, 2200);
+      }
+    }).catch(function() {
+      alert('Link: ' + window.location.href);
+    });
+  }
+
+  if (shareBtn) {
+    shareBtn.addEventListener('click', async function() {
+      var shareData = {
+        title: propTitle,
+        text: 'Take a look at this property on RealtyFlow!',
+        url: window.location.href,
+      };
+
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        try {
+          await navigator.share(shareData);
+          return;
+        } catch (err) {
+          if (err.name !== 'AbortError') copyLinkFallback();
+        }
+      } else {
+        copyLinkFallback();
+      }
+    });
+  }
+
+  /* ── Leaflet OpenStreetMap Initialization ── */
+  var mapEl = document.getElementById('property-map');
+  if (mapEl && typeof L !== 'undefined') {
+    try {
+      var lat = parseFloat(mapEl.getAttribute('data-lat'));
+      var lng = parseFloat(mapEl.getAttribute('data-lng'));
+      if (!isNaN(lat) && !isNaN(lng)) {
+        mapEl.innerHTML = '';
+        var map = L.map('property-map', {
+          zoomControl: true,
+          scrollWheelZoom: false,
+        }).setView([lat, lng], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors',
+          maxZoom: 19,
+        }).addTo(map);
+
+        var marker = L.marker([lat, lng]).addTo(map);
+        marker.bindPopup('<b>' + propTitle + '</b><br>' + propAddress).openPopup();
+      }
+    } catch(err) {
+      console.warn('Map initialization failed:', err);
+    }
+  }
+})();
+</script>
+
+{% include 'buyer/partials/heart_toggle.html' %}
+{% endblock %}

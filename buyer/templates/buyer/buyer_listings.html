@@ -1,0 +1,95 @@
+{% extends 'buyer/base_buyer.html' %}
+{% load buyer_tags %}
+
+{% block title %}RealtyFlow — {% if mode == 'rent' %}Rentals{% else %}Homes for Sale{% endif %}{% endblock %}
+{% block meta_description %}Browse {% if mode == 'rent' %}rental{% else %}sale{% endif %} properties on RealtyFlow.{% endblock %}
+
+{% block content %}
+
+{# Hidden CSRF token for heart toggle #}
+<form style="display:none;">{% csrf_token %}</form>
+
+<div id="bl-progress"></div>
+
+<!-- ═════════ QUICK FILTERS BAR ═════════ -->
+<section id="blFilters" class="px-4 md:px-8 pt-24 sm:pt-28 scroll-mt-24">
+  <div class="glass-strong rounded-2xl p-2 flex items-center gap-1 overflow-x-auto" style="scrollbar-width:none;">
+    <a href="{% url 'buyer_listings' mode %}" class="bn-link shrink-0 {% if active_filter == 'all' %}active{% endif %}"><i class="ri-sparkling-2-line"></i><span>For you</span></a>
+    <a href="{% url 'buyer_listings' mode %}?type=house" class="bn-link shrink-0 {% if active_filter == 'house' %}active{% endif %}"><i class="ri-home-5-line"></i><span>Houses</span></a>
+    <a href="{% url 'buyer_listings' mode %}?type=apartment" class="bn-link shrink-0 {% if active_filter == 'apartment' %}active{% endif %}"><i class="ri-building-4-line"></i><span>Apartments</span></a>
+    <a href="{% url 'buyer_listings' mode %}?sort=new" class="bn-link shrink-0 {% if active_filter == 'new' %}active{% endif %}"><i class="ri-line-chart-line"></i><span>Just listed</span></a>
+    <a href="{% url 'buyer_listings' mode %}?drops=1" class="bn-link shrink-0 {% if active_filter == 'drops' %}active{% endif %}"><i class="ri-arrow-down-line"></i><span>Price drops</span></a>
+  </div>
+</section>
+
+<!-- ═════════ SEARCH BAR ═════════ -->
+<section class="px-4 md:px-8 mt-4">
+  <form method="get" action="{% url 'buyer_listings' mode %}" class="glass-strong rounded-2xl p-2 flex items-center gap-1 max-w-xl">
+    <div class="flex-1 flex items-center gap-3 px-4 py-2">
+      <i class="ri-search-line text-gray-400"></i>
+      <input name="q" value="{{ search_q }}" placeholder="Search properties..." class="bl-search-input text-sm bg-transparent border-0 text-white w-full focus:outline-none" autocomplete="off">
+    </div>
+    <button type="submit" class="clay-cta px-5 py-2 text-sm font-semibold shrink-0">Search</button>
+  </form>
+</section>
+
+<!-- ═════════ LISTINGS ═════════ -->
+<section class="px-4 md:px-8 mt-10 md:mt-14">
+  <div class="mb-10 flex items-end justify-between gap-4">
+    <div>
+      <p class="fade-up text-indigo-400 text-sm font-semibold tracking-wider uppercase">{{ total_count }} {% if mode == 'rent' %}rental{{ total_count|pluralize:"s" }}{% else %}home{{ total_count|pluralize:"s" }}{% endif %}</p>
+      <h2 class="fade-up font-clash font-bold text-3xl md:text-4xl text-white mt-2 max-w-2xl" style="transition-delay:.1s;">
+        {% if mode == 'rent' %}Rentals we think you'll love{% else %}Homes we think you'll love{% endif %}
+      </h2>
+    </div>
+  </div>
+
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
+    {% for p in page_obj %}
+      {% include 'buyer/partials/property_card.html' with p=p saved_ids=saved_ids %}
+    {% empty %}
+      <div class="sm:col-span-2 lg:col-span-3 glass rounded-3xl p-12 text-center">
+        <i class="ri-search-eye-line text-3xl text-indigo-300"></i>
+        <p class="text-white font-clash font-semibold text-xl mt-3">No {% if mode == 'rent' %}rentals{% else %}homes{% endif %} match yet</p>
+        <p class="text-gray-400 text-sm mt-1">Try loosening the budget or location.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  {# ── Pagination ── #}
+  {% if page_obj.has_other_pages %}
+  <div class="mt-12 flex justify-center items-center gap-2">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% if query_string %}&{{ query_string }}{% endif %}"
+       class="bn-link"><i class="ri-arrow-left-s-line"></i> Prev</a>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+      {% if page_obj.number == num %}
+      <span class="bn-link active">{{ num }}</span>
+      {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+      <a href="?page={{ num }}{% if query_string %}&{{ query_string }}{% endif %}" class="bn-link">{{ num }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if query_string %}&{{ query_string }}{% endif %}"
+       class="bn-link">Next <i class="ri-arrow-right-s-line"></i></a>
+    {% endif %}
+  </div>
+  {% endif %}
+</section>
+
+<div class="mb-24"></div>
+
+{% endblock %}
+
+{% block buyer_scripts %}
+{% include 'buyer/partials/heart_toggle.html' %}
+<script>
+(function() {
+  /* Observe server-rendered cards */
+  document.querySelectorAll('.bl-fade').forEach(el => window.blObserver.observe(el));
+})();
+</script>
+{% endblock %}

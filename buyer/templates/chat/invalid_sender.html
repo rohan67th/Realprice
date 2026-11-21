@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center">
+  <div class="glass-strong p-8 rounded-3xl max-w-md border border-white/10 shadow-2xl">
+    <div class="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 grid place-items-center text-3xl mx-auto mb-4">
+      <i class="ri-error-warning-line"></i>
+    </div>
+    <h2 class="text-xl font-bold text-white mb-2 font-clash">Chat Not Available</h2>
+    <p class="text-gray-300 text-sm mb-6">{{ message|default:"This chat is only accessible once the scheduled visit has been approved by the seller." }}</p>
+    <a href="javascript:history.back()" class="clay-cta px-6 py-2.5 rounded-xl text-white text-sm font-semibold inline-block">
+      Go Back
+    </a>
+  </div>
+</div>
+{% endblock %}

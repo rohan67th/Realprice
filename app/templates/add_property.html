@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Property</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 py-10">
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-md">
+      <h2 class="text-2xl font-bold mb-6 text-gray-800">Add New Property</h2>
+
+      <form
+        action="#"
+        method="POST"
+        enctype="multipart/form-data"
+        class="space-y-6"
+      >
+        {% csrf_token %}
+        <!-- Property Type -->
+        <div>
+          <label
+            for="property_type"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >Property Type</label
+          >
+          <select
+            id="property_type"
+            name="property_type"
+            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+            <option value="" disabled selected>Select property type</option>
+            <option value="House">House</option>
+            <option value="Apartment">Apartment</option>
+            <option value="Commercial">Commercial</option>
+            <option value="Land">Land</option>
+          </select>
+        </div>
+
+        <!-- Property Address -->
+        <div>
+          <label
+            for="address"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >Property Address</label
+          >
+          <input
+            type="text"
+            id="address"
+            name="address"
+            placeholder="Full address including city, state, ZIP"
+            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+
+        <!-- Location -->
+
+        <div>
+  <label for="location" class="block text-sm font-medium text-gray-700 mb-1">
+    Location
+  </label>
+  <div class="flex space-x-2">
+    <input
+      type="text"
+      id="location"
+      name="location"
+      placeholder="e.g., Kochi, Downtown, Sector 21"
+      class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      required
+    />
+    <button
+      type="button"
+      id="fetch-location"
+      class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+    >
+      Fetch
+    </button>
+  </div>
+</div>
+
+<!-- Latitude & Longitude -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+  <div>
+    <label
+      for="latitude"
+      class="block text-sm font-medium text-gray-700 mb-1"
+      >Latitude</label
+    >
+    <input
+      type="text"
+      id="latitude"
+      name="latitude"
+      class="w-full p-3 border border-gray-300 rounded-lg"
+  
+    />
+  </div>
+  <div>
+    <label
+      for="longitude"
+      class="block text-sm font-medium text-gray-700 mb-1"
+      >Longitude</label
+    >
+    <input
+      type="text"
+      id="longitude"
+      name="longitude"
+      class="w-full p-3 border border-gray-300 rounded-lg"
+    
+    />
+  </div>
+</div>
+
+        <!-- Area, Bedrooms, Bathrooms -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label
+              for="area_sqft"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Area (sq ft)</label
+            >
+            <input
+              type="number"
+              name="area_sqft"
+              id="area_sqft"
+              class="w-full p-3 border border-gray-300 rounded-lg"
+            />
+          </div>
+          <div>
+            <label
+              for="bedrooms"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Bedrooms</label
+            >
+            <input
+              type="number"
+              name="bedrooms"
+              id="bedrooms"
+              class="w-full p-3 border border-gray-300 rounded-lg"
+            />
+          </div>
+          <div>
+            <label
+              for="bathrooms"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Bathrooms</label
+            >
+            <input
+              type="number"
+              name="bathrooms"
+              id="bathrooms"
+              class="w-full p-3 border border-gray-300 rounded-lg"
+            />
+          </div>
+        </div>
+
+        <!-- Features -->
+        <div>
+          <label
+            for="features"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >Features</label
+          >
+          <input
+            type="text"
+            name="features"
+            id="features"
+            class="w-full p-3 border border-gray-300 rounded-lg"
+          />
+        </div>
+
+        <!-- Property Price -->
+        <div>
+          <label
+            for="price"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >Property Price (in ₹)</label
+          >
+          <input
+            type="number"
+            id="price"
+            name="price"
+            min="0"
+            placeholder="e.g., 7500000"
+            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+
+        <!-- Property Description -->
+        <div>
+          <label
+            for="description"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >Property Description</label
+          >
+          <textarea
+            id="description"
+            name="description"
+            rows="4"
+            placeholder="Provide a detailed description of the property"
+            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          ></textarea>
+        </div>
+
+        <div>
+          <label
+            for="status"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >Status</label
+          >
+          <select
+            id="status"
+            name="status"
+            class="w-full p-3 border border-gray-300 rounded-lg"
+            required
+          >
+            <option value="Available">Available</option>
+            <option value="Sold">Sold</option>
+            <option value="Rented">Rented</option>
+          </select>
+        </div>
+
+        <!-- Upload Photos -->
+<div>
+  <label class="block text-sm font-medium text-gray-700 mb-1">
+    Upload Photos
+  </label>
+
+  <!-- Main Image -->
+  <input
+    type="file"
+    id="main_image"
+    name="main_image"
+    class="w-full mb-3 border border-gray-300 p-2 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+  />
+
+  <!-- Additional Image 1 -->
+  <input
+    type="file"
+    id="image_1"
+    name="image_1"
+    class="w-full mb-3 border border-gray-300 p-2 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+  />
+
+  <!-- Additional Image 2 -->
+  <input
+    type="file"
+    id="image_2"
+    name="image_2"
+    class="w-full mb-3 border border-gray-300 p-2 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+  />
+
+  <!-- Additional Image 3 -->
+  <input
+    type="file"
+    id="image_3"
+    name="image_3"
+    class="w-full border border-gray-300 p-2 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+  />
+</div>
+
+
+        <!-- Submit Button -->
+        <div class="pt-4">
+          <button
+            type="submit"
+            class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-200"
+          >
+            Add Property
+          </button>
+        </div>
+      </form>
+    </div>
+    <script>
+  document.getElementById("fetch-location").addEventListener("click", function () {
+    const location = document.getElementById("location").value;
+    if (!location) {
+      alert("Please enter a location first.");
+      return;
+    }
+
+    const proxyUrl = "https://api.allorigins.win/raw?url=";
+    const queryUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`;
+    const url = proxyUrl + encodeURIComponent(queryUrl);  // Double-encoded
+
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        if (data && data.length > 0) {
+          document.getElementById("latitude").value = data[0].lat;
+          document.getElementById("longitude").value = data[0].lon;
+        } else {
+          alert("Location not found. Try a more specific location.");
+        }
+      })
+      .catch(error => {
+        console.error("Geocoding error:", error);
+        alert("Error fetching location.");
+      });
+  });
+</script>
+</body>
+</html>

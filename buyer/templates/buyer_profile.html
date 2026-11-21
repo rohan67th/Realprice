@@ -1,0 +1,625 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile | RealtyFlow{% endblock %}
+{% block meta_description %}Manage your RealtyFlow buyer profile, preferences, and account settings.{% endblock %}
+
+{% block page_bg %}
+<div class="w-full h-full"
+  style="background-image: url('https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=2200&q=85'); background-size: cover; background-position: center; background-attachment: fixed;">
+</div>
+<div class="page-bg-overlay"
+  style="background: linear-gradient(180deg, rgba(8,10,28,0.93) 0%, rgba(12,15,38,0.88) 52%, rgba(7,9,24,0.96) 100%);">
+</div>
+{% endblock %}
+
+{% block page_styles %}
+<style>
+  /* ── Shared nav styles from buyer landing ── */
+  .buyer-nav-bar {
+    background: rgba(31, 34, 57, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 1.25rem;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+  }
+  .bn-link {
+    padding: .55rem .8rem; font-size: .82rem; font-weight: 500;
+    color: rgba(229, 231, 235, .72); border-radius: .85rem;
+    transition: all .22s ease; display: inline-flex; align-items: center;
+    gap: .4rem; white-space: nowrap; border: 1px solid transparent;
+    background: transparent; cursor: pointer; text-decoration: none;
+  }
+  .bn-link:hover { color: #fff; background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.07); }
+  .bn-link.active {
+    color: #fff; background: linear-gradient(135deg, #4f7df3, #3f73e8);
+    border-color: rgba(143, 178, 255, .18);
+    box-shadow: 0 10px 26px rgba(63, 115, 232, .28), inset 0 1px 0 rgba(255,255,255,.14);
+  }
+  .bn-link i { font-size: .95rem; }
+  .bn-link.danger { color: rgba(248,113,113,.8); }
+  .bn-link.danger:hover { color: #fca5a5; background: rgba(239,68,68,.08); }
+
+  .bn-avatar {
+    background: linear-gradient(135deg, #5b7df4, #6a48d9);
+    box-shadow: 0 6px 18px rgba(88, 113, 244, .25);
+    cursor: pointer; border: 2px solid rgba(255,255,255,.12);
+    transition: border-color .2s ease;
+  }
+  .bn-avatar:hover { border-color: rgba(255,255,255,.25); }
+  .bn-avatar-wrap { position: relative; }
+  .bn-avatar-menu {
+    position: absolute; top: calc(100% + .65rem); right: 0;
+    min-width: 240px; padding: .5rem; border-radius: 1rem;
+    background: rgba(27, 30, 50, .96); border: 1px solid rgba(255,255,255,.10);
+    box-shadow: 0 24px 50px rgba(0,0,0,.34);
+    backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+    opacity: 0; transform: translateY(-6px) scale(.98); pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease; z-index: 80;
+  }
+  .bn-avatar-menu.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+  .bn-menu-item {
+    width: 100%; display: flex; align-items: center; gap: .65rem;
+    padding: .7rem .75rem; border-radius: .8rem;
+    color: rgba(229,231,235,.76); font-size: .85rem;
+    transition: all .18s ease; text-decoration: none; border: none; background: transparent; cursor: pointer;
+  }
+  .bn-menu-item:hover { background: rgba(255,255,255,.06); color: #fff; }
+  .bn-menu-item.danger { color: rgba(248,113,113,.7); }
+  .bn-menu-item.danger:hover { color: #fca5a5; background: rgba(239,68,68,.08); }
+
+  .mobile-menu {
+    max-height: 0; overflow: hidden; opacity: 0;
+    transform: translateY(-4px);
+    transition: max-height .28s ease, opacity .2s ease, transform .2s ease;
+  }
+  .mobile-menu.open { max-height: 600px; opacity: 1; transform: translateY(0); }
+
+  /* ── Glass cards ── */
+  .glass-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 1.25rem;
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    transition: border-color .3s, box-shadow .3s, transform .4s cubic-bezier(.16,1,.3,1);
+  }
+  .glass-card:hover {
+    border-color: rgba(255,255,255,0.14);
+    box-shadow: 0 20px 50px rgba(0,0,0,.25), 0 0 40px rgba(99,102,241,.06);
+    transform: translateY(-4px);
+  }
+
+  /* ── Slide-over ── */
+  #edit-panel { transform: translateX(100%); transition: transform .28s cubic-bezier(.2,.8,.2,1); }
+  #edit-panel.open { transform: translateX(0); }
+  #edit-backdrop, #delete-modal { opacity: 0; pointer-events: none; transition: opacity .2s; }
+  #edit-backdrop.open, #delete-modal.open { opacity: 1; pointer-events: auto; }
+
+  .field {
+    width: 100%; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.06);
+    border-radius: 12px; padding: .7rem .9rem; font-size: .9rem; color: #fff;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .field::placeholder { color: rgba(255,255,255,.35); }
+  .field:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99,102,241,.2); }
+  .field.invalid { border-color: #ef4444; box-shadow: 0 0 0 4px rgba(239,68,68,.15); }
+
+  .copy-btn { transition: color .15s; }
+
+  /* ── Profile strength ring ── */
+  #ring { transition: stroke-dashoffset .6s ease; }
+
+  /* Fade-up */
+  .fade-up {
+    opacity: 0; transform: translateY(30px);
+    animation: fadeUp .7s cubic-bezier(.22,1,.36,1) forwards;
+  }
+  @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+{% endblock %}
+
+{% block nav %}
+<nav id="buyer-nav"
+     class="fixed top-3 left-1/2 -translate-x-1/2 z-[70] w-[calc(100%-1rem)] md:w-[calc(100%-2rem)] max-w-[1600px]">
+  <div>
+    <div class="buyer-nav-bar px-2 sm:px-3 py-2 flex items-center gap-2">
+      {# Logo #}
+      <a href="{% url 'buyer_landing' %}" class="flex items-center gap-2 shrink-0 group">
+        <div class="w-9 h-9 rounded-xl bg-[#1e2140] grid place-items-center group-hover:scale-105 transition-transform border border-white/10">
+          <i class="ri-home-5-line text-white text-lg"></i>
+        </div>
+        <span class="hidden md:inline font-clash font-semibold text-white text-[.95rem] tracking-tight">REALPRICE</span>
+      </a>
+
+      <div class="hidden sm:block w-px h-7 bg-white/10 shrink-0"></div>
+
+      {# Desktop nav links — Profile, Notifications, Complaints only #}
+      <div class="hidden sm:flex items-center gap-1.5 ml-auto">
+        <a href="{% url 'buyer_profile' buyer.id %}" class="bn-link active shrink-0">
+          <i class="ri-user-3-line"></i><span>Profile</span>
+        </a>
+        <a href="{% url 'buyer_notifications' buyer.id %}" class="bn-link shrink-0">
+          <i class="ri-notification-3-line"></i><span>Notifications</span>
+        </a>
+        <a href="{% url 'buyer_complaints' buyer.id %}" class="bn-link shrink-0">
+          <i class="ri-customer-service-2-line"></i><span>Complaints</span>
+        </a>
+
+        {# Avatar #}
+        <div class="bn-avatar-wrap shrink-0 ml-2">
+          <button type="button" id="buyer-avatar-toggle"
+                  class="bn-avatar w-9 h-9 rounded-full grid place-items-center text-white text-sm font-bold"
+                  aria-haspopup="true" aria-expanded="false">
+            {{ buyer.name|default:'B'|first|upper }}
+          </button>
+          <div id="buyer-avatar-menu" class="bn-avatar-menu">
+            <div class="px-3 py-2.5">
+              <p class="text-sm font-semibold text-white truncate">{{ buyer.name }}</p>
+              <p class="text-xs text-gray-400 truncate">{{ buyer.email }}</p>
+            </div>
+            <div class="h-px bg-white/10 my-1"></div>
+            <a href="{% url 'buyer_landing' %}" class="bn-menu-item"><i class="ri-home-4-line"></i><span>Browse listings</span></a>
+            <div class="h-px bg-white/10 my-1"></div>
+            <a href="{% url 'seller_logout' %}" class="bn-menu-item danger"><i class="ri-logout-box-r-line"></i><span>Logout</span></a>
+          </div>
+        </div>
+      </div>
+
+      {# Mobile hamburger #}
+      <button id="buyer-mobile-toggle"
+              class="sm:hidden ml-auto w-10 h-10 shrink-0 grid place-items-center rounded-xl border border-white/10 bg-white/5 text-white"
+              aria-label="Toggle menu" aria-expanded="false">
+        <i class="ri-menu-line text-lg" id="buyer-menu-icon"></i>
+      </button>
+    </div>
+
+    {# Mobile menu #}
+    <div id="buyer-mobile-menu" class="mobile-menu mt-2">
+      <div class="buyer-nav-bar px-3 py-3 flex flex-col gap-1">
+        <a href="{% url 'buyer_profile' buyer.id %}" class="bn-link active justify-start"><i class="ri-user-3-line"></i> Profile</a>
+        <a href="{% url 'buyer_notifications' buyer.id %}" class="bn-link justify-start"><i class="ri-notification-3-line"></i> Notifications</a>
+        <a href="{% url 'buyer_complaints' buyer.id %}" class="bn-link justify-start"><i class="ri-customer-service-2-line"></i> Complaints</a>
+        <div class="h-px bg-white/10 my-1"></div>
+        <a href="{% url 'buyer_landing' %}" class="bn-link justify-start"><i class="ri-home-4-line"></i> Browse listings</a>
+        <div class="h-px bg-white/10 my-1"></div>
+        <a href="{% url 'seller_logout' %}" class="bn-link danger justify-start"><i class="ri-logout-box-r-line"></i> Logout</a>
+      </div>
+    </div>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div id="profile-root"
+     class="pt-24 sm:pt-28 pb-16 px-4 md:px-8"
+     data-buyer-id="{{ buyer.id }}"
+     data-name="{{ buyer.name }}"
+     data-email="{{ buyer.email }}"
+     data-phone="{{ buyer.phone }}"
+     data-gender="{{ buyer.gender }}"
+     data-address="{{ buyer.address }}"
+     data-photo="{% if buyer.profile_pic or buyer.profile_photo %}1{% endif %}">
+
+  {# ── Toasts ── #}
+  <div id="toasts" class="fixed top-20 right-4 z-[80] space-y-2 w-[min(92vw,22rem)]" aria-live="polite">
+    {% for message in messages %}
+    <div class="toast flex items-start gap-3 p-4 rounded-2xl border bg-[#1a1d35]/90 backdrop-blur {% if 'error' in message.tags %}border-red-500/30 text-red-300{% else %}border-emerald-500/30 text-emerald-300{% endif %}">
+      <i class="ri-{% if 'error' in message.tags %}error-warning-line{% else %}checkbox-circle-line{% endif %} text-lg mt-0.5"></i>
+      <p class="text-sm flex-1">{{ message }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="max-w-5xl mx-auto space-y-8">
+
+    {# ── Profile hero ── #}
+    <section class="glass-card overflow-hidden fade-up">
+      <div class="h-32 sm:h-40 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-indigo-600 via-blue-500 to-purple-600"></div>
+        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=60')] bg-cover bg-center mix-blend-overlay opacity-30"></div>
+      </div>
+      <div class="px-5 sm:px-8 pb-6 -mt-14 sm:-mt-16 flex flex-col sm:flex-row sm:items-end gap-5">
+        <div class="relative w-24 h-24 sm:w-28 sm:h-28 shrink-0">
+          {% if buyer.profile_pic %}
+          <img src="{{ buyer.profile_pic.url }}" alt="{{ buyer.name }}" class="w-full h-full rounded-2xl object-cover ring-4 ring-[#0a0d1f] shadow-xl" />
+          {% else %}
+          <div class="w-full h-full rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 ring-4 ring-[#0a0d1f] shadow-xl text-white font-display font-semibold text-4xl flex items-center justify-center">{{ buyer.name|default:'B'|first|upper }}</div>
+          {% endif %}
+          <button type="button" data-open-edit class="absolute -bottom-2 -right-2 w-9 h-9 rounded-full bg-[#1e2140] border border-white/10 shadow-lg flex items-center justify-center text-white/70 hover:text-white hover:border-white/20 transition-all" aria-label="Change photo">
+            <i class="ri-camera-line"></i>
+          </button>
+        </div>
+
+        <div class="flex-1 min-w-0 sm:pb-1">
+          <h1 class="font-display font-semibold text-2xl sm:text-3xl text-white truncate">{{ buyer.name }}</h1>
+          <p class="text-sm text-gray-400 mt-1">
+            Buyer account{% if buyer.date_joined %} · member since {{ buyer.date_joined|date:"F Y" }}{% endif %}
+          </p>
+        </div>
+
+        <div class="flex gap-2 sm:pb-1">
+          <button type="button" data-open-edit class="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white text-sm font-medium px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-500/25 transition-all">
+            <i class="ri-edit-2-line"></i> Edit profile
+          </button>
+        </div>
+      </div>
+
+      {# Stats strip #}
+      <div class="grid grid-cols-3 border-t border-white/8 divide-x divide-white/8 text-center">
+        <a href="{% url 'buyer_profile' buyer.id %}" class="py-5 hover:bg-white/[.03] transition-colors">
+          <p class="font-display font-semibold text-xl text-white">{{ saved_count|default:0 }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">Saved homes</p>
+        </a>
+        <a href="{% url 'buyer_notifications' buyer.id %}" class="py-5 hover:bg-white/[.03] transition-colors">
+          <p class="font-display font-semibold text-xl text-white">{{ tours_count|default:0 }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">Tours booked</p>
+        </a>
+        <a href="{% url 'buyer_complaints' buyer.id %}" class="py-5 hover:bg-white/[.03] transition-colors">
+          <p class="font-display font-semibold text-xl text-white">{{ complaints_count|default:0 }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">Complaints</p>
+        </a>
+      </div>
+    </section>
+
+    <div class="grid lg:grid-cols-3 gap-8 items-start">
+      {# ── Left column ── #}
+      <div class="lg:col-span-2 space-y-8">
+
+        {# Personal details #}
+        <section class="glass-card p-5 sm:p-7 fade-up" style="animation-delay:.1s">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="font-display font-semibold text-xl text-white">Personal details</h2>
+            <button type="button" data-open-edit class="text-sm font-medium text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1.5 transition-colors">
+              <i class="ri-edit-2-line"></i> Edit
+            </button>
+          </div>
+
+          <dl class="grid sm:grid-cols-2 gap-x-6 gap-y-5">
+            <div>
+              <dt class="text-sm text-gray-400">Full name</dt>
+              <dd class="mt-1 font-medium text-white">{{ buyer.name|default:"—" }}</dd>
+            </div>
+            <div>
+              <dt class="text-sm text-gray-400">Gender</dt>
+              <dd class="mt-1 font-medium text-white">{{ buyer.get_gender_display|default:buyer.gender|default:"Not added" }}</dd>
+            </div>
+            <div>
+              <dt class="text-sm text-gray-400">Email</dt>
+              <dd class="mt-1 font-medium text-white flex items-center gap-2 min-w-0">
+                <span class="truncate">{{ buyer.email|default:"—" }}</span>
+                {% if buyer.email %}
+                <button type="button" class="copy-btn text-gray-500 hover:text-indigo-400" data-copy="{{ buyer.email }}" aria-label="Copy email"><i class="ri-file-copy-line"></i></button>
+                {% endif %}
+              </dd>
+            </div>
+            <div>
+              <dt class="text-sm text-gray-400">Phone</dt>
+              <dd class="mt-1 font-medium text-white flex items-center gap-2">
+                <span>{{ buyer.phone|default:"Not added" }}</span>
+                {% if buyer.phone %}
+                <button type="button" class="copy-btn text-gray-500 hover:text-indigo-400" data-copy="{{ buyer.phone }}" aria-label="Copy phone"><i class="ri-file-copy-line"></i></button>
+                {% endif %}
+              </dd>
+            </div>
+            <div class="sm:col-span-2">
+              <dt class="text-sm text-gray-400">Address</dt>
+              <dd class="mt-1 font-medium text-white flex items-start gap-2">
+                <i class="ri-map-pin-line text-gray-500 mt-0.5"></i>
+                <span>{{ buyer.address|default:"Not added" }}</span>
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        {# Recent activity #}
+        <section class="glass-card p-5 sm:p-7 fade-up" style="animation-delay:.2s">
+          <h2 class="font-display font-semibold text-xl text-white mb-5">Recent activity</h2>
+          {% if activities %}
+          <ol class="space-y-4">
+            {% for a in activities %}
+            <li class="flex gap-4 p-3 rounded-xl hover:bg-white/[.03] transition-colors">
+              <span class="w-10 h-10 rounded-xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center shrink-0"><i class="{{ a.icon|default:'ri-time-line' }}"></i></span>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium text-white">{{ a.title }}</p>
+                {% if a.detail %}<p class="text-sm text-gray-400 truncate">{{ a.detail }}</p>{% endif %}
+              </div>
+              <span class="text-xs text-gray-500 shrink-0">{{ a.when }}</span>
+            </li>
+            {% endfor %}
+          </ol>
+          {% else %}
+          <div class="text-center py-10">
+            <span class="w-14 h-14 mx-auto rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-2xl"><i class="ri-home-smile-line"></i></span>
+            <p class="font-medium text-white mt-4">Nothing here yet</p>
+            <p class="text-sm text-gray-400 mt-1">Save a home or book a tour and it will show up here.</p>
+          </div>
+          {% endif %}
+        </section>
+      </div>
+
+      {# ── Right column ── #}
+      <div class="space-y-8 lg:sticky lg:top-24">
+
+        {# Profile strength #}
+        <section class="glass-card p-5 sm:p-6 fade-up" style="animation-delay:.15s">
+          <div class="flex items-center gap-4">
+            <div class="relative w-16 h-16 shrink-0">
+              <svg viewBox="0 0 36 36" class="w-16 h-16 -rotate-90">
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="3.5"></circle>
+                <circle id="ring" cx="18" cy="18" r="15.5" fill="none" stroke="#6366f1" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="97.4" stroke-dashoffset="97.4"></circle>
+              </svg>
+              <span id="ring-pct" class="absolute inset-0 flex items-center justify-center text-sm font-semibold text-white">0%</span>
+            </div>
+            <div>
+              <h2 class="font-display font-semibold text-lg text-white">Profile strength</h2>
+              <p id="ring-msg" class="text-sm text-gray-400">Sellers respond faster to complete profiles.</p>
+            </div>
+          </div>
+          <ul id="checklist" class="mt-5 space-y-2 text-sm"></ul>
+        </section>
+
+        {# Security #}
+        <section class="glass-card p-5 sm:p-6 fade-up" style="animation-delay:.25s">
+          <h2 class="font-display font-semibold text-lg text-white mb-4">Security</h2>
+          <a href="{% url 'forgot-password-buyer' %}" class="flex items-center justify-between gap-3 p-3 -m-3 rounded-xl hover:bg-white/[.03] transition-colors">
+            <span class="flex items-center gap-3">
+              <span class="w-10 h-10 rounded-xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center"><i class="ri-lock-password-line text-lg"></i></span>
+              <span>
+                <span class="block text-sm font-medium text-white">Change password</span>
+                <span class="block text-xs text-gray-400">We'll email you a reset link</span>
+              </span>
+            </span>
+            <i class="ri-arrow-right-s-line text-gray-500 text-xl"></i>
+          </a>
+        </section>
+
+        {# Danger zone #}
+        <section class="rounded-2xl border border-red-500/20 bg-red-500/[.04] p-5 sm:p-6 fade-up" style="animation-delay:.3s">
+          <h2 class="font-display font-semibold text-lg text-red-400">Delete account</h2>
+          <p class="text-sm text-gray-400 mt-1">This removes your profile, saved homes and tour history. It can't be undone.</p>
+          <button type="button" id="open-delete" class="mt-4 text-sm font-medium text-red-400 border border-red-500/30 hover:bg-red-500/10 px-4 py-2 rounded-xl transition-colors">Delete my account</button>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ── Edit profile slide-over ── #}
+<div id="edit-backdrop" class="fixed inset-0 bg-black/60 z-[85]"></div>
+<aside id="edit-panel" class="fixed inset-y-0 right-0 z-[90] w-full max-w-md bg-[#12142a] border-l border-white/10 shadow-2xl flex flex-col" role="dialog" aria-modal="true" aria-labelledby="edit-title" aria-hidden="true">
+  <div class="flex items-center justify-between px-6 h-16 border-b border-white/10 shrink-0">
+    <h2 id="edit-title" class="font-display font-semibold text-xl text-white">Edit profile</h2>
+    <button type="button" id="close-edit" class="w-10 h-10 -mr-2 flex items-center justify-center rounded-xl text-white/60 hover:text-white hover:bg-white/5" aria-label="Close"><i class="ri-close-line text-xl"></i></button>
+  </div>
+
+  <form id="edit-form" method="post" action="{% url 'edit_profile_buyer' buyer.id %}" enctype="multipart/form-data" class="flex-1 flex flex-col min-h-0" novalidate>
+    {% csrf_token %}
+    <div class="flex-1 overflow-y-auto px-6 py-6 space-y-5">
+      {# Photo #}
+      <div class="flex items-center gap-4">
+        <div id="photo-preview" class="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-display font-semibold text-3xl flex items-center justify-center overflow-hidden shrink-0">
+          {% if buyer.profile_pic %}<img src="{{ buyer.profile_pic.url }}" alt="{{ buyer.name }}" class="w-full h-full object-cover" />{% else %}{{ buyer.name|default:'B'|first|upper }}{% endif %}
+        </div>
+        <div>
+          <label for="ef-photo" class="inline-block cursor-pointer text-sm font-medium text-indigo-400 hover:text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/10 px-4 py-2 rounded-xl transition-colors">Upload photo</label>
+          <input id="ef-photo" name="profile_pic" type="file" accept="image/png,image/jpeg,image/webp" class="sr-only" />
+          <p class="text-xs text-gray-500 mt-2">JPG, PNG or WebP, up to 2 MB.</p>
+        </div>
+      </div>
+
+      <div>
+        <label for="ef-name" class="text-sm font-medium text-gray-300">Full name</label>
+        <input id="ef-name" name="name" type="text" required maxlength="100" value="{{ buyer.name }}" class="field mt-2" autocomplete="name" />
+        <p class="err hidden text-xs text-red-400 mt-1.5"></p>
+      </div>
+
+      <div>
+        <label for="ef-email" class="text-sm font-medium text-gray-300">Email address</label>
+        <input id="ef-email" name="email" type="email" required value="{{ buyer.email }}" class="field mt-2" autocomplete="email" />
+        <p class="err hidden text-xs text-red-400 mt-1.5"></p>
+      </div>
+
+      <div>
+        <label for="ef-phone" class="text-sm font-medium text-gray-300">Phone number</label>
+        <input id="ef-phone" name="phone" type="tel" value="{{ buyer.phone }}" class="field mt-2" autocomplete="tel" inputmode="tel" />
+        <p class="err hidden text-xs text-red-400 mt-1.5"></p>
+      </div>
+
+      <div>
+        <label for="ef-gender" class="text-sm font-medium text-gray-300">Gender</label>
+        <select id="ef-gender" name="gender" class="field mt-2">
+          <option value="">Prefer not to say</option>
+          <option value="M" {% if buyer.gender == 'M' %}selected{% endif %}>Male</option>
+          <option value="F" {% if buyer.gender == 'F' %}selected{% endif %}>Female</option>
+          <option value="O" {% if buyer.gender == 'O' %}selected{% endif %}>Other</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="ef-address" class="text-sm font-medium text-gray-300">Address</label>
+        <textarea id="ef-address" name="address" rows="3" maxlength="250" class="field mt-2 resize-none" autocomplete="street-address">{{ buyer.address }}</textarea>
+      </div>
+    </div>
+
+    <div class="px-6 py-4 border-t border-white/10 flex gap-3 shrink-0 bg-[#12142a]">
+      <button type="button" id="cancel-edit" class="flex-1 text-sm font-medium text-gray-300 border border-white/10 hover:bg-white/5 py-2.5 rounded-xl transition-colors">Cancel</button>
+      <button type="submit" id="save-edit" class="flex-1 text-sm font-medium bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white py-2.5 rounded-xl shadow-lg shadow-indigo-500/25 transition-all">Save changes</button>
+    </div>
+  </form>
+</aside>
+
+{# ── Delete modal ── #}
+<div id="delete-modal" class="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-labelledby="del-title" aria-hidden="true">
+  <form id="delete-form" method="post" action="" data-endpoint="" class="bg-[#12142a] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md p-6">
+    {# TODO(delete): set action once buyer_delete_account view exists #}
+    {% csrf_token %}
+    <h2 id="del-title" class="font-display font-semibold text-xl text-white">Delete your account?</h2>
+    <p class="text-sm text-gray-400 mt-2">Your profile, saved homes and tour history will be removed permanently. Type <strong class="text-white">DELETE</strong> to confirm.</p>
+    <input id="del-confirm" type="text" class="field mt-4" placeholder="DELETE" autocomplete="off" />
+    <div class="flex gap-3 mt-5">
+      <button type="button" id="cancel-delete" class="flex-1 text-sm font-medium text-gray-300 border border-white/10 hover:bg-white/5 py-2.5 rounded-xl">Keep account</button>
+      <button type="submit" id="confirm-delete" disabled class="flex-1 text-sm font-medium bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed">Delete account</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+(function () {
+  const root = document.getElementById("profile-root");
+  const buyerId = root.dataset.buyerId || "anon";
+  const $ = (s, c = document) => c.querySelector(s);
+  const $$ = (s, c = document) => Array.from(c.querySelectorAll(s));
+
+  /* ── toasts ── */
+  function toast(msg, type) {
+    const el = document.createElement("div");
+    const ok = type !== "error";
+    el.className = "toast flex items-start gap-3 p-4 rounded-2xl border bg-[#1a1d35]/90 backdrop-blur " + (ok ? "border-emerald-500/30 text-emerald-300" : "border-red-500/30 text-red-300");
+    el.innerHTML = '<i class="ri-' + (ok ? "checkbox-circle-line" : "error-warning-line") + ' text-lg mt-0.5"></i><p class="text-sm flex-1"></p>';
+    el.querySelector("p").textContent = msg;
+    $("#toasts").appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+  $$("#toasts .toast").forEach(t => setTimeout(() => t.remove(), 5000));
+
+  /* ── navbar (avatar dropdown + mobile menu) ── */
+  const avatarToggle = $("#buyer-avatar-toggle");
+  const avatarMenu = $("#buyer-avatar-menu");
+  if (avatarToggle && avatarMenu) {
+    avatarToggle.addEventListener("click", () => {
+      const open = avatarMenu.classList.toggle("open");
+      avatarToggle.setAttribute("aria-expanded", open);
+    });
+    document.addEventListener("click", e => {
+      if (!avatarToggle.contains(e.target) && !avatarMenu.contains(e.target)) {
+        avatarMenu.classList.remove("open");
+        avatarToggle.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+  const mobileToggle = $("#buyer-mobile-toggle");
+  const mobileMenu = $("#buyer-mobile-menu");
+  const menuIcon = $("#buyer-menu-icon");
+  if (mobileToggle && mobileMenu) {
+    mobileToggle.addEventListener("click", () => {
+      const open = mobileMenu.classList.toggle("open");
+      mobileToggle.setAttribute("aria-expanded", open);
+      if (menuIcon) menuIcon.className = open ? "ri-close-line text-lg" : "ri-menu-line text-lg";
+    });
+  }
+
+  /* ── copy buttons ── */
+  $$(".copy-btn").forEach(btn => btn.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(btn.dataset.copy); toast("Copied to clipboard"); }
+    catch (e) { toast("Couldn't copy.", "error"); }
+  }));
+
+  /* ── edit slide-over ── */
+  const panel = $("#edit-panel"), backdrop = $("#edit-backdrop");
+  let lastFocus = null;
+  function openEdit() {
+    lastFocus = document.activeElement;
+    panel.classList.add("open"); backdrop.classList.add("open");
+    panel.setAttribute("aria-hidden", "false");
+    setTimeout(() => $("#ef-name").focus(), 150);
+  }
+  function closeEdit() {
+    panel.classList.remove("open"); backdrop.classList.remove("open");
+    panel.setAttribute("aria-hidden", "true");
+    if (lastFocus) lastFocus.focus();
+  }
+  $$("[data-open-edit]").forEach(b => b.addEventListener("click", openEdit));
+  $("#close-edit").addEventListener("click", closeEdit);
+  $("#cancel-edit").addEventListener("click", closeEdit);
+  backdrop.addEventListener("click", closeEdit);
+
+  // photo preview
+  $("#ef-photo").addEventListener("change", e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    if (f.size > 2 * 1024 * 1024) { toast("Photo is larger than 2 MB.", "error"); e.target.value = ""; return; }
+    const url = URL.createObjectURL(f);
+    $("#photo-preview").innerHTML = '<img src="' + url + '" alt="" class="w-full h-full object-cover" />';
+  });
+
+  // validation
+  function setErr(input, msg) {
+    const p = input.parentElement.querySelector(".err");
+    input.classList.toggle("invalid", !!msg);
+    if (p) { p.textContent = msg || ""; p.classList.toggle("hidden", !msg); }
+    return !msg;
+  }
+  function validateEdit() {
+    const name = $("#ef-name"), email = $("#ef-email"), phone = $("#ef-phone");
+    let ok = true;
+    ok = setErr(name, name.value.trim().length < 2 ? "Enter your full name." : "") && ok;
+    ok = setErr(email, !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.value.trim()) ? "Enter a valid email." : "") && ok;
+    const digits = phone.value.replace(/\D/g, "");
+    ok = setErr(phone, phone.value.trim() && (digits.length < 7 || digits.length > 15) ? "Enter a valid phone number." : "") && ok;
+    return ok;
+  }
+  $("#edit-form").addEventListener("submit", e => {
+    if (!validateEdit()) { e.preventDefault(); toast("Fix the highlighted fields.", "error"); return; }
+    const btn = $("#save-edit"); btn.disabled = true; btn.textContent = "Saving…";
+  });
+  $$("#edit-form input, #edit-form textarea").forEach(i => i.addEventListener("input", () => i.classList.remove("invalid")));
+
+  /* ── delete modal ── */
+  const dModal = $("#delete-modal"), dInput = $("#del-confirm"), dBtn = $("#confirm-delete");
+  const openDelete = () => { dModal.classList.add("open"); dModal.setAttribute("aria-hidden", "false"); dInput.value = ""; dBtn.disabled = true; setTimeout(() => dInput.focus(), 100); };
+  const closeDelete = () => { dModal.classList.remove("open"); dModal.setAttribute("aria-hidden", "true"); };
+  $("#open-delete").addEventListener("click", openDelete);
+  $("#cancel-delete").addEventListener("click", closeDelete);
+  dModal.addEventListener("click", e => { if (e.target === dModal) closeDelete(); });
+  dInput.addEventListener("input", () => { dBtn.disabled = dInput.value.trim() !== "DELETE"; });
+  $("#delete-form").addEventListener("submit", e => {
+    if (!e.currentTarget.dataset.endpoint) { e.preventDefault(); toast("Account deletion isn't connected yet.", "error"); closeDelete(); }
+  });
+
+  document.addEventListener("keydown", e => {
+    if (e.key !== "Escape") return;
+    if (dModal.classList.contains("open")) closeDelete();
+    else if (panel.classList.contains("open")) closeEdit();
+  });
+
+  /* ── profile strength ── */
+  function renderStrength() {
+    const d = root.dataset;
+    const items = [
+      { label: "Add your name", done: !!d.name.trim(), action: "edit" },
+      { label: "Add your email", done: !!d.email.trim(), action: "edit" },
+      { label: "Add a phone number", done: !!d.phone.trim(), action: "edit" },
+      { label: "Add your address", done: !!d.address.trim(), action: "edit" },
+      { label: "Upload a photo", done: !!d.photo, action: "edit" },
+    ];
+    const done = items.filter(i => i.done).length;
+    const pct = Math.round((done / items.length) * 100);
+    $("#ring").style.strokeDashoffset = 97.4 * (1 - pct / 100);
+    $("#ring-pct").textContent = pct + "%";
+    $("#ring-msg").textContent = pct === 100 ? "All set. Sellers can see a complete profile." : "Sellers respond faster to complete profiles.";
+
+    const ul = $("#checklist"); ul.innerHTML = "";
+    items.forEach(it => {
+      const li = document.createElement("li");
+      if (it.done) {
+        li.className = "flex items-center gap-2.5 text-gray-500";
+        li.innerHTML = '<i class="ri-checkbox-circle-fill text-indigo-400 text-lg"></i><span class="line-through"></span>';
+        li.querySelector("span").textContent = it.label;
+      } else {
+        li.innerHTML = '<button type="button" class="w-full flex items-center gap-2.5 text-gray-300 hover:text-indigo-400 text-left transition-colors"><i class="ri-checkbox-blank-circle-line text-gray-600 text-lg"></i><span></span></button>';
+        li.querySelector("span").textContent = it.label;
+        li.querySelector("button").addEventListener("click", () => openEdit());
+      }
+      ul.appendChild(li);
+    });
+  }
+
+  renderStrength();
+})();
+</script>
+{% endblock %}

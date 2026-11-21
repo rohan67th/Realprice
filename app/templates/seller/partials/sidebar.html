@@ -1,0 +1,85 @@
+<!-- templates/seller/partials/sidebar.html -->
+<!-- Verbatim from seller_profile.html lines 116-198 -->
+<aside id="sidebar" data-user-id="{{ user.id }}"
+    class="fixed lg:sticky top-0 left-0 z-50 h-screen w-72 shrink-0 -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-out
+           bg-white dark:bg-ink-900 border-r border-ink-200 dark:border-ink-800 flex flex-col">
+
+    <!-- Brand -->
+    <div class="h-16 flex items-center gap-2.5 px-5 border-b border-ink-200 dark:border-ink-800 shrink-0">
+      <div class="h-9 w-9 rounded-xl bg-brand-600 text-white grid place-items-center shadow-glow">
+        <i class="ri-building-line text-lg"></i>
+      </div>
+      <div class="leading-tight">
+        <p class="font-extrabold text-ink-900 dark:text-white tracking-tight">REAL PRICE</p>
+        <p class="text-[10px] uppercase tracking-widest text-ink-400">Seller Suite</p>
+      </div>
+      <button onclick="toggleSidebar()" class="ml-auto lg:hidden h-8 w-8 grid place-items-center rounded-lg text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-800">
+        <i class="ri-close-line text-xl"></i>
+      </button>
+    </div>
+
+    <!-- Nav -->
+    <nav class="flex-1 overflow-y-auto no-scrollbar px-3 py-4 space-y-5">
+
+      <!-- Dashboard -->
+      <div>
+        <p class="nav-label">Main</p>
+        <a class="nav-item {% if request.resolver_match.url_name == 'seller_profile' %}active{% endif %}" href="{% url 'seller_profile' user.id %}"><i class="ri-dashboard-3-line text-lg"></i><span>Dashboard</span></a>
+      </div>
+
+      <!-- Property Management -->
+      <div>
+        <p class="nav-label">Property Management</p>
+        <a class="nav-item {% if request.resolver_match.url_name == 'seller_properties_page' and not request.GET.action and not request.GET.filter %}active{% endif %}" href="{% url 'seller_properties_page' user.id %}"><i class="ri-home-5-line text-lg"></i><span>My Properties</span></a>
+        <a class="nav-item {% if request.resolver_match.url_name == 'add_property' %}active{% endif %}" href="{% url 'add_property' %}"><i class="ri-add-line text-lg"></i><span>Add Property</span></a>
+        <a class="nav-item {% if request.resolver_match.url_name == 'seller_properties_page' and request.GET.filter == 'draft' %}active{% endif %}" href="{% url 'seller_properties_page' user.id %}?filter=draft"><i class="ri-draft-line text-lg"></i><span>Draft Properties</span></a>
+      </div>
+
+      <!-- Visits -->
+      <div>
+        <p class="nav-label">Visits</p>
+        <a class="nav-item {% if request.resolver_match.url_name == 'seller_visits_page' %}active{% endif %}" href="{% url 'seller_visits_page' user.id %}"><i class="ri-calendar-todo-line text-lg"></i><span>Scheduled Visits</span></a>
+        <a class="nav-item {% if request.resolver_match.url_name == 'seller_calendar_page' %}active{% endif %}" href="{% url 'seller_calendar_page' user.id %}"><i class="ri-calendar-2-line text-lg"></i><span>Calendar</span></a>
+      </div>
+
+      <!-- Communication -->
+      <div>
+        <p class="nav-label">Communication</p>
+        <a class="nav-item {% if request.resolver_match.url_name == 'seller_chats_page' %}active{% endif %}" href="{% url 'seller_chats_page' user.id %}"><i class="ri-chat-3-line text-lg"></i><span>Chats</span><span class="ml-auto badge-mini">7</span></a>
+        <a class="nav-item {% if request.resolver_match.url_name == 'seller_notifications_page' %}active{% endif %}" href="{% url 'seller_notifications_page' user.id %}"><i class="ri-notification-3-line text-lg"></i><span>Notifications</span><span class="ml-auto badge-mini">3</span></a>
+      </div>
+
+      <!-- Transactions -->
+      <div>
+        <p class="nav-label">Transactions</p>
+        <a class="nav-item {% if request.resolver_match.url_name == 'seller_rent_requests_page' %}active{% endif %}" href="{% url 'seller_rent_requests_page' user.id %}"><i class="ri-wallet-3-line text-lg"></i><span>Rent Requests</span></a>
+        <a class="nav-item {% if request.resolver_match.url_name == 'seller_billing_page' %}active{% endif %}" href="{% url 'seller_billing_page' user.id %}"><i class="ri-bill-line text-lg"></i><span>Billing History</span></a>
+      </div>
+
+      <!-- Analytics / Profile / Settings -->
+      <div>
+        <p class="nav-label">Account</p>
+        <a class="nav-item {% if request.resolver_match.url_name == 'seller_analytics_page' %}active{% endif %}" href="{% url 'seller_analytics_page' user.id %}"><i class="ri-bar-chart-2-line text-lg"></i><span>Analytics</span></a>
+        <a class="nav-item {% if request.resolver_match.url_name == 'seller_profile_details_page' %}active{% endif %}" href="{% url 'seller_profile_details_page' user.id %}"><i class="ri-user-3-line text-lg"></i><span>Profile</span></a>
+        <a class="nav-item {% if request.resolver_match.url_name == 'seller_settings_page' %}active{% endif %}" href="{% url 'seller_settings_page' user.id %}"><i class="ri-settings-3-line text-lg"></i><span>Settings</span></a>
+      </div>
+
+      <!-- Showcase -->
+      <div>
+        <p class="nav-label">UI Showcase</p>
+        <a class="nav-item {% if request.resolver_match.url_name == 'seller_empty_states_page' %}active{% endif %}" href="{% url 'seller_empty_states_page' user.id %}"><i class="ri-inbox-2-line text-lg"></i><span>Empty States</span></a>
+        <a class="nav-item {% if request.resolver_match.url_name == 'seller_loading_states_page' %}active{% endif %}" href="{% url 'seller_loading_states_page' user.id %}"><i class="ri-loader-4-line text-lg"></i><span>Loading States</span></a>
+      </div>
+    </nav>
+
+    <!-- Logout + upgrade card -->
+    <div class="p-3 border-t border-ink-200 dark:border-ink-800 space-y-3 shrink-0">
+      <div class="rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 p-4 text-white relative overflow-hidden">
+        <div class="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-white/10"></div>
+        <p class="text-sm font-bold relative">Go Pro</p>
+        <p class="text-[11px] text-brand-100 mt-0.5 relative">Unlock advanced analytics & AI pricing.</p>
+        <button class="mt-3 w-full bg-white/15 hover:bg-white/25 backdrop-blur rounded-lg py-1.5 text-xs font-semibold transition">Upgrade</button>
+      </div>
+      <a class="nav-item text-danger-600 dark:text-danger-400" href="{% url 'logout' %}"><i class="ri-logout-circle-r-line text-lg"></i><span>Logout</span></a>
+    </div>
+  </aside>

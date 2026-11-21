@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+
+{% block title %}Login — RealtyFlow{% endblock %}
+{% block meta_description %}Sign in to your RealtyFlow account. Access your dashboard as a Buyer, Seller, or Admin.{% endblock %}
+
+{% block page_bg %}
+<!-- Modern city skyline at dusk -->
+<div class="w-full h-full page-bg-image" style="background-image: url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80');"></div>
+<div class="page-bg-overlay" style="background: linear-gradient(135deg, rgba(15, 5, 40, 0.88) 0%, rgba(20, 10, 50, 0.82) 40%, rgba(10, 15, 45, 0.78) 70%, rgba(8, 8, 30, 0.9) 100%);"></div>
+{% endblock %}
+
+{% block page_styles %}
+<style>
+    /* Floating particle keyframes */
+    @keyframes floatSlow {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(10px, -15px) rotate(90deg); }
+        50% { transform: translate(-5px, -25px) rotate(180deg); }
+        75% { transform: translate(-15px, -10px) rotate(270deg); }
+    }
+    .float-particle {
+        animation: floatSlow 8s ease-in-out infinite;
+        pointer-events: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="relative min-h-screen flex items-center justify-center px-4 pt-28 pb-16">
+    <div class="content-layer w-full max-w-md relative">
+
+        <!-- Floating Particles -->
+        <div class="absolute top-[-30px] left-[-20px] w-2 h-2 bg-blue-300/20 rounded-full float-particle" style="animation-delay: 0s;"></div>
+        <div class="absolute top-[20%] right-[-15px] w-3 h-3 bg-purple-300/15 rounded-full float-particle" style="animation-delay: 2s;"></div>
+        <div class="absolute bottom-[15%] left-[-10px] w-2.5 h-2.5 bg-indigo-300/20 rounded-full float-particle" style="animation-delay: 4s;"></div>
+
+        <!-- Login Card -->
+        <div class="login-card rounded-3xl p-8 md:p-10 fade-up">
+
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 mx-auto mb-5 rounded-2xl flex items-center justify-center" style="background: linear-gradient(135deg, #6366f1, #3b82f6); box-shadow: 0 12px 30px rgba(99, 102, 241, 0.4), inset 0 2px 4px rgba(255,255,255,0.3);">
+                    <i class="ri-shield-keyhole-line text-3xl text-white drop-shadow-lg"></i>
+                </div>
+                <h1 class="text-3xl font-bold font-clash text-white mb-2">Welcome Back</h1>
+                <p class="text-white/60 text-sm">Sign in to your account to continue</p>
+            </div>
+
+            <!-- Messages -->
+            {% if messages %}
+            <div class="mb-6 space-y-2">
+                {% for message in messages %}
+                <div class="flex items-start gap-3 px-4 py-3 rounded-xl text-sm
+                    {% if message.tags == 'error' %}bg-red-500/15 border border-red-400/20 text-red-200
+                    {% elif message.tags == 'success' %}bg-emerald-500/15 border border-emerald-400/20 text-emerald-200
+                    {% else %}bg-blue-500/15 border border-blue-400/20 text-blue-200{% endif %}">
+                    <i class="{% if message.tags == 'error' %}ri-error-warning-line{% elif message.tags == 'success' %}ri-checkbox-circle-line{% else %}ri-information-line{% endif %} text-lg mt-0.5 flex-shrink-0"></i>
+                    <span>{{ message }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Login Form -->
+            <form method="POST" action="{% url 'login' %}" class="space-y-5" id="login-form">
+                {% csrf_token %}
+
+                <!-- Username -->
+                <div>
+                    <label for="username" class="block text-xs font-semibold uppercase tracking-widest text-white/50 mb-2">Username</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i class="ri-user-3-line text-white/30 text-lg"></i>
+                        </div>
+                        <input
+                            type="text"
+                            id="username"
+                            name="username"
+                            required
+                            autocomplete="username"
+                            placeholder="Enter your username"
+                            class="login-input w-full pl-12 pr-4 py-3.5 rounded-xl text-sm font-medium"
+                        />
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label for="password" class="block text-xs font-semibold uppercase tracking-widest text-white/50 mb-2">Password</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i class="ri-lock-2-line text-white/30 text-lg"></i>
+                        </div>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            required
+                            autocomplete="current-password"
+                            placeholder="Enter your password"
+                            class="login-input w-full pl-12 pr-12 py-3.5 rounded-xl text-sm font-medium"
+                        />
+                        <button type="button" class="absolute inset-y-0 right-0 pr-4 flex items-center pass-toggle text-white/30" onclick="togglePassword()">
+                            <i class="ri-eye-off-line text-lg" id="pass-icon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Forgot Password -->
+                <div class="forgot-links flex items-center justify-between text-xs">
+                    <a href="{% url 'forgot-password' %}" class="text-blue-300/80 hover:text-blue-200 transition-colors">
+                        Forgot password?
+                    </a>
+                </div>
+
+                <!-- Submit Button -->
+                <button
+                    type="submit"
+                    id="login-btn"
+                    class="login-submit w-full py-4 rounded-xl font-bold text-white text-sm uppercase tracking-widest flex items-center justify-center gap-2"
+                >
+                    <span id="btn-text">Sign In</span>
+                    <i class="ri-arrow-right-line text-lg" id="btn-icon"></i>
+                    <svg id="btn-spinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="flex items-center gap-4 my-6">
+                <div class="h-px flex-1 bg-gradient-to-r from-transparent via-white/15 to-transparent"></div>
+                <span class="text-white/30 text-xs font-semibold uppercase tracking-widest">or</span>
+                <div class="h-px flex-1 bg-gradient-to-r from-transparent via-white/15 to-transparent"></div>
+            </div>
+
+            <!-- Register Link -->
+            <div class="text-center">
+                <p class="text-white/50 text-sm mb-3">Don't have an account?</p>
+                <a href="{% url 'register_choice' %}" class="inline-flex items-center gap-2 glass text-white px-8 py-3 rounded-full font-semibold text-sm hover:bg-white/10 transition-all border border-white/20 hover:border-white/30 hover:scale-105 transform duration-300">
+                    <i class="ri-user-add-line"></i>
+                    Create Account
+                </a>
+            </div>
+        </div>
+
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+    // Password visibility toggle
+    function togglePassword() {
+        const input = document.getElementById('password');
+        const icon = document.getElementById('pass-icon');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'ri-eye-line text-lg';
+        } else {
+            input.type = 'password';
+            icon.className = 'ri-eye-off-line text-lg';
+        }
+    }
+
+    // Form loading state
+    document.getElementById('login-form').addEventListener('submit', function() {
+        const btn = document.getElementById('login-btn');
+        const text = document.getElementById('btn-text');
+        const icon = document.getElementById('btn-icon');
+        const spinner = document.getElementById('btn-spinner');
+        btn.disabled = true;
+        btn.classList.add('opacity-80');
+        text.textContent = 'Signing In...';
+        icon.classList.add('hidden');
+        spinner.classList.remove('hidden');
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends "seller/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+  /* Orange badge for changes_requested */
+  .badge-orange {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    padding: 0.25rem 0.625rem; border-radius: 9999px;
+    font-size: 11px; font-weight: 600;
+    color: #c2410c; background: #fff7ed;
+  }
+  html.dark .badge-orange { color: #fb923c; background: rgba(194, 65, 12, 0.2); }
+
+  .feedback-card {
+    border-left: 3px solid;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+  }
+  .feedback-card.rejected {
+    border-color: #ef4444;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+  html.dark .feedback-card.rejected {
+    background: rgba(153, 27, 27, 0.15);
+    color: #fca5a5;
+  }
+  .feedback-card.changes_requested {
+    border-color: #f97316;
+    background: #fff7ed;
+    color: #9a3412;
+  }
+  html.dark .feedback-card.changes_requested {
+    background: rgba(194, 65, 12, 0.15);
+    color: #fb923c;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+      <!-- =========================================================
+           PAGE: PROPERTIES  (gallery cards + table)
+      ========================================================== -->
+      <section id="page-properties" class="page active space-y-6">
+        <!-- Header + view toggle -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-extrabold text-ink-900 dark:text-white">My Properties</h2>
+            <p class="text-sm text-ink-400" id="props-subtitle">Manage and track all your listings</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <a href="{% url 'add_property' %}" class="btn-primary"><i class="ri-add-line"></i> Add Property</a>
+            <div class="flex rounded-xl border border-ink-200 dark:border-ink-700 p-1 bg-white dark:bg-ink-900">
+              <button id="view-gallery-btn" onclick="setPropView('gallery')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition"><i class="ri-grid-line"></i></button>
+              <button id="view-table-btn" onclick="setPropView('table')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition"><i class="ri-list-check-2"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gallery view -->
+        <div id="props-gallery" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"></div>
+
+        <!-- Table view -->
+        <div id="props-table" class="hidden card overflow-hidden">
+          <!-- toolbar -->
+          <div class="p-4 flex flex-col sm:flex-row gap-3 sm:items-center border-b border-ink-200 dark:border-ink-800">
+            <div class="relative flex-1 max-w-xs">
+              <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"></i>
+              <input id="props-search" oninput="renderPropsTable()" class="input pl-9" placeholder="Search properties…" />
+            </div>
+            <select id="props-filter" onchange="renderPropsTable()" class="input sm:w-44">
+              <option value="all">All statuses</option>
+              <option value="pending">Pending Review</option>
+              <option value="approved">Approved</option>
+              <option value="changes_requested">Changes Requested</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <span id="props-count" class="ml-auto text-xs text-ink-400"></span>
+          </div>
+          <!-- table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-ink-400 border-b border-ink-200 dark:border-ink-800">
+                  <th class="th sortable" onclick="sortProps('property_type')">Property <i class="ri-arrow-up-down-line"></i></th>
+                  <th class="th sortable" onclick="sortProps('price')">Price <i class="ri-arrow-up-down-line"></i></th>
+                  <th class="th">Approval Status</th>
+                  <th class="th">Availability</th>
+                  <th class="th sortable" onclick="sortProps('posted_at')">Listed <i class="ri-arrow-up-down-line"></i></th>
+                  <th class="th text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="props-tbody"></tbody>
+            </table>
+          </div>
+          <!-- pagination -->
+          <div class="p-4 flex items-center justify-between border-t border-ink-200 dark:border-ink-800">
+            <p id="props-pageinfo" class="text-xs text-ink-400"></p>
+            <div id="props-pagination" class="flex items-center gap-1"></div>
+          </div>
+        </div>
+      </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Inject real property data from Django context
+  const REAL_PROPERTIES = {{ properties_json|safe }};
+</script>
+<script src="{% static 'seller/js/properties.js' %}"></script>
+{% endblock %}

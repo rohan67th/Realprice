@@ -1,0 +1,609 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Seller Approvals · Admin Console{% endblock %}
+
+{% block breadcrumb %}Seller Approvals{% endblock %}
+
+{% block extra_css %}
+<style>
+  .doc-toggle { display: none; }
+  .doc-toggle + label {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 0.375rem 0.75rem; font-size: 0.75rem; font-weight: 600;
+    border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;
+    border: 1px solid #e2e8f0; color: #64748b;
+  }
+  html.dark .doc-toggle + label { border-color: #334155; color: #94a3b8; }
+  .doc-toggle.approve:checked + label {
+    background-color: #ecfdf5; color: #059669; border-color: #10b981;
+  }
+  html.dark .doc-toggle.approve:checked + label { background-color: rgba(6, 95, 70, 0.3); color: #34d399; }
+  .doc-toggle.reject:checked + label {
+    background-color: #fef2f2; color: #dc2626; border-color: #ef4444;
+  }
+  html.dark .doc-toggle.reject:checked + label { background-color: rgba(153, 27, 27, 0.3); color: #f87171; }
+  .doc-preview-overlay {
+    position: fixed; inset: 0; z-index: 70;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(15,23,42,.6); backdrop-filter: blur(12px);
+  }
+  .doc-preview-container {
+    background: #fff; border-radius: 1rem; max-width: 90vw; max-height: 90vh;
+    overflow: hidden; box-shadow: 0 24px 48px -12px rgba(15,23,42,.3);
+  }
+  html.dark .doc-preview-container { background: #0f172a; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- ================= HEADER & STATS ================= -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in-up stagger-1">
+    <div>
+      <h1 class="text-2xl font-bold text-ink-900 dark:text-white tracking-tight">Seller Approvals</h1>
+      <p class="text-sm text-ink-500 dark:text-ink-400 mt-1">Verify identities, review documents, and manage seller trust tiers.</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="{% url 'seller_approvals' %}" class="btn-outline btn-ripple"><i class="ri-refresh-line"></i> Refresh</a>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-in-up stagger-2">
+    <a href="?status=pending" class="card p-5 border-l-4 border-l-warning-500 block hover:shadow-md transition {% if status_filter == 'pending' %}ring-2 ring-warning-400 ring-offset-2 dark:ring-offset-ink-950{% endif %}">
+      <p class="lbl">Pending Review</p>
+      <div class="flex items-end justify-between mt-1">
+        <h3 class="text-2xl font-extrabold text-ink-900 dark:text-white">{{ pending_count }}</h3>
+        <span class="badge-warning"><i class="ri-time-line"></i> Needs action</span>
+      </div>
+    </a>
+    <a href="?status=changes_requested" class="card p-5 border-l-4 border-l-amber-500 block hover:shadow-md transition {% if status_filter == 'changes_requested' %}ring-2 ring-amber-400 ring-offset-2 dark:ring-offset-ink-950{% endif %}">
+      <p class="lbl">Changes Requested</p>
+      <div class="flex items-end justify-between mt-1">
+        <h3 class="text-2xl font-extrabold text-ink-900 dark:text-white">{{ changes_requested_count }}</h3>
+        <span class="badge-warning"><i class="ri-mail-send-line"></i> With seller</span>
+      </div>
+    </a>
+    <a href="?status=blocked" class="card p-5 border-l-4 border-l-danger-500 block hover:shadow-md transition {% if status_filter == 'blocked' %}ring-2 ring-danger-400 ring-offset-2 dark:ring-offset-ink-950{% endif %}">
+      <p class="lbl">Blocked</p>
+      <div class="flex items-end justify-between mt-1">
+        <h3 class="text-2xl font-extrabold text-ink-900 dark:text-white">{{ blocked_count }}</h3>
+        <span class="badge-danger"><i class="ri-error-warning-line"></i> Restricted</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- Archived summary (informational only — no links to these) -->
+  <div class="flex items-center gap-4 text-xs text-ink-400 dark:text-ink-500 animate-fade-in-up stagger-2">
+    <span class="flex items-center gap-1"><i class="ri-check-double-line text-success-500"></i> {{ approved_count }} approved (archived)</span>
+    <span class="flex items-center gap-1"><i class="ri-close-circle-line text-danger-400"></i> {{ rejected_count }} rejected (archived)</span>
+  </div>
+
+  <!-- ================= DATA TABLE ================= -->
+  <div class="card animate-fade-in-up stagger-3">
+    <!-- Single form: search + status stay in sync, no hidden-field juggling -->
+    <div class="p-4 border-b border-ink-200 dark:border-ink-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <form method="get" action="{% url 'seller_approvals' %}" id="filter-form" class="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
+        <div class="relative w-full sm:w-64">
+          <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"></i>
+          <input type="text" name="q" value="{{ q }}" class="input pl-9 py-2 text-sm" placeholder="Search by name, email or phone..." />
+        </div>
+        <div class="flex items-center gap-2 text-sm">
+          <span class="text-ink-500 font-medium">Status:</span>
+          <select name="status" class="input py-1.5 px-3 w-auto bg-ink-50 dark:bg-ink-900" onchange="document.getElementById('filter-form').requestSubmit()">
+            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending Review</option>
+            <option value="changes_requested" {% if status_filter == 'changes_requested' %}selected{% endif %}>Changes Requested</option>
+            <option value="blocked" {% if status_filter == 'blocked' %}selected{% endif %}>Blocked</option>
+            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Active</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-outline btn-ripple text-sm"><i class="ri-filter-3-line"></i> Apply</button>
+      </form>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse whitespace-nowrap">
+        <thead>
+          <tr class="bg-ink-50 dark:bg-ink-800/50 text-ink-500 dark:text-ink-400 border-b border-ink-200 dark:border-ink-800">
+            <th class="th">Seller Info</th>
+            <th class="th">Document</th>
+            <th class="th">Status</th>
+            <th class="th">Block Reason</th>
+            <th class="th text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-ink-100 dark:divide-ink-800/60">
+          {% for seller in sellers %}
+          <tr class="hover:bg-ink-50/50 dark:hover:bg-ink-800/20 transition group">
+            <td class="p-4">
+              <div class="flex items-center gap-3">
+                {% if seller.profile_pic %}
+                <img src="{{ seller.profile_pic.url }}" alt="Avatar" class="w-10 h-10 rounded-xl object-cover shadow-sm" />
+                {% else %}
+                <img src="https://ui-avatars.com/api/?name={{ seller.username|urlencode }}&background=2563eb&color=fff" alt="Avatar" class="w-10 h-10 rounded-xl object-cover shadow-sm" />
+                {% endif %}
+                <div>
+                  <p class="text-sm font-bold text-ink-900 dark:text-white">{{ seller.username }}</p>
+                  <p class="text-xs text-ink-500">{{ seller.email }} {% if seller.date_joined %}• Reg: {{ seller.date_joined|timesince }} ago{% endif %}</p>
+                </div>
+              </div>
+            </td>
+            <td class="p-4">
+              <div class="flex gap-1 text-lg">
+                {% if seller.proof_of_identity %}
+                <a href="{% url 'seller_document_view' seller.id %}" target="_blank" rel="noopener noreferrer" title="View uploaded document">
+                  <i class="ri-file-text-line text-brand-500 hover:text-brand-700 cursor-pointer"></i>
+                </a>
+                {% else %}
+                <i class="ri-file-close-line text-ink-300" title="No document uploaded"></i>
+                {% endif %}
+              </div>
+            </td>
+            <td class="p-4">
+              {% if seller.is_blocked %}
+              <span class="badge-danger"><i class="ri-lock-line"></i> Blocked</span>
+              {% elif seller.review_status == 'approved' %}
+              <span class="badge-success"><i class="ri-shield-check-line"></i> Approved</span>
+              {% elif seller.review_status == 'rejected' %}
+              <span class="badge-danger"><i class="ri-close-circle-line"></i> Rejected</span>
+              {% elif seller.review_status == 'changes_requested' %}
+              <span class="badge-warning"><i class="ri-mail-send-line"></i> Changes Requested</span>
+              {% else %}
+              <span class="badge-warning">Pending Review</span>
+              {% endif %}
+            </td>
+            <td class="p-4">
+              {% if seller.block_reason %}
+              <div class="flex items-center gap-1.5 text-xs text-danger-600 dark:text-danger-400 font-semibold bg-danger-50 dark:bg-danger-900/20 px-2 py-1 rounded border border-danger-100 dark:border-danger-800/30 w-max max-w-[200px] truncate" title="{{ seller.block_reason }}">
+                <i class="ri-information-line"></i> {{ seller.block_reason|truncatechars:40 }}
+              </div>
+              {% elif seller.rejection_reason %}
+              <div class="flex items-center gap-1.5 text-xs {% if seller.review_status == 'rejected' %}text-danger-600 dark:text-danger-400 bg-danger-50 dark:bg-danger-900/20 border-danger-100 dark:border-danger-800/30{% else %}text-warning-600 dark:text-warning-400 bg-warning-50 dark:bg-warning-900/20 border-warning-100 dark:border-warning-800/30{% endif %} font-semibold px-2 py-1 rounded border w-max max-w-[200px] truncate" title="{{ seller.rejection_reason }}">
+                <i class="ri-alert-line"></i> {{ seller.rejection_reason|truncatechars:40 }}
+              </div>
+              {% else %}
+              <span class="text-ink-400 text-xs">— Clean —</span>
+              {% endif %}
+            </td>
+            <td class="p-4 text-right">
+              <button type="button" onclick="openReviewModal({{ seller.id }})" class="btn-primary py-1.5 px-3 text-xs">Review</button>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="p-8 text-center text-ink-400">
+              <div class="flex flex-col items-center gap-2">
+                <i class="ri-user-search-line text-3xl"></i>
+                <p class="font-medium">No sellers found</p>
+                <p class="text-xs">Try adjusting your search or filter criteria.</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="p-4 border-t border-ink-200 dark:border-ink-800 flex items-center justify-between text-sm">
+      <span class="text-ink-500">
+        Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} sellers
+      </span>
+      <div class="flex items-center gap-1">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}"
+           class="act-btn border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900">
+          <i class="ri-arrow-left-s-line"></i>
+        </a>
+        {% else %}
+        <button type="button" class="act-btn border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900" disabled><i class="ri-arrow-left-s-line"></i></button>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+          <span class="act-btn bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 font-bold border border-brand-200 dark:border-brand-800">{{ num }}</span>
+          {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+          <a href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}"
+             class="act-btn border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}"
+           class="act-btn border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900">
+          <i class="ri-arrow-right-s-line"></i>
+        </a>
+        {% else %}
+        <button type="button" class="act-btn border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900" disabled><i class="ri-arrow-right-s-line"></i></button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     COMPREHENSIVE REVIEW MODAL
+========================================================== -->
+<div id="review-modal" class="modal-wrap hidden">
+  <div class="card w-full max-w-6xl max-h-[90vh] mx-4 flex flex-col animate-scale-in overflow-hidden shadow-2xl shadow-ink-900/20">
+
+    <div class="px-6 py-4 border-b border-ink-200 dark:border-ink-800 flex items-center justify-between bg-ink-50/50 dark:bg-ink-900/50">
+      <div>
+        <h2 class="text-lg font-bold text-ink-900 dark:text-white flex items-center gap-2">
+          Review Seller: <span id="modal-seller-name"></span>
+          <span id="modal-seller-badge" class="ml-2"></span>
+        </h2>
+        <p class="text-xs text-ink-500 mt-1">ID: #<span id="modal-seller-id"></span> • <span id="modal-seller-email-top"></span></p>
+      </div>
+      <button type="button" onclick="closeModal('review-modal')" class="h-8 w-8 rounded bg-ink-200 dark:bg-ink-800 text-ink-500 hover:text-ink-800 dark:hover:text-white transition grid place-items-center">
+        <i class="ri-close-line text-xl"></i>
+      </button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto bg-ink-50 dark:bg-ink-950 p-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- COLUMN 1: Identity & Block Reason -->
+        <div class="lg:col-span-3 space-y-6">
+          <div class="card p-5">
+            <h3 class="lbl mb-4"><i class="ri-user-search-line"></i> Profile Details</h3>
+            <div class="flex items-center gap-3 mb-4">
+              <img id="modal-seller-avatar" src="" class="w-12 h-12 rounded-xl object-cover" />
+              <div>
+                <p class="text-sm font-bold text-ink-900 dark:text-white" id="modal-seller-username"></p>
+                <p class="text-xs text-ink-500" id="modal-seller-phone"></p>
+              </div>
+            </div>
+            <div class="space-y-3 text-sm">
+              <div>
+                <span class="text-ink-400 text-xs block">Email</span>
+                <span class="font-medium text-ink-800 dark:text-ink-200" id="modal-seller-email"></span>
+              </div>
+              <div>
+                <span class="text-ink-400 text-xs block">Gender</span>
+                <span class="font-medium text-ink-800 dark:text-ink-200" id="modal-seller-gender"></span>
+              </div>
+              <div>
+                <span class="text-ink-400 text-xs block">Address</span>
+                <span class="font-medium text-ink-800 dark:text-ink-200 text-xs leading-tight" id="modal-seller-address"></span>
+              </div>
+              <div>
+                <span class="text-ink-400 text-xs block">Registered</span>
+                <span class="font-medium text-ink-800 dark:text-ink-200" id="modal-seller-joined"></span>
+              </div>
+            </div>
+          </div>
+
+          <div id="modal-block-reason-card" class="card p-5 border-l-4 border-l-danger-500 bg-danger-50/30 dark:bg-danger-900/10 hidden">
+            <h3 class="lbl text-danger-700 dark:text-danger-400 mb-3"><i class="ri-information-line"></i> <span id="modal-block-reason-heading"></span></h3>
+            <p class="text-sm text-danger-800 dark:text-danger-200" id="modal-block-reason-text"></p>
+          </div>
+        </div>
+
+        <!-- COLUMN 2: Document Verification -->
+        <div class="lg:col-span-6 space-y-4">
+          <h3 class="lbl"><i class="ri-folder-shield-2-line"></i> Document Verification</h3>
+
+          <div id="modal-doc-card" class="card p-4 flex flex-col sm:flex-row gap-4 border border-ink-200 dark:border-ink-800">
+            <div id="modal-doc-preview" class="w-32 h-24 bg-ink-100 dark:bg-ink-800 rounded-lg flex-shrink-0 grid place-items-center relative overflow-hidden group cursor-pointer border border-ink-200 dark:border-ink-700" onclick="openDocPreview()">
+              <i class="ri-file-text-line text-2xl text-brand-400 group-hover:hidden"></i>
+              <div class="absolute inset-0 bg-black/60 hidden group-hover:flex items-center justify-center text-white text-xs font-semibold backdrop-blur-sm transition">
+                View Full
+              </div>
+            </div>
+            <div class="flex-1 flex flex-col justify-between">
+              <div>
+                <div class="flex justify-between items-start">
+                  <h4 class="font-bold text-sm text-ink-900 dark:text-white">Proof of Identity</h4>
+                  <span class="text-[10px] bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300 px-2 py-0.5 rounded font-mono" id="modal-doc-filename"></span>
+                </div>
+                <p class="text-xs text-ink-500 mt-1" id="modal-doc-info">Identity document uploaded by seller during registration.</p>
+              </div>
+              <div class="mt-3">
+                <a id="modal-doc-link" href="#" target="_blank" rel="noopener noreferrer" class="btn-primary py-1.5 px-3 text-xs inline-flex items-center gap-1">
+                  <i class="ri-external-link-line"></i> Open Document
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div id="modal-no-doc" class="card p-6 border border-ink-200 dark:border-ink-800 text-center hidden">
+            <i class="ri-file-warning-line text-3xl text-ink-300 mb-2"></i>
+            <p class="text-sm text-ink-500 font-medium">No document uploaded</p>
+            <p class="text-xs text-ink-400 mt-1">This seller has not uploaded any proof of identity.</p>
+          </div>
+
+          <div class="pt-4">
+            <label class="lbl" for="modal-notes">Admin Internal Notes (Audit Log)</label>
+            <textarea id="modal-notes" class="input min-h-[80px] resize-none" placeholder="Reason for rejection, request for changes, or approval notes..."></textarea>
+            <p class="text-xs text-ink-400 mt-1">Required for Reject and Request Changes.</p>
+          </div>
+        </div>
+
+        <!-- COLUMN 3: Audit Trail -->
+        <div class="lg:col-span-3 flex flex-col h-full">
+          <div class="card flex-1 p-5 flex flex-col border border-ink-200 dark:border-ink-800">
+            <h3 class="lbl mb-4"><i class="ri-history-line"></i> Audit Trail</h3>
+            <div id="modal-audit-trail" class="relative flex-1 space-y-4 overflow-y-auto max-h-[300px]">
+              <div id="modal-no-audit" class="text-center text-ink-400 text-xs py-4">
+                <i class="ri-history-line text-2xl mb-2 block"></i>
+                No audit history yet
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="p-4 border-t border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 flex items-center justify-between">
+      <form id="modal-action-form" method="post" action="">
+        {% csrf_token %}
+        <input type="hidden" name="action" id="modal-action-value" value="" />
+        <input type="hidden" name="notes" id="modal-notes-hidden" value="" />
+      </form>
+
+      <button type="button" onclick="closeModal('review-modal')" class="btn-secondary">Cancel</button>
+
+      <div class="flex gap-3">
+        <button type="button" onclick="submitAction('reject')" class="btn-outline text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 border-danger-200 dark:border-danger-800/50">
+          <i class="ri-close-circle-line"></i> Reject
+        </button>
+        <button type="button" onclick="submitAction('request_changes')" class="btn-primary bg-warning-500 hover:bg-warning-600 text-white border-none shadow-warning-500/20">
+          <i class="ri-mail-send-line"></i> Request Changes
+        </button>
+        <button type="button" onclick="submitAction('approve')" class="btn-primary bg-success-600 hover:bg-success-700 text-white border-none shadow-success-600/20">
+          <i class="ri-shield-check-fill"></i> Approve Seller
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Document Preview Modal -->
+<div id="doc-preview-modal" class="doc-preview-overlay hidden" onclick="closeDocPreview(event)">
+  <div class="doc-preview-container p-2" onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between px-4 py-2 border-b border-ink-200 dark:border-ink-800">
+      <p class="text-sm font-bold text-ink-900 dark:text-white">Document Preview</p>
+      <button type="button" onclick="closeDocPreview()" class="h-8 w-8 rounded bg-ink-200 dark:bg-ink-800 text-ink-500 hover:text-ink-800 dark:hover:text-white transition grid place-items-center">
+        <i class="ri-close-line text-xl"></i>
+      </button>
+    </div>
+    <div class="p-4" id="doc-preview-content" style="max-width:80vw; max-height:75vh; overflow:auto;"></div>
+  </div>
+</div>
+
+<!-- Data payloads, rendered via json_script: this is Django's built-in safe way
+     to hand data to JS — it HTML-escapes automatically, so nothing a seller
+     typed into their profile can break out of this tag. -->
+{{ sellers_json|json_script:"sellers-data" }}
+{{ audit_json|json_script:"audit-data" }}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const sellersData = {};
+  JSON.parse(document.getElementById('sellers-data').textContent).forEach(s => { sellersData[s.id] = s; });
+  const auditData = JSON.parse(document.getElementById('audit-data').textContent);
+
+  let currentSellerId = null;
+  let currentDocUrl = '';
+
+  // All user-supplied strings go through here before ever touching innerHTML.
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str ?? '';
+    return div.innerHTML;
+  }
+
+  function openReviewModal(sellerId) {
+    const s = sellersData[sellerId];
+    if (!s) return;
+    currentSellerId = sellerId;
+
+    document.getElementById('modal-seller-name').textContent = s.username;
+    document.getElementById('modal-seller-id').textContent = s.id;
+    document.getElementById('modal-seller-email-top').textContent = s.email;
+
+    const badge = document.getElementById('modal-seller-badge');
+    if (s.isBlocked) {
+      badge.className = 'badge-danger ml-2';
+      badge.innerHTML = '<i class="ri-lock-line"></i> Blocked';
+    } else if (s.reviewStatus === 'approved') {
+      badge.className = 'badge-success ml-2';
+      badge.innerHTML = '<i class="ri-shield-check-line"></i> Approved';
+    } else if (s.reviewStatus === 'rejected') {
+      badge.className = 'badge-danger ml-2';
+      badge.innerHTML = '<i class="ri-close-circle-line"></i> Rejected';
+    } else if (s.reviewStatus === 'changes_requested') {
+      badge.className = 'badge-warning ml-2';
+      badge.innerHTML = '<i class="ri-mail-send-line"></i> Changes Requested';
+    } else {
+      badge.className = 'badge-warning ml-2';
+      badge.textContent = 'Pending Review';
+    }
+
+    const avatarUrl = s.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.username)}&background=2563eb&color=fff`;
+    document.getElementById('modal-seller-avatar').src = avatarUrl;
+    document.getElementById('modal-seller-username').textContent = s.username;
+    document.getElementById('modal-seller-phone').textContent = s.phone;
+    document.getElementById('modal-seller-email').textContent = s.email;
+    document.getElementById('modal-seller-gender').textContent = s.gender || 'N/A';
+    document.getElementById('modal-seller-address').textContent = s.address || 'N/A';
+    document.getElementById('modal-seller-joined').textContent = s.dateJoined;
+
+    const reasonCard = document.getElementById('modal-block-reason-card');
+    const reasonHeading = document.getElementById('modal-block-reason-heading');
+    const reasonText = document.getElementById('modal-block-reason-text');
+    if (s.blockReason) {
+      reasonCard.classList.remove('hidden');
+      reasonHeading.textContent = 'Block Reason';
+      reasonText.textContent = s.blockReason;
+    } else if (s.reviewStatus === 'rejected' && s.rejectionReason) {
+      reasonCard.classList.remove('hidden');
+      reasonHeading.textContent = 'Rejection Reason (final)';
+      reasonText.textContent = s.rejectionReason;
+    } else if (s.reviewStatus === 'changes_requested' && s.rejectionReason) {
+      reasonCard.classList.remove('hidden');
+      reasonHeading.textContent = 'Changes Requested — awaiting seller resubmit';
+      reasonText.textContent = s.rejectionReason;
+    } else {
+      reasonCard.classList.add('hidden');
+    }
+
+    const docCard = document.getElementById('modal-doc-card');
+    const noDoc = document.getElementById('modal-no-doc');
+    if (s.hasProof) {
+      docCard.classList.remove('hidden');
+      noDoc.classList.add('hidden');
+      currentDocUrl = s.docUrl;
+      document.getElementById('modal-doc-link').href = s.docUrl;
+      document.getElementById('modal-doc-filename').textContent = s.proofFilename;
+
+      const previewEl = document.getElementById('modal-doc-preview');
+      const ext = s.proofFilename.split('.').pop().toLowerCase();
+      const icon = previewEl.querySelector('i');
+      if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+        icon.className = 'ri-image-line text-2xl text-brand-400 group-hover:hidden';
+      } else if (ext === 'pdf') {
+        icon.className = 'ri-file-pdf-line text-2xl text-danger-400 group-hover:hidden';
+      } else {
+        icon.className = 'ri-file-text-line text-2xl text-brand-400 group-hover:hidden';
+      }
+    } else {
+      docCard.classList.add('hidden');
+      noDoc.classList.remove('hidden');
+      currentDocUrl = '';
+    }
+
+    // Audit trail — built with textContent, not innerHTML, for anything
+    // that came from a free-text admin note.
+    const auditContainer = document.getElementById('modal-audit-trail');
+    const noAudit = document.getElementById('modal-no-audit');
+    auditContainer.querySelectorAll('.audit-item').forEach(el => el.remove());
+
+    const logs = auditData[String(sellerId)] || [];
+    if (logs.length > 0) {
+      noAudit.classList.add('hidden');
+      logs.forEach(log => {
+        let iconClass = 'ri-checkbox-circle-line';
+        let iconColor = 'text-success-500';
+        if (log.actionRaw === 'reject') { iconClass = 'ri-close-circle-line'; iconColor = 'text-danger-500'; }
+        else if (log.actionRaw === 'request_changes') { iconClass = 'ri-mail-send-line'; iconColor = 'text-warning-500'; }
+        else if (log.actionRaw === 'block') { iconClass = 'ri-lock-line'; iconColor = 'text-danger-500'; }
+        else if (log.actionRaw === 'unblock') { iconClass = 'ri-lock-unlock-line'; iconColor = 'text-brand-500'; }
+
+        const item = document.createElement('div');
+        item.className = 'audit-item flex items-start gap-3 p-3 rounded-lg bg-ink-50 dark:bg-ink-800 border border-ink-100 dark:border-ink-700';
+
+        const iconWrap = document.createElement('div');
+        iconWrap.className = `flex items-center justify-center w-6 h-6 rounded-full ${iconColor} shrink-0 mt-0.5`;
+        iconWrap.innerHTML = `<i class="${iconClass}"></i>`; // static, not user data
+
+        const body = document.createElement('div');
+        body.className = 'flex-1 min-w-0';
+
+        const headerRow = document.createElement('div');
+        headerRow.className = 'flex justify-between items-center mb-0.5';
+        const adminSpan = document.createElement('span');
+        adminSpan.className = 'text-[10px] font-bold text-ink-900 dark:text-white';
+        adminSpan.textContent = log.admin;
+        const dateSpan = document.createElement('span');
+        dateSpan.className = 'text-[9px] text-ink-400';
+        dateSpan.textContent = log.date;
+        headerRow.append(adminSpan, dateSpan);
+
+        const actionP = document.createElement('p');
+        actionP.className = `text-[11px] font-semibold ${iconColor}`;
+        actionP.textContent = log.action;
+
+        body.append(headerRow, actionP);
+
+        if (log.notes) {
+          const notesP = document.createElement('p');
+          notesP.className = 'text-xs text-ink-600 dark:text-ink-300 mt-1 break-words';
+          notesP.textContent = log.notes;
+          body.append(notesP);
+        }
+
+        item.append(iconWrap, body);
+        auditContainer.appendChild(item);
+      });
+    } else {
+      noAudit.classList.remove('hidden');
+    }
+
+    document.getElementById('modal-notes').value = '';
+    document.getElementById('modal-action-form').action = s.actionUrl;
+
+    openModal('review-modal');
+  }
+
+  function submitAction(action) {
+    const notes = document.getElementById('modal-notes').value.trim();
+
+    if ((action === 'reject' || action === 'request_changes') && !notes) {
+      alert('Please add a note before submitting this action.');
+      return;
+    }
+    if (action === 'reject' && !confirm('Are you sure you want to reject this seller? An email will be sent.')) {
+      return;
+    }
+
+    document.getElementById('modal-action-value').value = action;
+    document.getElementById('modal-notes-hidden').value = notes;
+    document.getElementById('modal-action-form').submit();
+  }
+
+  function openDocPreview() {
+    if (!currentDocUrl) return;
+    const content = document.getElementById('doc-preview-content');
+    const filename = sellersData[currentSellerId] ? sellersData[currentSellerId].proofFilename : '';
+    const ext = filename.split('.').pop().toLowerCase();
+
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+      const img = document.createElement('img');
+      img.src = currentDocUrl;
+      img.alt = 'Document';
+      img.style.cssText = 'max-width:100%; max-height:70vh; object-fit:contain; border-radius:0.5rem;';
+      content.innerHTML = '';
+      content.appendChild(img);
+    } else if (ext === 'pdf') {
+      const iframe = document.createElement('iframe');
+      iframe.src = currentDocUrl;
+      iframe.style.cssText = 'width:70vw; height:70vh; border:none; border-radius:0.5rem;';
+      content.innerHTML = '';
+      content.appendChild(iframe);
+    } else {
+      content.innerHTML = '';
+      const wrap = document.createElement('div');
+      wrap.className = 'text-center py-8';
+      wrap.innerHTML = '<i class="ri-file-text-line text-4xl text-ink-300 mb-3"></i>';
+      const p = document.createElement('p');
+      p.className = 'text-sm text-ink-500';
+      p.textContent = 'Cannot preview this file type. ';
+      const link = document.createElement('a');
+      link.href = currentDocUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.className = 'text-brand-600 underline';
+      link.textContent = 'Download instead';
+      p.appendChild(link);
+      wrap.appendChild(p);
+      content.appendChild(wrap);
+    }
+
+    document.getElementById('doc-preview-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDocPreview(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('doc-preview-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+</script>
+{% endblock %}

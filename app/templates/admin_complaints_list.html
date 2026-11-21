@@ -1,0 +1,67 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block title %}Admin - Complaint Management{% endblock %}
+{% block breadcrumb %}Complaints{% endblock %}
+
+{% block content %}
+<section class="space-y-6">
+
+  <!-- ═══ PAGE HEADER ═══ -->
+  <div class="animate-fade-in-up">
+    <p class="text-xs uppercase tracking-wider mb-1 text-ink-400">ADMIN › COMPLAINTS</p>
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-ink-900 dark:text-white tracking-tight">Complaint Management</h2>
+    <p class="text-sm mt-1 text-ink-500 dark:text-ink-400">Review and manage all buyer complaints</p>
+  </div>
+
+  <!-- ═══ COMPLAINTS TABLE ═══ -->
+  <div class="card overflow-hidden animate-fade-in-up">
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-left border-b border-ink-200 dark:border-ink-800 bg-ink-50 dark:bg-ink-800/50">
+            <th class="th text-ink-500 dark:text-ink-400">ID</th>
+            <th class="th text-ink-500 dark:text-ink-400">Property</th>
+            <th class="th text-ink-500 dark:text-ink-400">Buyer</th>
+            <th class="th text-ink-500 dark:text-ink-400">Seller</th>
+            <th class="th text-ink-500 dark:text-ink-400">Category</th>
+            <th class="th text-ink-500 dark:text-ink-400">Priority</th>
+            <th class="th text-ink-500 dark:text-ink-400">Status</th>
+            <th class="th text-ink-500 dark:text-ink-400">Created At</th>
+            <th class="th text-ink-500 dark:text-ink-400">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-ink-100 dark:divide-ink-800">
+          {% for complaint in complaints %}
+          <tr class="hover:bg-ink-50 dark:hover:bg-ink-800/50 transition">
+            <td class="px-4 py-3.5 font-semibold text-ink-900 dark:text-white">#{{ complaint.id }}</td>
+            <td class="px-4 py-3.5 text-ink-700 dark:text-ink-300">{{ complaint.property.property_type }}</td>
+            <td class="px-4 py-3.5 text-ink-700 dark:text-ink-300">{{ complaint.buyer.name }}</td>
+            <td class="px-4 py-3.5 text-ink-700 dark:text-ink-300">{{ complaint.property.seller.username }}</td>
+            <td class="px-4 py-3.5">
+              <span class="badge-brand">{{ complaint.get_category_display }}</span>
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="badge-success">{{ complaint.get_priority_display }}</span>
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="badge-neutral">{{ complaint.get_status_display }}</span>
+            </td>
+            <td class="px-4 py-3.5 text-ink-400">{{ complaint.created_at|date:"Y-m-d H:i" }}</td>
+            <td class="px-4 py-3.5">
+              <span class="text-ink-400 text-xs">Updated</span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" class="text-center py-16 text-ink-400">
+              <i class="ri-chat-check-line text-5xl mb-3 block"></i>
+              <p class="text-sm font-medium">No complaints found</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endblock %}

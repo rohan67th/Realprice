@@ -1,0 +1,511 @@
+{% extends 'base.html' %}
+
+{% block title %}My Complaints | RealtyFlow{% endblock %}
+{% block meta_description %}View and track resolution status of your submitted complaints and reports.{% endblock %}
+
+{% block page_bg %}
+<div class="w-full h-full"
+  style="background-image: url('https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=2200&q=85'); background-size: cover; background-position: center; background-attachment: fixed;">
+</div>
+<div class="page-bg-overlay"
+  style="background: linear-gradient(180deg, rgba(8,10,28,0.93) 0%, rgba(12,15,38,0.88) 52%, rgba(7,9,24,0.96) 100%);">
+</div>
+{% endblock %}
+
+{% block page_styles %}
+<style>
+  /* ── Navigation bar styling ── */
+  .buyer-nav-bar {
+    background: rgba(31, 34, 57, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 1.25rem;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+  }
+  .bn-link {
+    padding: .55rem .8rem; font-size: .82rem; font-weight: 500;
+    color: rgba(229, 231, 235, .72); border-radius: .85rem;
+    transition: all .22s ease; display: inline-flex; align-items: center;
+    gap: .4rem; white-space: nowrap; border: 1px solid transparent;
+    background: transparent; cursor: pointer; text-decoration: none;
+  }
+  .bn-link:hover { color: #fff; background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.07); }
+  .bn-link.active {
+    color: #fff; background: linear-gradient(135deg, #4f7df3, #3f73e8);
+    border-color: rgba(143, 178, 255, .18);
+    box-shadow: 0 10px 26px rgba(63, 115, 232, .28), inset 0 1px 0 rgba(255,255,255,.14);
+  }
+  .bn-link i { font-size: .95rem; }
+  .bn-link.danger { color: rgba(248,113,113,.8); }
+  .bn-link.danger:hover { color: #fca5a5; background: rgba(239,68,68,.08); }
+
+  .bn-avatar {
+    background: linear-gradient(135deg, #5b7df4, #6a48d9);
+    box-shadow: 0 6px 18px rgba(88, 113, 244, .25);
+    cursor: pointer; border: 2px solid rgba(255,255,255,.12);
+    transition: border-color .2s ease;
+  }
+  .bn-avatar:hover { border-color: rgba(255,255,255,.25); }
+  .bn-avatar-wrap { position: relative; }
+  .bn-avatar-menu {
+    position: absolute; top: calc(100% + .65rem); right: 0;
+    min-width: 240px; padding: .5rem; border-radius: 1rem;
+    background: rgba(27, 30, 50, .96); border: 1px solid rgba(255,255,255,.10);
+    box-shadow: 0 24px 50px rgba(0,0,0,.34);
+    backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+    opacity: 0; transform: translateY(-6px) scale(.98); pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease; z-index: 80;
+  }
+  .bn-avatar-menu.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+  .bn-menu-item {
+    width: 100%; display: flex; align-items: center; gap: .65rem;
+    padding: .7rem .75rem; border-radius: .8rem;
+    color: rgba(229,231,235,.76); font-size: .85rem;
+    transition: all .18s ease; text-decoration: none; border: none; background: transparent; cursor: pointer;
+  }
+  .bn-menu-item:hover { background: rgba(255,255,255,.06); color: #fff; }
+  .bn-menu-item.danger { color: rgba(248,113,113,.7); }
+  .bn-menu-item.danger:hover { color: #fca5a5; background: rgba(239,68,68,.08); }
+
+  .mobile-menu {
+    max-height: 0; overflow: hidden; opacity: 0;
+    transform: translateY(-4px);
+    transition: max-height .28s ease, opacity .2s ease, transform .2s ease;
+  }
+  .mobile-menu.open { max-height: 600px; opacity: 1; transform: translateY(0); }
+
+  /* ── Glass Cards ── */
+  .glass-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 1.25rem;
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    transition: border-color .3s, box-shadow .3s, transform .3s cubic-bezier(.16,1,.3,1);
+  }
+  .glass-card:hover {
+    border-color: rgba(255,255,255,0.14);
+    box-shadow: 0 16px 40px rgba(0,0,0,.25);
+    transform: translateY(-3px);
+  }
+
+  .stat-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 1rem;
+    padding: 1.1rem 1.25rem;
+    backdrop-filter: blur(14px);
+    transition: all .25s ease;
+  }
+  .stat-card:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.12);
+  }
+
+  .filter-btn {
+    transition: all .2s ease;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    color: rgba(209,213,219,0.85);
+  }
+  .filter-btn:hover {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    border-color: rgba(255,255,255,0.15);
+  }
+  .filter-btn.active {
+    background: linear-gradient(135deg, #4f7df3, #3f73e8);
+    color: #fff;
+    border-color: rgba(143,178,255,.25);
+    box-shadow: 0 6px 20px rgba(63,115,232,.25);
+  }
+
+  .fade-up {
+    opacity: 0; transform: translateY(24px);
+    animation: fadeUp .65s cubic-bezier(.22,1,.36,1) forwards;
+  }
+  @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+</style>
+{% endblock %}
+
+{% block nav %}
+<nav id="buyer-nav"
+     class="fixed top-3 left-1/2 -translate-x-1/2 z-[70] w-[calc(100%-1rem)] md:w-[calc(100%-2rem)] max-w-[1600px]">
+  <div>
+    <div class="buyer-nav-bar px-2 sm:px-3 py-2 flex items-center gap-2">
+      {# Logo #}
+      <a href="{% url 'buyer_landing' %}" class="flex items-center gap-2 shrink-0 group">
+        <div class="w-9 h-9 rounded-xl bg-[#1e2140] grid place-items-center group-hover:scale-105 transition-transform border border-white/10">
+          <i class="ri-home-5-line text-white text-lg"></i>
+        </div>
+        <span class="hidden md:inline font-clash font-semibold text-white text-[.95rem] tracking-tight">REALPRICE</span>
+      </a>
+
+      <div class="hidden sm:block w-px h-7 bg-white/10 shrink-0"></div>
+
+      {# Desktop navigation: Profile, Notifications, Complaints only #}
+      <div class="hidden sm:flex items-center gap-1.5 ml-auto">
+        <a href="{% url 'buyer_profile' buyer.id %}" class="bn-link shrink-0">
+          <i class="ri-user-3-line"></i><span>Profile</span>
+        </a>
+        <a href="{% url 'buyer_notifications' buyer.id %}" class="bn-link shrink-0">
+          <i class="ri-notification-3-line"></i><span>Notifications</span>
+        </a>
+        <a href="{% url 'buyer_complaints' buyer.id %}" class="bn-link active shrink-0">
+          <i class="ri-customer-service-2-line"></i><span>Complaints</span>
+        </a>
+
+        {# Avatar dropdown #}
+        <div class="bn-avatar-wrap shrink-0 ml-2">
+          <button type="button" id="buyer-avatar-toggle"
+                  class="bn-avatar w-9 h-9 rounded-full grid place-items-center text-white text-sm font-bold"
+                  aria-haspopup="true" aria-expanded="false">
+            {{ buyer.name|default:'B'|first|upper }}
+          </button>
+          <div id="buyer-avatar-menu" class="bn-avatar-menu">
+            <div class="px-3 py-2.5">
+              <p class="text-sm font-semibold text-white truncate">{{ buyer.name }}</p>
+              <p class="text-xs text-gray-400 truncate">{{ buyer.email }}</p>
+            </div>
+            <div class="h-px bg-white/10 my-1"></div>
+            <a href="{% url 'buyer_landing' %}" class="bn-menu-item"><i class="ri-home-4-line"></i><span>Browse listings</span></a>
+            <div class="h-px bg-white/10 my-1"></div>
+            <a href="{% url 'seller_logout' %}" class="bn-menu-item danger"><i class="ri-logout-box-r-line"></i><span>Logout</span></a>
+          </div>
+        </div>
+      </div>
+
+      {# Mobile hamburger #}
+      <button id="buyer-mobile-toggle"
+              class="sm:hidden ml-auto w-10 h-10 shrink-0 grid place-items-center rounded-xl border border-white/10 bg-white/5 text-white"
+              aria-label="Toggle menu" aria-expanded="false">
+        <i class="ri-menu-line text-lg" id="buyer-menu-icon"></i>
+      </button>
+    </div>
+
+    {# Mobile menu dropdown #}
+    <div id="buyer-mobile-menu" class="mobile-menu mt-2">
+      <div class="buyer-nav-bar px-3 py-3 flex flex-col gap-1">
+        <a href="{% url 'buyer_profile' buyer.id %}" class="bn-link justify-start"><i class="ri-user-3-line"></i> Profile</a>
+        <a href="{% url 'buyer_notifications' buyer.id %}" class="bn-link justify-start"><i class="ri-notification-3-line"></i> Notifications</a>
+        <a href="{% url 'buyer_complaints' buyer.id %}" class="bn-link active justify-start"><i class="ri-customer-service-2-line"></i> Complaints</a>
+        <div class="h-px bg-white/10 my-1"></div>
+        <a href="{% url 'buyer_landing' %}" class="bn-link justify-start"><i class="ri-home-4-line"></i> Browse listings</a>
+        <div class="h-px bg-white/10 my-1"></div>
+        <a href="{% url 'seller_logout' %}" class="bn-link danger justify-start"><i class="ri-logout-box-r-line"></i> Logout</a>
+      </div>
+    </div>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="pt-24 sm:pt-28 pb-16 px-4 md:px-8">
+  <div class="max-w-5xl mx-auto space-y-8">
+
+    {# ── Page Header ── #}
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 fade-up">
+      <div>
+        <h1 class="font-display font-semibold text-3xl sm:text-4xl text-white">Support & Complaints</h1>
+        <p class="text-gray-400 mt-2">Track reports, incorrect listing inquiries, and seller feedback.</p>
+      </div>
+      <div>
+        <a href="{% url 'buyer_landing' %}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition-all">
+          <i class="ri-compass-3-line text-indigo-400"></i> Browse Listings
+        </a>
+      </div>
+    </div>
+
+    {# ── Stats Strip ── #}
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 fade-up" style="animation-delay:.05s">
+      <div class="stat-card">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-400 font-medium">Total Filed</span>
+          <div class="w-7 h-7 rounded-lg bg-indigo-500/15 text-indigo-400 flex items-center justify-center text-sm">
+            <i class="ri-file-list-3-line"></i>
+          </div>
+        </div>
+        <p class="font-display font-bold text-2xl text-white mt-2" id="stat-total">{{ complaints|length }}</p>
+      </div>
+
+      <div class="stat-card">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-400 font-medium">Under Review</span>
+          <div class="w-7 h-7 rounded-lg bg-sky-500/15 text-sky-400 flex items-center justify-center text-sm">
+            <i class="ri-time-line"></i>
+          </div>
+        </div>
+        <p class="font-display font-bold text-2xl text-white mt-2" id="stat-progress">0</p>
+      </div>
+
+      <div class="stat-card">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-400 font-medium">Open</span>
+          <div class="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center text-sm">
+            <i class="ri-alert-line"></i>
+          </div>
+        </div>
+        <p class="font-display font-bold text-2xl text-white mt-2" id="stat-open">0</p>
+      </div>
+
+      <div class="stat-card">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-400 font-medium">Resolved</span>
+          <div class="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-sm">
+            <i class="ri-checkbox-circle-line"></i>
+          </div>
+        </div>
+        <p class="font-display font-bold text-2xl text-white mt-2" id="stat-resolved">0</p>
+      </div>
+    </div>
+
+    {# ── Filters & Search ── #}
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 fade-up" style="animation-delay:.1s">
+      <div class="flex flex-wrap gap-2" id="status-filters">
+        <button type="button" class="filter-btn active px-4 py-2 rounded-xl text-xs sm:text-sm font-medium" data-filter="all">
+          All ({{ complaints|length }})
+        </button>
+        <button type="button" class="filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-medium" data-filter="open">
+          Open
+        </button>
+        <button type="button" class="filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-medium" data-filter="in_progress">
+          In Progress
+        </button>
+        <button type="button" class="filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-medium" data-filter="resolved">
+          Resolved
+        </button>
+      </div>
+
+      <div class="relative w-full sm:w-64">
+        <i class="ri-search-line absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <input type="text" id="search-complaints" placeholder="Search reports..."
+               class="w-full pl-9 pr-3 py-2 rounded-xl bg-white/[0.05] border border-white/10 text-white placeholder-gray-500 text-xs sm:text-sm focus:outline-none focus:border-indigo-500/50 transition-colors">
+      </div>
+    </div>
+
+    {# ── Complaints List ── #}
+    <div id="complaints-container" class="space-y-4 fade-up" style="animation-delay:.15s">
+      {% if complaints %}
+        {% for complaint in complaints %}
+        <div class="complaint-card glass-card p-5 sm:p-6"
+             data-status="{{ complaint.status }}"
+             data-search="{{ complaint.property }} {{ complaint.get_category_display }} {{ complaint.description }}">
+          
+          {# Card Header #}
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/8">
+            <div class="flex flex-wrap items-center gap-2">
+              {# Status Pill #}
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold
+                {% if complaint.status == 'resolved' %}bg-emerald-500/15 text-emerald-400 border border-emerald-500/30
+                {% elif complaint.status == 'in_progress' %}bg-sky-500/15 text-sky-400 border border-sky-500/30
+                {% else %}bg-amber-500/15 text-amber-400 border border-amber-500/30{% endif %}">
+                <i class="ri-{% if complaint.status == 'resolved' %}checkbox-circle-fill{% elif complaint.status == 'in_progress' %}loader-4-line{% else %}time-line{% endif %} text-xs"></i>
+                {{ complaint.get_status_display }}
+              </span>
+
+              {# Category Badge #}
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-white/5 text-gray-300 border border-white/10">
+                <i class="ri-price-tag-3-line text-indigo-400 text-xs"></i>
+                {{ complaint.get_category_display }}
+              </span>
+
+              {# Priority Badge #}
+              {% if complaint.priority %}
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
+                {% if complaint.priority == 'high' %}bg-rose-500/15 text-rose-300 border border-rose-500/20
+                {% elif complaint.priority == 'medium' %}bg-amber-500/15 text-amber-300 border border-amber-500/20
+                {% else %}bg-blue-500/15 text-blue-300 border border-blue-500/20{% endif %}">
+                <i class="ri-flag-line text-xs"></i>
+                {{ complaint.get_priority_display|default:complaint.priority|capfirst }} Priority
+              </span>
+              {% endif %}
+            </div>
+
+            <div class="text-xs text-gray-400 flex items-center gap-1.5 shrink-0">
+              <i class="ri-calendar-event-line"></i>
+              {{ complaint.created_at|date:"M d, Y · h:i A" }}
+            </div>
+          </div>
+
+          {# Property Info Row #}
+          <div class="mt-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5 min-w-0">
+              {% if complaint.property.main_image %}
+              <img src="{{ complaint.property.main_image.url }}" alt="{{ complaint.property }}"
+                   class="w-14 h-14 rounded-xl object-cover ring-1 ring-white/10 shrink-0">
+              {% else %}
+              <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center shrink-0 text-indigo-400">
+                <i class="ri-building-line text-2xl"></i>
+              </div>
+              {% endif %}
+              <div class="min-w-0">
+                <h3 class="font-display font-semibold text-white text-base truncate">{{ complaint.property }}</h3>
+                <p class="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5 truncate">
+                  <i class="ri-map-pin-2-line text-gray-500"></i>
+                  {{ complaint.property.location|default:complaint.property.address|default:"Location on file" }}
+                </p>
+              </div>
+            </div>
+
+            <div class="shrink-0">
+              <a href="{% url 'property_detail_buyer' buyer.id complaint.property.id %}"
+                 class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white text-xs font-medium transition-all">
+                <i class="ri-external-link-line text-indigo-400"></i> View Property
+              </a>
+            </div>
+          </div>
+
+          {# Complaint Description #}
+          {% if complaint.description %}
+          <div class="mt-4 p-3.5 rounded-xl bg-white/[0.03] border border-white/5">
+            <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">Issue Details</p>
+            <p class="text-sm text-gray-300 leading-relaxed">{{ complaint.description }}</p>
+          </div>
+          {% endif %}
+
+          {# Resolution banner if resolved #}
+          {% if complaint.status == 'resolved' %}
+          <div class="mt-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2.5 text-emerald-300 text-xs sm:text-sm">
+            <i class="ri-checkbox-circle-line text-emerald-400 text-base shrink-0"></i>
+            <span>This inquiry has been reviewed and marked as resolved by the administration team.</span>
+          </div>
+          {% endif %}
+
+        </div>
+        {% endfor %}
+      {% else %}
+        {# Empty state if no complaints exist #}
+        <div class="glass-card p-10 sm:p-14 text-center">
+          <div class="w-16 h-16 mx-auto rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-3xl">
+            <i class="ri-customer-service-2-line"></i>
+          </div>
+          <h3 class="mt-5 text-lg font-semibold text-white">No complaints reported</h3>
+          <p class="mt-2 text-sm text-gray-400 max-w-md mx-auto">
+            You haven't submitted any complaints or inquiries regarding properties. If you ever notice an issue with a listing or seller, you can submit a report directly from the property details page.
+          </p>
+          <div class="mt-6">
+            <a href="{% url 'buyer_landing' %}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-500 text-white text-sm font-medium hover:from-indigo-600 hover:to-blue-600 transition-all shadow-lg shadow-indigo-500/20">
+              <i class="ri-home-4-line"></i> Browse Properties
+            </a>
+          </div>
+        </div>
+      {% endif %}
+
+      {# No search results placeholder #}
+      <div id="no-search-results" class="glass-card p-8 text-center hidden">
+        <div class="w-12 h-12 mx-auto rounded-xl bg-white/5 text-gray-400 flex items-center justify-center text-2xl">
+          <i class="ri-search-line"></i>
+        </div>
+        <p class="mt-3 text-sm text-gray-300 font-medium">No complaints match your filters</p>
+        <p class="text-xs text-gray-500 mt-1">Try changing the status tab or searching with different keywords.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+(function() {
+  const $ = (s, c = document) => c.querySelector(s);
+  const $$ = (s, c = document) => Array.from(c.querySelectorAll(s));
+
+  // Compute stats on the fly from cards
+  const cards = $$(".complaint-card");
+  let openCount = 0;
+  let progressCount = 0;
+  let resolvedCount = 0;
+
+  cards.forEach(card => {
+    const st = card.dataset.status;
+    if (st === 'open') openCount++;
+    else if (st === 'in_progress') progressCount++;
+    else if (st === 'resolved') resolvedCount++;
+  });
+
+  const statOpen = $("#stat-open");
+  const statProgress = $("#stat-progress");
+  const statResolved = $("#stat-resolved");
+  if (statOpen) statOpen.textContent = openCount;
+  if (statProgress) statProgress.textContent = progressCount;
+  if (statResolved) statResolved.textContent = resolvedCount;
+
+  // Status Filter & Search Logic
+  let currentFilter = 'all';
+  let searchQuery = '';
+
+  const filterBtns = $$("#status-filters .filter-btn");
+  const searchInput = $("#search-complaints");
+  const emptyFilterMsg = $("#no-search-results");
+
+  function applyFilters() {
+    let visibleCount = 0;
+    cards.forEach(card => {
+      const status = card.dataset.status || '';
+      const text = (card.dataset.search || '').toLowerCase();
+
+      const matchesStatus = (currentFilter === 'all') || (status === currentFilter);
+      const matchesSearch = !searchQuery || text.includes(searchQuery);
+
+      if (matchesStatus && matchesSearch) {
+        card.classList.remove('hidden');
+        visibleCount++;
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+
+    if (emptyFilterMsg) {
+      if (cards.length > 0 && visibleCount === 0) {
+        emptyFilterMsg.classList.remove('hidden');
+      } else {
+        emptyFilterMsg.classList.add('hidden');
+      }
+    }
+  }
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      filterBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentFilter = btn.dataset.filter;
+      applyFilters();
+    });
+  });
+
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      searchQuery = e.target.value.trim().toLowerCase();
+      applyFilters();
+    });
+  }
+
+  // Avatar menu toggle
+  const avatarToggle = $("#buyer-avatar-toggle");
+  const avatarMenu = $("#buyer-avatar-menu");
+  if (avatarToggle && avatarMenu) {
+    avatarToggle.addEventListener("click", () => {
+      const open = avatarMenu.classList.toggle("open");
+      avatarToggle.setAttribute("aria-expanded", open);
+    });
+    document.addEventListener("click", e => {
+      if (!avatarToggle.contains(e.target) && !avatarMenu.contains(e.target)) {
+        avatarMenu.classList.remove("open");
+      }
+    });
+  }
+
+  // Mobile menu toggle
+  const mobileToggle = $("#buyer-mobile-toggle");
+  const mobileMenu = $("#buyer-mobile-menu");
+  const menuIcon = $("#buyer-menu-icon");
+  if (mobileToggle && mobileMenu) {
+    mobileToggle.addEventListener("click", () => {
+      const open = mobileMenu.classList.toggle("open");
+      mobileToggle.setAttribute("aria-expanded", open);
+      if (menuIcon) menuIcon.className = open ? "ri-close-line text-lg" : "ri-menu-line text-lg";
+    });
+  }
+})();
+</script>
+{% endblock %}

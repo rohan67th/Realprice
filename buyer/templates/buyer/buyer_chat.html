@@ -1,0 +1,446 @@
+{% extends 'buyer/base_buyer.html' %}
+
+{% block title %}RealtyFlow — Messages{% endblock %}
+{% block meta_description %}Chat with sellers on RealtyFlow.{% endblock %}
+
+{% block buyer_page_styles %}
+<style>
+  .chat-container { height: calc(100vh - 8rem); min-height: 500px; }
+  .chat-sidebar { border-right: 1px solid rgba(255,255,255,0.08); }
+  @media (max-width: 767px) {
+    .chat-sidebar { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  }
+  .chat-conv-item { transition: background .15s ease; }
+  .chat-conv-item:hover { background: rgba(255,255,255,0.05); }
+  .chat-conv-item.active { background: rgba(99,102,241,0.15); border-left: 3px solid #6366f1; }
+  .chat-bubble-in {
+    background: rgba(255,255,255,0.06); border-radius: 1rem 1rem 1rem .25rem;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .chat-bubble-out {
+    background: linear-gradient(135deg, #4f7df3, #3f73e8); border-radius: 1rem 1rem .25rem 1rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div id="bl-progress"></div>
+
+<section class="px-4 md:px-8 pt-24 sm:pt-28 pb-8">
+  <div class="mb-6">
+    <p class="fade-up text-indigo-400 text-sm font-semibold tracking-wider uppercase">Messages</p>
+    <h2 class="fade-up font-clash font-bold text-3xl md:text-4xl text-white mt-2" style="transition-delay:.1s;">Chat</h2>
+  </div>
+
+  {# ── Chat root element with FastAPI config as data attributes ── #}
+  <div id="chat-root"
+       class="glass-strong rounded-3xl overflow-hidden chat-container"
+       data-ws-url="{{ chat_ws_url }}"
+       data-api-url="{{ chat_api_url }}"
+       data-buyer-id="{{ buyer.id }}">
+
+    <div class="flex flex-col md:flex-row h-full">
+      {# ── Conversation sidebar ── #}
+      <div class="chat-sidebar w-full md:w-80 shrink-0 flex flex-col">
+        <div class="p-4 border-b border-white/8">
+          <div class="flex items-center gap-2 glass rounded-xl px-3 py-2">
+            <i class="ri-search-line text-gray-400 text-sm"></i>
+            <input type="text" placeholder="Search conversations..." class="bg-transparent border-0 text-sm text-white w-full focus:outline-none" id="chat-search">
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto" id="chat-conv-list">
+          {% comment %}
+          TODO(fastapi): Load conversations from the FastAPI REST API
+          GET {CHAT_SERVICE_API_URL}/conversations/{buyer_id}
+          Each conversation shows: seller name, last message preview, timestamp, unread badge
+          {% endcomment %}
+
+          {# Empty state #}
+          <div class="p-8 text-center" id="chat-empty-state">
+            <i class="ri-chat-3-line text-4xl text-indigo-300"></i>
+            <p class="text-white font-clash font-semibold text-lg mt-4">No conversations yet</p>
+            <p class="text-gray-400 text-sm mt-2">Message a seller from any property page.</p>
+          </div>
+        </div>
+      </div>
+
+      {# ── Message thread pane ── #}
+      <div class="flex-1 flex flex-col min-w-0">
+        {# Thread header #}
+        <div class="p-4 border-b border-white/8 flex items-center gap-3" id="chat-thread-header" style="display:none;">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 grid place-items-center text-white text-sm font-bold" id="chat-thread-avatar">?</div>
+          <div>
+            <p class="text-white font-semibold text-sm" id="chat-thread-name">Select a conversation</p>
+            <p class="text-gray-400 text-xs" id="chat-thread-property">—</p>
+          </div>
+        </div>
+
+        {# Messages area #}
+        <div class="flex-1 overflow-y-auto p-4 space-y-3" id="chat-messages">
+          {% comment %}
+          TODO(fastapi): Load message history from
+          GET {CHAT_SERVICE_API_URL}/history/{conversation_id}
+          Messages rendered as chat-bubble-in (seller) / chat-bubble-out (buyer)
+          {% endcomment %}
+
+          <div class="flex items-center justify-center h-full text-gray-500 text-sm" id="chat-select-prompt">
+            <div class="text-center">
+              <i class="ri-chat-smile-3-line text-3xl text-indigo-300 mb-3"></i>
+              <p>Select a conversation to start chatting</p>
+            </div>
+          </div>
+        </div>
+
+        {# Composer #}
+        <div class="p-4 border-t border-white/8" id="chat-composer" style="display:none;">
+          <form class="flex items-center gap-2" id="chat-send-form">
+            {% comment %}
+            TODO(fastapi): POST message to
+            POST {CHAT_SERVICE_API_URL}/send
+            Body: { conversation_id, sender_type: "buyer", sender_id, content }
+            Also send via WebSocket for real-time delivery
+            {% endcomment %}
+            <input type="text" placeholder="Type a message..." class="flex-1 bg-transparent border-0 text-sm text-white focus:outline-none glass rounded-xl px-4 py-3" id="chat-input" autocomplete="off">
+            <button type="submit" class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 grid place-items-center text-white shrink-0 hover:scale-105 transition-transform">
+              <i class="ri-send-plane-fill text-sm"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% comment %}
+  TODO(fastapi): WebSocket connect/reconnect logic
+  1. Django endpoint issues short-lived JWT: GET /buyer/chat/token/
+  2. Connect to CHAT_SERVICE_WS_URL with JWT in query or header
+  3. On message received: append to thread, update sidebar unread
+  4. On disconnect: exponential backoff reconnect
+  5. Unread count source: WebSocket event or polling API
+  {% endcomment %}
+</section>
+
+{% endblock %}
+
+{% block buyer_scripts %}
+<script id="buyer-conversations-data" type="application/json">{{ conversations_json|default:"[]"|safe }}</script>
+<script>
+  window.CURRENT_BUYER_ID = {{ buyer.id }};
+</script>
+<script>
+(function() {
+  let CONVERSATIONS = [];
+  let activeIndex = -1;
+  let renderedMsgIds = new Set();
+  let pollTimer = null;
+  const initialVisitId = "{{ initial_visit_id|default:'' }}";
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function formatTime(isoStr) {
+    if (!isoStr) return '';
+    try {
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return isoStr;
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch(e) {
+      return isoStr;
+    }
+  }
+
+  function getCsrfToken() {
+    const match = document.cookie.match(/csrftoken=([^;]+)/);
+    return match ? match[1] : '';
+  }
+
+  function initData() {
+    const dataEl = document.getElementById('buyer-conversations-data');
+    if (dataEl && dataEl.textContent.trim()) {
+      try {
+        CONVERSATIONS = JSON.parse(dataEl.textContent);
+      } catch (e) {
+        console.error('[BuyerChat] JSON parse error:', e);
+        CONVERSATIONS = [];
+      }
+    }
+  }
+
+  function renderConvList(q) {
+    const listEl = document.getElementById('chat-conv-list');
+    if (!listEl) return;
+
+    if (CONVERSATIONS.length === 0) {
+      listEl.innerHTML = `
+        <div class="p-8 text-center" id="chat-empty-state">
+          <i class="ri-chat-3-line text-4xl text-indigo-300"></i>
+          <p class="text-white font-clash font-semibold text-lg mt-4">No conversations yet</p>
+          <p class="text-gray-400 text-sm mt-2">Message a seller from any property page.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const query = (q || '').toLowerCase().trim();
+    const filtered = CONVERSATIONS.map((c, i) => ({ c, i })).filter(({ c }) => {
+      if (!query) return true;
+      return (c.seller_name || '').toLowerCase().includes(query) ||
+             (c.property_title || '').toLowerCase().includes(query) ||
+             (c.last || '').toLowerCase().includes(query);
+    });
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = `
+        <div class="p-6 text-center text-gray-400 text-xs">
+          <p>No conversations match "${escapeHtml(q)}"</p>
+        </div>
+      `;
+      return;
+    }
+
+    listEl.innerHTML = filtered.map(({ c, i }) => {
+      const isActive = i === activeIndex;
+      return `
+        <div onclick="window.__buyerSelectConv(${i})" class="chat-conv-item p-4 border-b border-white/5 cursor-pointer flex items-center gap-3 ${isActive ? 'active' : ''}">
+          <div class="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 grid place-items-center text-white text-sm font-bold shrink-0 overflow-hidden">
+            <img src="${escapeHtml(c.avatar)}" alt="" class="w-full h-full object-cover" onerror="this.onerror=null; this.parentElement.innerText='${escapeHtml(c.seller_name.charAt(0))}'" />
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex justify-between items-baseline">
+              <p class="text-white font-semibold text-sm truncate">${escapeHtml(c.seller_name)}</p>
+              <span class="text-[10px] text-gray-400 ml-1 shrink-0">${escapeHtml(c.time || '')}</span>
+            </div>
+            <p class="text-gray-400 text-xs truncate mt-0.5">${escapeHtml(c.last || 'No messages yet')}</p>
+            <p class="text-indigo-400 text-[10px] truncate mt-0.5">${escapeHtml(c.property_title || '')}</p>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function selectConv(idx) {
+    if (idx < 0 || idx >= CONVERSATIONS.length) return;
+    activeIndex = idx;
+    renderConvList(document.getElementById('chat-search') ? document.getElementById('chat-search').value : '');
+
+    const c = CONVERSATIONS[idx];
+    const headerEl = document.getElementById('chat-thread-header');
+    const avatarEl = document.getElementById('chat-thread-avatar');
+    const nameEl = document.getElementById('chat-thread-name');
+    const propEl = document.getElementById('chat-thread-property');
+    const composerEl = document.getElementById('chat-composer');
+    const selectPrompt = document.getElementById('chat-select-prompt');
+    const messagesEl = document.getElementById('chat-messages');
+
+    if (headerEl) headerEl.style.display = 'flex';
+    if (composerEl) composerEl.style.display = 'block';
+    if (selectPrompt) selectPrompt.style.display = 'none';
+
+    if (nameEl) nameEl.textContent = c.seller_name;
+    if (propEl) propEl.textContent = `${c.property_title} (${c.status || 'Approved'})`;
+    if (avatarEl) {
+      avatarEl.innerHTML = `<img src="${escapeHtml(c.avatar)}" alt="" class="w-full h-full object-cover rounded-full" onerror="this.onerror=null; this.parentElement.innerText='${escapeHtml(c.seller_name.charAt(0))}'" />`;
+    }
+
+    renderedMsgIds.clear();
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+
+    if (messagesEl) {
+      messagesEl.innerHTML = `
+        <div class="flex items-center justify-center h-full text-indigo-300 text-xs">
+          <i class="ri-loader-4-line animate-spin text-2xl mr-2"></i> Loading messages…
+        </div>
+      `;
+    }
+
+    fetchHistory(c.visit_id, true);
+
+    pollTimer = setInterval(function() {
+      if (activeIndex >= 0 && activeIndex < CONVERSATIONS.length && !document.hidden) {
+        fetchHistory(CONVERSATIONS[activeIndex].visit_id, false);
+      }
+    }, 3000);
+  }
+
+  function fetchHistory(visitId, isInitial) {
+    fetch(`/api/messaging/history/${visitId}/`, {
+      headers: { 'Accept': 'application/json' },
+      credentials: 'same-origin',
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        if (activeIndex < 0 || CONVERSATIONS[activeIndex].visit_id !== visitId) return;
+
+        const messagesEl = document.getElementById('chat-messages');
+        if (!messagesEl) return;
+
+        const rawList = Array.isArray(data) ? data : (data.messages || []);
+
+        if (isInitial) {
+          messagesEl.innerHTML = '';
+          renderedMsgIds.clear();
+
+          if (rawList.length === 0) {
+            messagesEl.innerHTML = `
+              <div id="buyer-no-msgs" class="flex items-center justify-center h-full text-center text-gray-400 text-xs p-8">
+                <div>
+                  <i class="ri-chat-smile-3-line text-3xl text-indigo-400 mb-2 block"></i>
+                  <p class="font-semibold text-sm text-white">No messages yet</p>
+                  <p class="mt-1">Send a message to chat with ${escapeHtml(CONVERSATIONS[activeIndex].seller_name)}.</p>
+                </div>
+              </div>
+            `;
+            return;
+          }
+        } else {
+          const placeholder = document.getElementById('buyer-no-msgs');
+          if (placeholder && rawList.length > 0) placeholder.remove();
+        }
+
+        let hasNew = false;
+        rawList.forEach(m => {
+          if (!renderedMsgIds.has(m.id)) {
+            renderedMsgIds.add(m.id);
+            hasNew = true;
+            appendBubble(m, messagesEl);
+          }
+        });
+
+        if (hasNew) {
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+          if (rawList.length > 0) {
+            const lastM = rawList[rawList.length - 1];
+            CONVERSATIONS[activeIndex].last = lastM.content;
+            CONVERSATIONS[activeIndex].time = formatTime(lastM.timestamp);
+            renderConvList(document.getElementById('chat-search') ? document.getElementById('chat-search').value : '');
+          }
+        }
+      })
+      .catch(err => {
+        console.warn('[BuyerChat] History error:', err);
+      });
+  }
+
+  function appendBubble(m, container) {
+    // Buyer's own message: sender_buyer_id is set
+    const isMe = Boolean(m.sender_buyer_id);
+    const wrap = document.createElement('div');
+    wrap.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-3`;
+    wrap.innerHTML = `
+      <div class="${isMe ? 'chat-bubble-out text-white' : 'chat-bubble-in text-gray-200'} px-4 py-2.5 max-w-[75%] shadow-sm">
+        <p class="text-sm whitespace-pre-wrap break-words">${escapeHtml(m.content)}</p>
+        <p class="text-[10px] ${isMe ? 'text-blue-200' : 'text-gray-400'} mt-1 text-right">${formatTime(m.timestamp)}</p>
+      </div>
+    `;
+    container.appendChild(wrap);
+  }
+
+  function sendMessage() {
+    if (activeIndex < 0 || activeIndex >= CONVERSATIONS.length) return;
+    const input = document.getElementById('chat-input');
+    if (!input) return;
+
+    const content = input.value.trim();
+    if (!content) return;
+
+    const c = CONVERSATIONS[activeIndex];
+    input.disabled = true;
+
+    fetch('/api/messaging/send/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken(),
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        visit_id: c.visit_id,
+        content: content,
+      }),
+    })
+      .then(res => {
+        if (!res.ok) {
+          return res.json().then(d => { throw new Error(d.detail || d.error || `HTTP ${res.status}`); });
+        }
+        return res.json();
+      })
+      .then(data => {
+        input.disabled = false;
+        input.value = '';
+        input.focus();
+
+        const placeholder = document.getElementById('buyer-no-msgs');
+        if (placeholder) placeholder.remove();
+
+        const messagesEl = document.getElementById('chat-messages');
+        if (messagesEl && data.message_id) {
+          renderedMsgIds.add(data.message_id);
+          appendBubble({
+            id: data.message_id,
+            sender_buyer_id: window.CURRENT_BUYER_ID || 1,
+            content: content,
+            timestamp: new Date().toISOString(),
+          }, messagesEl);
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        c.last = content;
+        c.time = 'Just now';
+        renderConvList(document.getElementById('chat-search') ? document.getElementById('chat-search').value : '');
+      })
+      .catch(err => {
+        console.error('[BuyerChat] Send error:', err);
+        input.disabled = false;
+        input.focus();
+        alert(`Could not send message: ${err.message}`);
+      });
+  }
+
+  window.__buyerSelectConv = selectConv;
+
+  document.addEventListener('DOMContentLoaded', function() {
+    initData();
+    renderConvList('');
+
+    const searchInput = document.getElementById('chat-search');
+    if (searchInput) {
+      searchInput.addEventListener('input', function(e) {
+        renderConvList(e.target.value);
+      });
+    }
+
+    const sendForm = document.getElementById('chat-send-form');
+    if (sendForm) {
+      sendForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        sendMessage();
+      });
+    }
+
+    if (CONVERSATIONS.length > 0) {
+      let targetIdx = 0;
+      if (initialVisitId) {
+        const found = CONVERSATIONS.findIndex(c => String(c.visit_id) === String(initialVisitId));
+        if (found !== -1) targetIdx = found;
+      }
+      selectConv(targetIdx);
+    }
+  });
+})();
+</script>
+{% endblock %}

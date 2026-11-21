@@ -1,0 +1,477 @@
+{% extends "seller/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<!-- Custom styles for Drag and Drop dropzones / Image pre-population -->
+<style>
+  .dropzone-box {
+    transition: border-color 0.2s, background-color 0.2s;
+  }
+  .dropzone-box:hover {
+    border-color: #3b82f6;
+    background-color: rgba(59, 130, 246, 0.02);
+  }
+  .feedback-banner {
+    border-left: 4px solid #f97316;
+    background: #fff7ed;
+  }
+  html.dark .feedback-banner {
+    background: rgba(249, 115, 22, 0.1);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-[1400px] mx-auto pb-24 animate-fade-in-up">
+
+  <!-- ==================== HEADER ==================== -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-ink-200 dark:border-ink-800 pb-5">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-ink-400 mb-2">
+        <span>Estately</span>
+        <i class="ri-arrow-right-s-line"></i>
+        <span>Properties</span>
+        <i class="ri-arrow-right-s-line"></i>
+        <span class="text-ink-600 dark:text-ink-300 font-medium">Edit Property</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-ink-900 dark:text-white tracking-tight">Edit Property #{{ property.id }}</h1>
+      <p class="text-sm text-ink-400 mt-1">Update your property listing details.</p>
+    </div>
+    <div>
+      <a href="{% url 'seller_properties_page' user.id %}" class="btn-outline text-xs">
+        <i class="ri-arrow-left-line"></i> Back to Properties
+      </a>
+    </div>
+  </div>
+
+  <!-- ==================== FEEDBACK BANNER (If Changes Requested/Rejected) ==================== -->
+  {% if property.approval_status == 'changes_requested' or property.approval_status == 'rejected' %}
+  <div class="card p-5 feedback-banner">
+    <div class="flex items-start gap-4">
+      <div class="flex-shrink-0 w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-950 grid place-items-center">
+        {% if property.approval_status == 'rejected' %}
+        <i class="ri-close-circle-line text-xl text-danger-600 dark:text-danger-400"></i>
+        {% else %}
+        <i class="ri-alert-line text-xl text-orange-600 dark:text-orange-400"></i>
+        {% endif %}
+      </div>
+      <div class="flex-1">
+        <h3 class="text-sm font-bold text-orange-850 dark:text-orange-300">
+          {% if property.approval_status == 'rejected' %}
+          Listing Rejected by Admin
+          {% else %}
+          Action Required: Changes Requested
+          {% endif %}
+        </h3>
+        {% if property.seller_feedback %}
+        <div class="mt-2 p-3 rounded-lg bg-white/60 dark:bg-ink-800/50 border border-orange-200 dark:border-orange-850/30 text-sm text-ink-700 dark:text-ink-200">
+          <p class="font-semibold text-xs text-ink-500 dark:text-ink-400 mb-1">Feedback:</p>
+          {{ property.seller_feedback }}
+        </div>
+        {% endif %}
+        <p class="text-xs text-orange-600 dark:text-orange-400 mt-2">
+          {% if property.approval_status == 'changes_requested' %}
+          Make the necessary updates below and save. The status will automatically revert to "Pending Review" for admin approval.
+          {% else %}
+          Your listing has been rejected. You can correct details below to submit a review request.
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ==================== MAIN FORM LAYOUT ==================== -->
+  <form method="POST" enctype="multipart/form-data" class="space-y-6">
+    {% csrf_token %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- LEFT COLUMN: Form Panels -->
+      <div class="lg:col-span-2 space-y-6">
+
+        <!-- PANEL 1: Basic Information -->
+        <div class="card p-6 space-y-6">
+          <div>
+            <h3 class="text-lg font-bold text-ink-900 dark:text-white">Basic Information</h3>
+            <p class="text-xs text-ink-400 mt-0.5">Where is the property and what is its category?</p>
+          </div>
+
+          <!-- Property Type -->
+          <div>
+            <label for="property_type" class="lbl">Property Type <span class="text-danger-500">*</span></label>
+            <select id="property_type" name="property_type" class="input" required>
+              <option value="" disabled>Select property type</option>
+              <option value="House" {% if property.property_type == "House" %}selected{% endif %}>House</option>
+              <option value="Apartment" {% if property.property_type == "Apartment" %}selected{% endif %}>Apartment</option>
+              <option value="Commercial" {% if property.property_type == "Commercial" %}selected{% endif %}>Commercial</option>
+              <option value="Land" {% if property.property_type == "Land" %}selected{% endif %}>Land</option>
+            </select>
+          </div>
+
+          <!-- Property Address -->
+          <div>
+            <label for="address" class="lbl">Property Address <span class="text-danger-500">*</span></label>
+            <input type="text" id="address" name="address" value="{{ property.address }}" placeholder="Full street address" class="input" required />
+          </div>
+
+          <!-- Location Name + Fetch Coordinates -->
+          <div>
+            <label for="location" class="lbl">Location <span class="text-danger-500">*</span></label>
+            <div class="flex gap-2">
+              <input type="text" id="location" name="location" value="{{ property.location }}" placeholder="e.g. San Francisco, Nob Hill" class="input" required />
+              <button type="button" id="fetch-location" class="btn-primary shrink-0 py-2.5">
+                Fetch Coordinates
+              </button>
+            </div>
+          </div>
+
+          <!-- Latitude & Longitude -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="latitude" class="lbl">Latitude</label>
+              <input type="text" id="latitude" name="latitude" value="{{ property.latitude|default:'' }}" placeholder="e.g. 37.7749" class="input bg-ink-50/50 dark:bg-ink-950/20" />
+            </div>
+            <div>
+              <label for="longitude" class="lbl">Longitude</label>
+              <input type="text" id="longitude" name="longitude" value="{{ property.longitude|default:'' }}" placeholder="e.g. -122.4194" class="input bg-ink-50/50 dark:bg-ink-950/20" />
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL 2: Property Details & Features -->
+        <div class="card p-6 space-y-6">
+          <div>
+            <h3 class="text-lg font-bold text-ink-900 dark:text-white">Property Details</h3>
+            <p class="text-xs text-ink-400 mt-0.5">Specifications, pricing and availability status.</p>
+          </div>
+
+          <!-- Price, Area -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="price" class="lbl">Property Price (₹) <span class="text-danger-500">*</span></label>
+              <input type="number" id="price" name="price" value="{{ property.price|floatformat:0 }}" placeholder="e.g. 7500000" min="0" class="input" required />
+            </div>
+            <div>
+              <label for="area_sqft" class="lbl">Area (sq ft)</label>
+              <input type="number" id="area_sqft" name="area_sqft" value="{{ property.area_sqft|floatformat:0 }}" placeholder="e.g. 1500" class="input" />
+            </div>
+          </div>
+
+          <!-- Bedrooms, Bathrooms, Availability Status -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label for="bedrooms" class="lbl">Bedrooms</label>
+              <input type="number" id="bedrooms" name="bedrooms" value="{{ property.bedrooms|default:'' }}" placeholder="e.g. 3" class="input" />
+            </div>
+            <div>
+              <label for="bathrooms" class="lbl">Bathrooms</label>
+              <input type="number" id="bathrooms" name="bathrooms" value="{{ property.bathrooms|default:'' }}" placeholder="e.g. 2" class="input" />
+            </div>
+            <div>
+              <label for="status" class="lbl">Availability Status <span class="text-danger-500">*</span></label>
+              <select id="status" name="status" class="input" required>
+                <option value="Available" {% if property.status == "Available" %}selected{% endif %}>Available</option>
+                <option value="Sold" {% if property.status == "Sold" %}selected{% endif %}>Sold</option>
+                <option value="Rented" {% if property.status == "Rented" %}selected{% endif %}>Rented</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Features -->
+          <div>
+            <label for="features" class="lbl">Features</label>
+            <input type="text" id="features" name="features" value="{{ property.features }}" placeholder="Gym, Parking, Security, Garden, Swimming Pool" class="input" />
+            <p class="text-[10px] text-ink-400 mt-1">Separate features with commas.</p>
+          </div>
+
+          <!-- Description -->
+          <div>
+            <label for="description" class="lbl">Description</label>
+            <textarea id="description" name="description" rows="4" maxlength="1000" placeholder="Provide a detailed description of the property..." class="input">{{ property.description }}</textarea>
+            <div class="flex justify-end mt-1">
+              <span id="char-count" class="text-[10px] text-ink-400">0 / 1000 characters</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL 3: Media Upload -->
+        <div class="card p-6 space-y-6">
+          <div>
+            <h3 class="text-lg font-bold text-ink-900 dark:text-white">Media Gallery</h3>
+            <p class="text-xs text-ink-400 mt-0.5">Upload new images to replace the current ones.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+            <!-- Main Cover Image Dropzone -->
+            <div class="space-y-2">
+              <label class="lbl">Main Cover Image</label>
+              <div id="dropzone-main" class="dropzone-box border-2 border-dashed border-ink-200 dark:border-ink-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-2xl h-44 flex flex-col items-center justify-center text-center p-4 cursor-pointer relative overflow-hidden bg-ink-50/50 dark:bg-ink-900/10">
+                <!-- preview wrapper -->
+                <div id="preview-main" class="absolute inset-0 bg-cover bg-center {% if not property.main_image %}hidden{% endif %}" {% if property.main_image %}style="background-image: url('{{ property.main_image.url }}');"{% endif %}></div>
+                <button type="button" id="clear-main" class="absolute top-2 right-2 h-7 w-7 bg-ink-950/80 backdrop-blur rounded-full text-white grid place-items-center hover:bg-danger-600 transition {% if not property.main_image %}hidden{% endif %} z-10">
+                  <i class="ri-close-line"></i>
+                </button>
+                <div class="placeholder-content flex flex-col items-center {% if property.main_image %}hidden{% endif %}">
+                  <i class="ri-image-add-line text-3xl text-brand-500"></i>
+                  <p class="text-xs font-semibold text-ink-700 dark:text-ink-200 mt-2">Upload Cover Image</p>
+                  <p class="text-[10px] text-ink-400 mt-1">Drag & drop or click to replace</p>
+                </div>
+              </div>
+              <input type="file" id="main_image" name="main_image" class="hidden" accept="image/*" />
+            </div>
+
+            <!-- Additional Image 1 -->
+            <div class="space-y-2">
+              <label class="lbl">Gallery Photo 1</label>
+              <div id="dropzone-img1" class="dropzone-box border-2 border-dashed border-ink-200 dark:border-ink-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-2xl h-44 flex flex-col items-center justify-center text-center p-4 cursor-pointer relative overflow-hidden bg-ink-50/50 dark:bg-ink-900/10">
+                <div id="preview-img1" class="absolute inset-0 bg-cover bg-center {% if not property.image_1 %}hidden{% endif %}" {% if property.image_1 %}style="background-image: url('{{ property.image_1.url }}');"{% endif %}></div>
+                <button type="button" id="clear-img1" class="absolute top-2 right-2 h-7 w-7 bg-ink-950/80 backdrop-blur rounded-full text-white grid place-items-center hover:bg-danger-600 transition {% if not property.image_1 %}hidden{% endif %} z-10">
+                  <i class="ri-close-line"></i>
+                </button>
+                <div class="placeholder-content flex flex-col items-center {% if property.image_1 %}hidden{% endif %}">
+                  <i class="ri-camera-lens-line text-3xl text-ink-400"></i>
+                  <p class="text-xs font-semibold text-ink-700 dark:text-ink-200 mt-2">Upload Photo 1</p>
+                  <p class="text-[10px] text-ink-400 mt-1">Drag & drop or click to replace</p>
+                </div>
+              </div>
+              <input type="file" id="image_1" name="image_1" class="hidden" accept="image/*" />
+            </div>
+
+            <!-- Additional Image 2 -->
+            <div class="space-y-2">
+              <label class="lbl">Gallery Photo 2</label>
+              <div id="dropzone-img2" class="dropzone-box border-2 border-dashed border-ink-200 dark:border-ink-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-2xl h-44 flex flex-col items-center justify-center text-center p-4 cursor-pointer relative overflow-hidden bg-ink-50/50 dark:bg-ink-900/10">
+                <div id="preview-img2" class="absolute inset-0 bg-cover bg-center {% if not property.image_2 %}hidden{% endif %}" {% if property.image_2 %}style="background-image: url('{{ property.image_2.url }}');"{% endif %}></div>
+                <button type="button" id="clear-img2" class="absolute top-2 right-2 h-7 w-7 bg-ink-950/80 backdrop-blur rounded-full text-white grid place-items-center hover:bg-danger-600 transition {% if not property.image_2 %}hidden{% endif %} z-10">
+                  <i class="ri-close-line"></i>
+                </button>
+                <div class="placeholder-content flex flex-col items-center {% if property.image_2 %}hidden{% endif %}">
+                  <i class="ri-camera-lens-line text-3xl text-ink-400"></i>
+                  <p class="text-xs font-semibold text-ink-700 dark:text-ink-200 mt-2">Upload Photo 2</p>
+                  <p class="text-[10px] text-ink-400 mt-1">Drag & drop or click to replace</p>
+                </div>
+              </div>
+              <input type="file" id="image_2" name="image_2" class="hidden" accept="image/*" />
+            </div>
+
+            <!-- Additional Image 3 -->
+            <div class="space-y-2">
+              <label class="lbl">Gallery Photo 3</label>
+              <div id="dropzone-img3" class="dropzone-box border-2 border-dashed border-ink-200 dark:border-ink-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-2xl h-44 flex flex-col items-center justify-center text-center p-4 cursor-pointer relative overflow-hidden bg-ink-50/50 dark:bg-ink-900/10">
+                <div id="preview-img3" class="absolute inset-0 bg-cover bg-center {% if not property.image_3 %}hidden{% endif %}" {% if property.image_3 %}style="background-image: url('{{ property.image_3.url }}');"{% endif %}></div>
+                <button type="button" id="clear-img3" class="absolute top-2 right-2 h-7 w-7 bg-ink-950/80 backdrop-blur rounded-full text-white grid place-items-center hover:bg-danger-600 transition {% if not property.image_3 %}hidden{% endif %} z-10">
+                  <i class="ri-close-line"></i>
+                </button>
+                <div class="placeholder-content flex flex-col items-center {% if property.image_3 %}hidden{% endif %}">
+                  <i class="ri-camera-lens-line text-3xl text-ink-400"></i>
+                  <p class="text-xs font-semibold text-ink-700 dark:text-ink-200 mt-2">Upload Photo 3</p>
+                  <p class="text-[10px] text-ink-400 mt-1">Drag & drop or click to replace</p>
+                </div>
+              </div>
+              <input type="file" id="image_3" name="image_3" class="hidden" accept="image/*" />
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: Sticky Information and Help Tips -->
+      <div class="lg:col-span-1">
+        <div class="card p-6 space-y-6 lg:sticky lg:top-24">
+          <div>
+            <h3 class="text-base font-bold text-ink-900 dark:text-white">Current Status</h3>
+            <p class="text-xs text-ink-400 mt-0.5">Approval tracking info</p>
+          </div>
+
+          <div class="space-y-4">
+            <div class="flex items-center justify-between border-b border-ink-100 dark:border-ink-800 pb-3">
+              <span class="text-xs text-ink-400">Status Badge</span>
+              {% if property.approval_status == 'pending' %}
+              <span class="badge-warning">Pending Review</span>
+              {% elif property.approval_status == 'approved' %}
+              <span class="badge-success">Approved</span>
+              {% elif property.approval_status == 'rejected' %}
+              <span class="badge-danger">Rejected</span>
+              {% elif property.approval_status == 'changes_requested' %}
+              <span class="badge-orange">Changes Requested</span>
+              {% endif %}
+            </div>
+            <div class="flex items-center justify-between border-b border-ink-100 dark:border-ink-800 pb-3">
+              <span class="text-xs text-ink-400">Last Reviewed</span>
+              <span class="text-xs font-bold text-ink-800 dark:text-white">{{ property.reviewed_at|date:"M d, Y"|default:"Never" }}</span>
+            </div>
+          </div>
+
+          <!-- Quick Tips -->
+          <div class="rounded-2xl bg-ink-50 dark:bg-ink-900/40 p-4 border border-ink-100 dark:border-ink-800/80">
+            <h4 class="text-xs font-bold text-ink-800 dark:text-white flex items-center gap-1.5">
+              <i class="ri-lightbulb-line text-warning-500"></i> Editing Notes
+            </h4>
+            <ul class="mt-3 space-y-2 text-[11px] text-ink-500 list-disc list-inside leading-relaxed">
+              <li>Address changes will require coordinates update.</li>
+              <li>New images replace old ones immediately.</li>
+              <li>Re-submitting changes notifies the admin review queue.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== BOTTOM ACTION BAR ==================== -->
+    <div class="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-ink-900 border-t border-ink-200 dark:border-ink-800 px-6 py-4 flex items-center justify-between lg:left-72 transition-all duration-300">
+      <a href="{% url 'seller_properties_page' user.id %}" class="btn-outline">
+        Cancel
+      </a>
+      <div class="flex gap-3">
+        <button type="submit" class="btn-primary bg-success-600 hover:bg-success-700 border-none">
+          <i class="ri-checkbox-circle-line"></i> Save Property Changes
+        </button>
+      </div>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    setupGeocoding();
+    setupImageDropzones();
+    setupCharCounter();
+  });
+
+  /* ---------- LATITUDE / LONGITUDE GEOCODING ---------- */
+  function setupGeocoding() {
+    const fetchBtn = document.querySelector('#fetch-location');
+    const locationInput = document.querySelector('#location');
+    const latInput = document.querySelector('#latitude');
+    const lonInput = document.querySelector('#longitude');
+
+    if (!fetchBtn) return;
+
+    fetchBtn.addEventListener('click', () => {
+      const locVal = locationInput ? locationInput.value : '';
+      if (!locVal) {
+        alert("Please enter a location first.");
+        return;
+      }
+
+      fetchBtn.innerHTML = `<i class="ri-loader-4-line animate-spin"></i> Fetching...`;
+      fetchBtn.disabled = true;
+
+      const proxyUrl = "https://api.allorigins.win/raw?url=";
+      const queryUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locVal)}`;
+      const url = proxyUrl + encodeURIComponent(queryUrl);
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.length > 0) {
+            if (latInput) latInput.value = data[0].lat;
+            if (lonInput) lonInput.value = data[0].lon;
+          } else {
+            alert("Location not found. Try a more specific location name.");
+          }
+        })
+        .catch(error => {
+          console.error("Geocoding error:", error);
+          alert("Error fetching coordinates.");
+        })
+        .finally(() => {
+          fetchBtn.innerHTML = `Fetch Coordinates`;
+          fetchBtn.disabled = false;
+        });
+    });
+  }
+
+  /* ---------- CHARACTER COUNTER ---------- */
+  function setupCharCounter() {
+    const desc = document.querySelector('#description');
+    const counter = document.querySelector('#char-count');
+    if (!desc || !counter) return;
+
+    const updateCount = () => {
+      const len = desc.value.length;
+      counter.textContent = `${len} / 1000 characters`;
+    };
+
+    desc.addEventListener('input', updateCount);
+    updateCount();
+  }
+
+  /* ---------- IMAGE DROPZONES & PREVIEWS ---------- */
+  function setupImageDropzones() {
+    const uploadZones = [
+      { zone: '#dropzone-main', input: '#main_image', preview: '#preview-main', clear: '#clear-main', key: 'mainImage' },
+      { zone: '#dropzone-img1', input: '#image_1', preview: '#preview-img1', clear: '#clear-img1', key: 'image1' },
+      { zone: '#dropzone-img2', input: '#image_2', preview: '#preview-img2', clear: '#clear-img2', key: 'image2' },
+      { zone: '#dropzone-img3', input: '#image_3', preview: '#preview-img3', clear: '#clear-img3', key: 'image3' }
+    ];
+
+    uploadZones.forEach(({ zone, input, preview, clear }) => {
+      const zEl = document.querySelector(zone);
+      const iEl = document.querySelector(input);
+      const pEl = document.querySelector(preview);
+      const cEl = document.querySelector(clear);
+      const placeholder = zEl ? zEl.querySelector('.placeholder-content') : null;
+
+      if (!zEl || !iEl) return;
+
+      zEl.addEventListener('click', (e) => {
+        if (e.target.closest(clear)) return;
+        iEl.click();
+      });
+
+      zEl.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zEl.classList.add('border-brand-500', 'bg-brand-50/20', 'dark:bg-brand-900/10');
+      });
+
+      zEl.addEventListener('dragleave', () => {
+        zEl.classList.remove('border-brand-500', 'bg-brand-50/20', 'dark:bg-brand-900/10');
+      });
+
+      zEl.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zEl.classList.remove('border-brand-500', 'bg-brand-50/20', 'dark:bg-brand-900/10');
+        if (e.dataTransfer.files.length) {
+          iEl.files = e.dataTransfer.files;
+          handleFileSelect(iEl.files[0], pEl, cEl, placeholder);
+        }
+      });
+
+      iEl.addEventListener('change', () => {
+        if (iEl.files.length) {
+          handleFileSelect(iEl.files[0], pEl, cEl, placeholder);
+        }
+      });
+
+      cEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        iEl.value = '';
+        pEl.style.backgroundImage = '';
+        pEl.classList.add('hidden');
+        cEl.classList.add('hidden');
+        if (placeholder) placeholder.classList.remove('hidden');
+      });
+    });
+  }
+
+  function handleFileSelect(file, preview, clear, placeholder) {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      preview.style.backgroundImage = `url('${e.target.result}')`;
+      preview.classList.remove('hidden');
+      clear.classList.remove('hidden');
+      if (placeholder) placeholder.classList.add('hidden');
+    };
+    reader.readAsDataURL(file);
+  }
+</script>
+{% endblock %}

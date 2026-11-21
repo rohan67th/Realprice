@@ -1,0 +1,316 @@
+{% extends "admin_base.html" %}
+{% load humanize %}
+
+{% block title %}REAL PRICE · Admin Dashboard{% endblock %}
+{% block breadcrumb %}Overview{% endblock %}
+
+{% block content %}
+      <!-- =========================================================
+           PAGE: ADMIN DASHBOARD
+      ========================================================== -->
+      <section class="space-y-6">
+
+        <!-- Welcome + Quick Stats ---->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Welcome card -->
+          <div class="lg:col-span-2 card p-6 sm:p-8 relative overflow-hidden animate-fade-in-up">
+            <div class="absolute -right-10 -top-10 h-44 w-44 rounded-full bg-brand-100/60 dark:bg-brand-900/30 blur-2xl"></div>
+            <div class="relative">
+              <p class="text-sm text-ink-500 dark:text-ink-400">Welcome back,</p>
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-ink-900 dark:text-white tracking-tight mt-1">Admin 👋</h1>
+              <p class="text-sm text-ink-500 dark:text-ink-400 mt-2 max-w-lg">You have <span class="font-semibold text-warning-600">{{ pending_approvals }} pending approvals</span> and <span class="font-semibold text-danger-600">{{ open_complaints_count }} open complaints</span> to review. Let's keep things running smooth.</p>
+              <div class="mt-6 flex flex-wrap gap-3">
+                <a href="{% url 'seller_approvals' %}" class="btn-primary"><i class="ri-user-follow-line"></i> Approve Sellers</a>
+                <a href="{% url 'listing_approvals' %}" class="btn-secondary"><i class="ri-file-check-line"></i> Review Listings</a>
+                <a href="{% url 'admin_analytics' %}" class="btn-outline"><i class="ri-bar-chart-2-line"></i> View Analytics</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick stats summary -->
+          <div class="card p-6 animate-fade-in-up stagger-1">
+            <p class="text-sm font-bold text-ink-900 dark:text-white">Platform Health</p>
+            <p class="text-xs text-ink-400">Overview snapshot</p>
+            <div class="mt-4 space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-ink-500">Total Users</span>
+                <span class="text-sm font-bold text-ink-900 dark:text-white">{{ total_users }}</span>
+              </div>
+              <div class="h-2 rounded-full bg-ink-100 dark:bg-ink-800 overflow-hidden"><div class="h-full bg-brand-500 rounded-full" style="width:85%"></div></div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-ink-500">Active Listings</span>
+                <span class="text-sm font-bold text-ink-900 dark:text-white">{{ total_listings }}</span>
+              </div>
+              <div class="h-2 rounded-full bg-ink-100 dark:bg-ink-800 overflow-hidden"><div class="h-full bg-success-500 rounded-full" style="width:62%"></div></div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-ink-500">Pending Approvals</span>
+                <span class="text-sm font-bold text-ink-900 dark:text-white">{{ pending_approvals }}</span>
+              </div>
+              <div class="h-2 rounded-full bg-ink-100 dark:bg-ink-800 overflow-hidden"><div class="h-full bg-warning-500 rounded-full" style="width:25%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ STATISTICS CARDS ============ -->
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+          <!-- Total Users -->
+          <div class="card card-hover p-5 animate-fade-in-up stagger-1">
+            <div class="flex items-center justify-between mb-3">
+              <div class="h-10 w-10 rounded-xl bg-brand-50 dark:bg-brand-900/30 grid place-items-center">
+                <i class="ri-group-line text-lg text-brand-600 dark:text-brand-400"></i>
+              </div>
+              <span class="badge-brand"><i class="ri-arrow-up-line"></i> 12%</span>
+            </div>
+            <p class="text-2xl font-extrabold text-ink-900 dark:text-white">{{ total_users }}</p>
+            <p class="text-xs text-ink-400 mt-1">Total Users</p>
+            <p class="text-[11px] text-ink-400 mt-0.5">{{ total_sellers }} sellers · {{ total_buyers }} buyers</p>
+          </div>
+
+          <!-- Active Listings -->
+          <div class="card card-hover p-5 animate-fade-in-up stagger-2">
+            <div class="flex items-center justify-between mb-3">
+              <div class="h-10 w-10 rounded-xl bg-success-50 dark:bg-success-900/30 grid place-items-center">
+                <i class="ri-building-4-line text-lg text-success-600 dark:text-success-400"></i>
+              </div>
+              <span class="badge-success"><i class="ri-arrow-up-line"></i> 8%</span>
+            </div>
+            <p class="text-2xl font-extrabold text-ink-900 dark:text-white">{{ total_listings }}</p>
+            <p class="text-xs text-ink-400 mt-1">Active Listings</p>
+            <p class="text-[11px] text-ink-400 mt-0.5">Approved properties</p>
+          </div>
+
+          <!-- Pending Approvals -->
+          <div class="card card-hover p-5 animate-fade-in-up stagger-3">
+            <div class="flex items-center justify-between mb-3">
+              <div class="h-10 w-10 rounded-xl bg-warning-50 dark:bg-warning-900/30 grid place-items-center">
+                <i class="ri-time-line text-lg text-warning-600 dark:text-warning-400"></i>
+              </div>
+              <span class="badge-warning"><i class="ri-arrow-down-line"></i> 3%</span>
+            </div>
+            <p class="text-2xl font-extrabold text-ink-900 dark:text-white">{{ pending_approvals }}</p>
+            <p class="text-xs text-ink-400 mt-1">Pending Approvals</p>
+            <p class="text-[11px] text-ink-400 mt-0.5">{{ pending_seller_count }} sellers · {{ pending_property_count }} listings</p>
+          </div>
+
+          <!-- Total Properties -->
+          <div class="card card-hover p-5 animate-fade-in-up stagger-4">
+            <div class="flex items-center justify-between mb-3">
+              <div class="h-10 w-10 rounded-xl bg-danger-50 dark:bg-danger-900/30 grid place-items-center">
+                <i class="ri-home-5-line text-lg text-danger-600 dark:text-danger-400"></i>
+              </div>
+              <span class="badge-neutral">All</span>
+            </div>
+            <p class="text-2xl font-extrabold text-ink-900 dark:text-white">{{ total_properties }}</p>
+            <p class="text-xs text-ink-400 mt-1">Total Properties</p>
+            <p class="text-[11px] text-ink-400 mt-0.5">All properties on platform</p>
+          </div>
+        </div>
+
+        <!-- Recent Sellers + Needs Attention -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Recent Sellers -->
+          <div class="lg:col-span-2 card p-6 animate-fade-in-up">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="font-bold text-ink-900 dark:text-white">Recent Sellers</h3>
+                <p class="text-xs text-ink-400">Latest registered sellers</p>
+              </div>
+              <a href="{% url 'seller_list' %}" class="text-xs font-semibold text-brand-600 hover:text-brand-700">View all <i class="ri-arrow-right-line"></i></a>
+            </div>
+            <div class="divide-y divide-ink-100 dark:divide-ink-800">
+              {% for seller in recent_sellers %}
+              <div class="flex items-center gap-4 py-3 hover:bg-ink-50 dark:hover:bg-ink-800/50 rounded-lg px-2 transition -mx-2">
+                <!-- Avatar -->
+                <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-brand-50 dark:bg-brand-900/30">
+                  {% if seller.profile_pic %}
+                  <img src="{{ seller.profile_pic.url }}" alt="{{ seller.username }}" class="w-9 h-9 rounded-full object-cover">
+                  {% else %}
+                  <i class="ri-user-line text-sm text-brand-600 dark:text-brand-400"></i>
+                  {% endif %}
+                </div>
+                <!-- Info -->
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium text-ink-800 dark:text-ink-100 truncate">{{ seller.username }}</div>
+                  <div class="text-xs text-ink-400 truncate">{{ seller.email }}</div>
+                </div>
+                <!-- Role pill -->
+                <span class="badge-brand">Seller</span>
+                <!-- Status -->
+                {% if seller.is_approved and not seller.is_blocked %}
+                <span class="badge-success">Active</span>
+                {% elif seller.is_blocked %}
+                <span class="badge-danger">Blocked</span>
+                {% else %}
+                <span class="badge-warning">Pending</span>
+                {% endif %}
+              </div>
+              {% empty %}
+              <div class="py-10 text-center text-ink-400">
+                <i class="ri-user-line text-3xl mb-2 block"></i>
+                No sellers registered yet
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Needs Attention -->
+          <div class="card p-6 animate-fade-in-up stagger-1">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-ink-900 dark:text-white">Needs Attention</h3>
+              <span class="badge-warning">{{ pending_approvals }}</span>
+            </div>
+            <div class="space-y-3">
+              <!-- Pending seller approvals -->
+              <a href="{% url 'seller_approvals' %}" class="flex items-center gap-3 p-3 rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 hover:border-brand-300 dark:hover:border-brand-800 hover:shadow-card transition group">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-warning-50 dark:bg-warning-900/30">
+                  <i class="ri-store-2-line text-base text-warning-600 dark:text-warning-400"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium text-ink-800 dark:text-ink-100">Pending Sellers</div>
+                  <div class="text-xs text-ink-400">{{ pending_seller_count }} sellers waiting</div>
+                </div>
+                <i class="ri-arrow-right-s-line text-ink-300 dark:text-ink-600 group-hover:text-brand-500 transition"></i>
+              </a>
+
+              <!-- Pending listing approvals -->
+              <a href="{% url 'listing_approvals' %}" class="flex items-center gap-3 p-3 rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 hover:border-brand-300 dark:hover:border-brand-800 hover:shadow-card transition group">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-brand-50 dark:bg-brand-900/30">
+                  <i class="ri-building-4-line text-base text-brand-600 dark:text-brand-400"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium text-ink-800 dark:text-ink-100">Pending Listings</div>
+                  <div class="text-xs text-ink-400">{{ pending_property_count }} listings waiting</div>
+                </div>
+                <i class="ri-arrow-right-s-line text-ink-300 dark:text-ink-600 group-hover:text-brand-500 transition"></i>
+              </a>
+
+              <!-- Open complaints -->
+              <a href="{% url 'admin_complaints' %}" class="flex items-center gap-3 p-3 rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 hover:border-brand-300 dark:hover:border-brand-800 hover:shadow-card transition group">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-danger-50 dark:bg-danger-900/30">
+                  <i class="ri-error-warning-line text-base text-danger-600 dark:text-danger-400"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium text-ink-800 dark:text-ink-100">Open Complaints</div>
+                  <div class="text-xs text-ink-400">{{ open_complaints_count }} unresolved</div>
+                </div>
+                <i class="ri-arrow-right-s-line text-ink-300 dark:text-ink-600 group-hover:text-brand-500 transition"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="animate-fade-in-up">
+          <h3 class="font-bold text-ink-900 dark:text-white mb-4">Quick Actions</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <a href="{% url 'seller_approvals' %}" class="card card-hover p-5 group">
+              <div class="flex items-center gap-4">
+                <div class="h-10 w-10 rounded-xl bg-success-50 dark:bg-success-900/30 grid place-items-center group-hover:bg-success-100 dark:group-hover:bg-success-900/50 transition">
+                  <i class="ri-user-follow-line text-lg text-success-600 dark:text-success-400"></i>
+                </div>
+                <div class="flex-1">
+                  <div class="text-sm font-semibold text-ink-800 dark:text-ink-100">Approve Sellers</div>
+                  <div class="text-xs text-ink-400">Review pending accounts</div>
+                </div>
+                <i class="ri-arrow-right-s-line text-ink-300 dark:text-ink-600 group-hover:text-brand-500 transition"></i>
+              </div>
+            </a>
+
+            <a href="{% url 'listing_approvals' %}" class="card card-hover p-5 group">
+              <div class="flex items-center gap-4">
+                <div class="h-10 w-10 rounded-xl bg-brand-50 dark:bg-brand-900/30 grid place-items-center group-hover:bg-brand-100 dark:group-hover:bg-brand-900/50 transition">
+                  <i class="ri-home-check-line text-lg text-brand-600 dark:text-brand-400"></i>
+                </div>
+                <div class="flex-1">
+                  <div class="text-sm font-semibold text-ink-800 dark:text-ink-100">Approve Listings</div>
+                  <div class="text-xs text-ink-400">Review new properties</div>
+                </div>
+                <i class="ri-arrow-right-s-line text-ink-300 dark:text-ink-600 group-hover:text-brand-500 transition"></i>
+              </div>
+            </a>
+
+            <a href="{% url 'admin_complaints' %}" class="card card-hover p-5 group">
+              <div class="flex items-center gap-4">
+                <div class="h-10 w-10 rounded-xl bg-danger-50 dark:bg-danger-900/30 grid place-items-center group-hover:bg-danger-100 dark:group-hover:bg-danger-900/50 transition">
+                  <i class="ri-chat-check-line text-lg text-danger-600 dark:text-danger-400"></i>
+                </div>
+                <div class="flex-1">
+                  <div class="text-sm font-semibold text-ink-800 dark:text-ink-100">View Complaints</div>
+                  <div class="text-xs text-ink-400">Manage buyer issues</div>
+                </div>
+                <i class="ri-arrow-right-s-line text-ink-300 dark:text-ink-600 group-hover:text-brand-500 transition"></i>
+              </div>
+            </a>
+
+            <a href="{% url 'admin_analytics' %}" class="card card-hover p-5 group">
+              <div class="flex items-center gap-4">
+                <div class="h-10 w-10 rounded-xl bg-warning-50 dark:bg-warning-900/30 grid place-items-center group-hover:bg-warning-100 dark:group-hover:bg-warning-900/50 transition">
+                  <i class="ri-bar-chart-line text-lg text-warning-600 dark:text-warning-400"></i>
+                </div>
+                <div class="flex-1">
+                  <div class="text-sm font-semibold text-ink-800 dark:text-ink-100">View Analytics</div>
+                  <div class="text-xs text-ink-400">Platform insights</div>
+                </div>
+                <i class="ri-arrow-right-s-line text-ink-300 dark:text-ink-600 group-hover:text-brand-500 transition"></i>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Recently Added Properties -->
+        <div class="animate-fade-in-up">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-ink-900 dark:text-white">Recently Added Properties</h3>
+            <a href="{% url 'admin_property_list' %}" class="text-xs font-semibold text-brand-600 hover:text-brand-700">View all <i class="ri-arrow-right-line"></i></a>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {% for property in recent_properties %}
+            <div class="card card-hover overflow-hidden group">
+              <!-- Image -->
+              {% if property.main_image %}
+              <div class="h-[120px] overflow-hidden">
+                <img src="{{ property.main_image.url }}" alt="{{ property.property_type }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+              </div>
+              {% else %}
+              <div class="h-[120px] flex items-center justify-center bg-ink-50 dark:bg-ink-800">
+                <i class="ri-image-line text-2xl text-ink-300 dark:text-ink-600"></i>
+              </div>
+              {% endif %}
+
+              <!-- Info -->
+              <div class="p-4">
+                <div class="text-sm font-semibold text-ink-800 dark:text-ink-100 truncate">{{ property.property_type }} at {{ property.location }}</div>
+                <div class="text-xs text-ink-400 mt-0.5">@{{ property.seller.username }}</div>
+                <div class="text-ink-900 dark:text-white font-bold text-sm mt-2">₹{{ property.price|floatformat:0|intcomma }}</div>
+                <div class="flex items-center justify-between mt-3">
+                  <!-- Property Type Badge -->
+                  {% if property.property_type == 'House' %}
+                  <span class="badge-brand">House</span>
+                  {% elif property.property_type == 'Apartment' %}
+                  <span class="badge-neutral">Apartment</span>
+                  {% elif property.property_type == 'Commercial' %}
+                  <span class="badge-warning">Commercial</span>
+                  {% elif property.property_type == 'Land' %}
+                  <span class="badge-success">Land</span>
+                  {% elif property.property_type == 'Villa' %}
+                  <span class="badge-success">Villa</span>
+                  {% else %}
+                  <span class="badge-neutral">{{ property.property_type }}</span>
+                  {% endif %}
+                  <span class="flex items-center gap-0.5 text-xs text-ink-400 truncate max-w-[100px]">
+                    <i class="ri-map-pin-line text-[11px]"></i>{{ property.location|truncatewords:2 }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full card p-10 text-center text-ink-400">
+              <i class="ri-home-line text-4xl mb-2 block"></i>
+              No properties listed yet
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+      </section>
+{% endblock %}

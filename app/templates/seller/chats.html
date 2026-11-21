@@ -1,0 +1,39 @@
+{% extends "seller/base.html" %}
+{% load static %}
+
+{% block content %}
+      <!-- =========================================================
+           PAGE: CHATS
+      ========================================================== -->
+      <section id="page-chats" class="page active">
+        <h2 class="text-xl font-extrabold text-ink-900 dark:text-white mb-6">Chats</h2>
+        <div class="card overflow-hidden grid grid-cols-1 md:grid-cols-3" style="min-height:560px">
+          <!-- chat list -->
+          <div class="border-r border-ink-200 dark:border-ink-800 flex flex-col">
+            <div class="p-4 border-b border-ink-200 dark:border-ink-800">
+              <div class="relative"><i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"></i><input id="chat-search" class="input pl-9" placeholder="Search chats…" /></div>
+            </div>
+            <div id="chat-list" class="flex-1 overflow-y-auto no-scrollbar"></div>
+          </div>
+          <!-- chat thread -->
+          <div class="md:col-span-2 flex flex-col">
+            <div id="chat-header" class="p-4 border-b border-ink-200 dark:border-ink-800 flex items-center gap-3"></div>
+            <div id="chat-thread" class="flex-1 overflow-y-auto no-scrollbar p-6 space-y-3 bg-ink-50/50 dark:bg-ink-950/40"></div>
+            <form id="chat-form" class="p-4 border-t border-ink-200 dark:border-ink-800 flex items-center gap-2">
+              <button type="button" class="h-9 w-9 grid place-items-center rounded-xl text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-800" title="Attachment"><i class="ri-attachment-2"></i></button>
+              <input id="chat-input" class="input flex-1" placeholder="Type a message…" autocomplete="off" />
+              <button type="submit" id="chat-send-btn" class="btn-primary px-3" title="Send message"><i class="ri-send-plane-fill"></i></button>
+            </form>
+          </div>
+        </div>
+      </section>
+{% endblock %}
+
+{% block extra_js %}
+{{ conversations|json_script:"seller-conversations-data" }}
+<script>
+  window.CURRENT_SELLER_ID = {{ user.id }};
+  window.INITIAL_VISIT_ID = "{{ initial_visit_id|default:'' }}";
+</script>
+<script src="{% static 'seller/js/chats.js' %}?v={% now 'U' %}"></script>
+{% endblock %}

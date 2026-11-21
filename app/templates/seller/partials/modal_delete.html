@@ -1,0 +1,10 @@
+<!-- templates/seller/partials/modal_delete.html -->
+<!-- Verbatim from seller_profile.html lines 801-808 -->
+<!-- Delete Property -->
+<div id="modal-delete" class="modal-wrap hidden fixed inset-0 z-[100] grid place-items-center p-4">
+  <div class="absolute inset-0 bg-ink-950/40 backdrop-blur-sm animate-fade-in" onclick="closeModal('modal-delete')"></div>
+  <div class="relative w-full max-w-md card overflow-hidden animate-scale-in">
+    <div class="p-6 text-center"><div class="mx-auto h-14 w-14 rounded-2xl bg-danger-50 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400 grid place-items-center"><i class="ri-delete-bin-2-line text-2xl"></i></div><h3 class="mt-4 text-lg font-bold text-ink-900 dark:text-white">Delete Property?</h3><p class="mt-2 text-sm text-ink-500">Are you sure you want to delete <span class="font-semibold text-ink-700 dark:text-ink-200" id="del-name">this property</span>? This action cannot be undone.</p></div>
+    <div class="flex gap-3 p-5 border-t border-ink-200 dark:border-ink-800 bg-ink-50/50 dark:bg-ink-900/50"><button class="btn-outline flex-1" onclick="closeModal('modal-delete')">Cancel</button><button class="btn-danger flex-1" onclick="closeModal('modal-delete')"><i class="ri-delete-bin-line"></i> Delete</button></div>
+  </div>
+</div>

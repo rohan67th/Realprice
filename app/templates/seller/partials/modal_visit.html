@@ -1,0 +1,96 @@
+<!-- templates/seller/partials/modal_visit.html -->
+<!-- Schedule Visit Modal with real backend wiring -->
+<div id="modal-visit" class="modal-wrap hidden fixed inset-0 z-[100] grid place-items-center p-4">
+  <div class="absolute inset-0 bg-ink-950/40 backdrop-blur-sm animate-fade-in" onclick="closeModal('modal-visit')"></div>
+  <div class="relative w-full max-w-lg card overflow-hidden animate-scale-in">
+    <form method="post" action="{% url 'seller_create_visit' user.id %}" id="form-schedule-visit">
+      {% csrf_token %}
+      <div class="flex items-center justify-between p-5 border-b border-ink-200 dark:border-ink-800">
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 grid place-items-center">
+            <i class="ri-calendar-check-line text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-ink-900 dark:text-white">Schedule a Visit</h3>
+            <p class="text-xs text-ink-400">Arrange a property tour with a prospective buyer</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeModal('modal-visit')" class="h-8 w-8 grid place-items-center rounded-lg text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-800">
+          <i class="ri-close-line"></i>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <!-- Property Selection -->
+        <div>
+          <label class="lbl">Select Property <span class="text-danger-500">*</span></label>
+          <select name="property_id" class="input" required>
+            <option value="">-- Choose one of your properties --</option>
+            {% for p in seller_properties %}
+              <option value="{{ p.id }}">{{ p.property_type }} · {{ p.location }}{% if p.price %} (₹{{ p.price }}){% endif %}</option>
+            {% empty %}
+              <option value="" disabled>No properties found — add a property first</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Buyer Selection / Input -->
+        <div>
+          <label class="lbl">Buyer Name or Email <span class="text-danger-500">*</span></label>
+          <div class="relative">
+            <input list="buyer-datalist" name="buyer_name" class="input pl-9" placeholder="Search registered buyer or type client name" required autocomplete="off" />
+            <i class="ri-user-search-line absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"></i>
+          </div>
+          <datalist id="buyer-datalist">
+            {% for b in buyers %}
+              <option value="{{ b.name }}">{{ b.email }}{% if b.phone %} · {{ b.phone }}{% endif %}</option>
+            {% endfor %}
+          </datalist>
+          <p class="text-[11px] text-ink-400 mt-1">Select an existing registered buyer or enter a new client's name/email.</p>
+        </div>
+
+        <!-- Date & Time -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="lbl">Tour Date <span class="text-danger-500">*</span></label>
+            <input class="input" type="date" name="scheduled_date" id="modal-visit-date" required />
+          </div>
+          <div>
+            <label class="lbl">Tour Time <span class="text-danger-500">*</span></label>
+            <input class="input" type="time" name="scheduled_time" value="10:00" required />
+          </div>
+        </div>
+
+        <!-- Notes / Instructions -->
+        <div>
+          <label class="lbl">Notes / Special Instructions</label>
+          <textarea class="input" name="message" rows="2" placeholder="e.g. Meeting at the front gate, bring ID proof, etc."></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 p-5 border-t border-ink-200 dark:border-ink-800 bg-ink-50/50 dark:bg-ink-900/50">
+        <button type="button" class="btn-outline" onclick="closeModal('modal-visit')">Cancel</button>
+        <button type="submit" class="btn-primary">
+          <i class="ri-calendar-check-line"></i> Confirm & Schedule
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Set default minimum date to today
+  (function initModalDate(){
+    const dateInput = document.getElementById('modal-visit-date');
+    if (dateInput) {
+      const today = new Date().toISOString().split('T')[0];
+      dateInput.min = today;
+      if (!dateInput.value) {
+        // default to tomorrow
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        dateInput.value = tomorrow.toISOString().split('T')[0];
+      }
+    }
+  })();
+</script>

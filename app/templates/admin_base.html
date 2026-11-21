@@ -1,0 +1,379 @@
+{% load static %}
+<!doctype html>
+<html lang="en" class="">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}REAL PRICE · Admin Console{% endblock %}</title>
+  <meta name="description" content="Premium PropTech Admin Console — manage users, properties, approvals & more." />
+
+  <!-- ============ FONTS ============ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- ============ REMIX ICONS ============ -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+
+  <!-- ============ TAILWIND (Play CDN + inline config) ============ -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#eef5ff',100:'#d9e8ff',200:'#bcd7ff',300:'#8ebdff',400:'#5a9bff',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554' },
+            ink: { 50:'#f8fafc',100:'#f1f5f9',200:'#e2e8f0',300:'#cbd5e1',400:'#94a3b8',500:'#64748b',600:'#475569',700:'#334155',800:'#1e293b',900:'#0f172a',950:'#020617' },
+            success: { 50:'#ecfdf5',100:'#d1fae5',200:'#a7f3d0',300:'#6ee7b7',400:'#34d399',500:'#10b981',600:'#059669',700:'#047857',800:'#065f46',900:'#064e3b' },
+            warning: { 50:'#fffbeb',100:'#fef3c7',200:'#fde68a',300:'#fcd34d',400:'#fbbf24',500:'#f59e0b',600:'#d97706',700:'#b45309',800:'#92400e',900:'#78350f' },
+            danger: { 50:'#fef2f2',100:'#fee2e2',200:'#fecaca',300:'#fca5a5',400:'#f87171',500:'#ef4444',600:'#dc2626',700:'#b91c1c',800:'#991b1b',900:'#7f1d1d' },
+          },
+          fontFamily: { sans:['Plus Jakarta Sans','ui-sans-serif','system-ui','sans-serif'], display:['Plus Jakarta Sans','sans-serif'], mono:['JetBrains Mono','ui-monospace','monospace'] },
+          borderRadius: { '2xl':'1rem','3xl':'1.25rem','4xl':'1.75rem' },
+          boxShadow: {
+            card:'0 1px 2px 0 rgb(15 23 42 / .04), 0 4px 16px -2px rgb(15 23 42 / .06)',
+            'card-hover':'0 4px 8px -2px rgb(15 23 42 / .08), 0 24px 48px -12px rgb(15 23 42 / .16)',
+            glow:'0 0 0 1px rgb(59 130 246 / .15), 0 12px 32px -8px rgb(59 130 246 / .35)',
+          },
+          keyframes: {
+            'fade-in':{'0%':{opacity:'0'},'100%':{opacity:'1'}},
+            'fade-in-up':{'0%':{opacity:'0',transform:'translateY(12px)'},'100%':{opacity:'1',transform:'translateY(0)'}},
+            'slide-in-left':{'0%':{opacity:'0',transform:'translateX(-12px)'},'100%':{opacity:'1',transform:'translateX(0)'}},
+            'scale-in':{'0%':{opacity:'0',transform:'scale(.96)'},'100%':{opacity:'1',transform:'scale(1)'}},
+            shimmer:{'100%':{transform:'translateX(100%)'}},
+            'pulse-soft':{'0%,100%':{opacity:'1'},'50%':{opacity:'.6'}},
+          },
+          animation: {
+            'fade-in':'fade-in .4s ease-out both','fade-in-up':'fade-in-up .5s cubic-bezier(.16,1,.3,1) both',
+            'slide-in-left':'slide-in-left .3s ease-out both','scale-in':'scale-in .2s ease-out both',
+            shimmer:'shimmer 1.6s infinite','pulse-soft':'pulse-soft 2s ease-in-out infinite',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- ============ CUSTOM STYLES ============ -->
+  <style>
+    html{color-scheme:light}html.dark{color-scheme:dark}
+    body{font-family:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    ::-webkit-scrollbar{width:10px;height:10px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:9999px;border:2px solid transparent;background-clip:content-box}
+    ::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+    html.dark ::-webkit-scrollbar-thumb{background:#334155}
+    html.dark ::-webkit-scrollbar-thumb:hover{background:#475569}
+    .glass{background:rgba(255,255,255,.7);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.6)}
+    html.dark .glass{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.05)}
+    .glass-strong{background:rgba(255,255,255,.85);backdrop-filter:blur(20px)}
+    html.dark .glass-strong{background:rgba(15,23,42,.85)}
+    .card{background:#fff;border:1px solid #e2e8f0;border-radius:1rem;box-shadow:0 1px 2px 0 rgb(15 23 42/.04),0 4px 16px -2px rgb(15 23 42/.06);transition:all .3s ease}
+    html.dark .card{background:#0f172a;border-color:#1e293b}
+    .card-hover:hover{transform:translateY(-4px);box-shadow:0 4px 8px -2px rgb(15 23 42/.08),0 24px 48px -12px rgb(15 23 42/.16);border-color:#bcd7ff}
+    html.dark .card-hover:hover{border-color:#1e3a8a}
+    .nav-item{position:relative;display:flex;align-items:center;gap:.75rem;padding:.625rem .75rem;border-radius:.75rem;font-size:.875rem;font-weight:500;color:#64748b;cursor:pointer;transition:all .2s ease}
+    .nav-item:hover{background:#f1f5f9;color:#1e293b}
+    html.dark .nav-item{color:#94a3b8}html.dark .nav-item:hover{background:#1e293b;color:#f1f5f9}
+    .nav-item.active{background:#eef5ff;color:#1d4ed8}
+    html.dark .nav-item.active{background:rgba(30,58,138,.4);color:#8ebdff}
+    .nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);height:1.25rem;width:.25rem;border-radius:0 .25rem .25rem 0;background:#2563eb}
+    html.dark .nav-item.active::before{background:#5a9bff}
+    .btn-ripple{position:relative;overflow:hidden}
+    .ripple{position:absolute;border-radius:9999px;background:rgba(255,255,255,.45);pointer-events:none;transform:scale(0);animation:ripple-anim .6s ease-out}
+    @keyframes ripple-anim{to{transform:scale(2.5);opacity:0}}
+    .skeleton{position:relative;overflow:hidden;background:#f1f5f9;border-radius:.5rem}
+    html.dark .skeleton{background:#1e293b}
+    .skeleton::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);transform:translateX(-100%);animation:shimmer 1.6s infinite}
+    html.dark .skeleton::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.04),transparent)}
+    @keyframes shimmer{100%{transform:translateX(100%)}}
+    .input{width:100%;padding:.625rem .875rem;border-radius:.75rem;background:#fff;border:1px solid #e2e8f0;font-size:.875rem;color:#1e293b;transition:all .2s}
+    .input:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 4px rgba(59,130,246,.1)}
+    html.dark .input{background:#0f172a;border-color:#334155;color:#f1f5f9}
+    .stagger-1{animation-delay:.06s}.stagger-2{animation-delay:.12s}.stagger-3{animation-delay:.18s}
+    .stagger-4{animation-delay:.24s}.stagger-5{animation-delay:.3s}.stagger-6{animation-delay:.36s}
+    .no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{scrollbar-width:none}
+    @media (prefers-reduced-motion: reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+  </style>
+
+  <!-- ============ COMPONENT STYLES ============ -->
+  <style>
+    /* nav label */
+    .nav-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;padding:0 .75rem;margin-bottom:.5rem}
+    html.dark .nav-label{color:#475569}
+    /* mini badge */
+    .badge-mini{display:inline-grid;place-items:center;min-width:1.25rem;height:1.25rem;padding:0 .25rem;font-size:10px;font-weight:700;color:#fff;background:#2563eb;border-radius:9999px}
+    /* buttons */
+    .btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.625rem 1rem;border-radius:.75rem;font-size:.875rem;font-weight:600;color:#fff;background:#2563eb;box-shadow:0 1px 2px rgba(37,99,235,.2);transition:all .2s}
+    .btn-primary:hover{background:#1d4ed8;box-shadow:0 4px 12px rgba(37,99,235,.3)}
+    .btn-primary{position:relative;overflow:hidden}
+    .btn-secondary{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.625rem 1rem;border-radius:.75rem;font-size:.875rem;font-weight:600;color:#334155;background:#f1f5f9;transition:all .2s}
+    html.dark .btn-secondary{background:#1e293b;color:#e2e8f0}
+    .btn-secondary:hover{background:#e2e8f0}html.dark .btn-secondary:hover{background:#334155}
+    .btn-secondary{position:relative;overflow:hidden}
+    .btn-outline{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.625rem 1rem;border-radius:.75rem;font-size:.875rem;font-weight:600;color:#334155;border:1px solid #e2e8f0;background:transparent;transition:all .2s}
+    html.dark .btn-outline{color:#e2e8f0;border-color:#334155}
+    .btn-outline:hover{background:#f8fafc;border-color:#cbd5e1}html.dark .btn-outline:hover{background:#1e293b}
+    .btn-outline{position:relative;overflow:hidden}
+    .btn-danger{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.625rem 1rem;border-radius:.75rem;font-size:.875rem;font-weight:600;color:#fff;background:#dc2626;transition:all .2s}
+    .btn-danger:hover{background:#b91c1c}.btn-danger{position:relative;overflow:hidden}
+    /* badges */
+    .badge-brand{display:inline-flex;align-items:center;gap:.25rem;padding:.25rem .625rem;border-radius:9999px;font-size:11px;font-weight:600;color:#1d4ed8;background:#eef5ff}html.dark .badge-brand{color:#8ebdff;background:rgba(30,58,138,.3)}
+    .badge-success{display:inline-flex;align-items:center;gap:.25rem;padding:.25rem .625rem;border-radius:9999px;font-size:11px;font-weight:600;color:#047857;background:#ecfdf5}html.dark .badge-success{color:#6ee7b7;background:rgba(6,95,70,.3)}
+    .badge-warning{display:inline-flex;align-items:center;gap:.25rem;padding:.25rem .625rem;border-radius:9999px;font-size:11px;font-weight:600;color:#b45309;background:#fffbeb}html.dark .badge-warning{color:#fcd34d;background:rgba(146,64,14,.3)}
+    .badge-danger{display:inline-flex;align-items:center;gap:.25rem;padding:.25rem .625rem;border-radius:9999px;font-size:11px;font-weight:600;color:#b91c1c;background:#fef2f2}html.dark .badge-danger{color:#fca5a5;background:rgba(153,27,27,.3)}
+    .badge-neutral{display:inline-flex;align-items:center;gap:.25rem;padding:.25rem .625rem;border-radius:9999px;font-size:11px;font-weight:600;color:#475569;background:#f1f5f9}html.dark .badge-neutral{color:#cbd5e1;background:#1e293b}
+    /* table header */
+    .th{padding:.75rem 1rem;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+    .sortable{cursor:pointer;user-select:none}.sortable:hover{color:#2563eb}
+    /* action button */
+    .act-btn{display:inline-grid;place-items:center;height:2rem;width:2rem;border-radius:.5rem;color:#64748b;transition:all .2s}
+    .act-btn:hover{background:#f1f5f9;color:#2563eb}html.dark .act-btn{color:#94a3b8}html.dark .act-btn:hover{background:#1e293b;color:#8ebdff}
+    /* dropdown link */
+    .dd-link{display:flex;align-items:center;gap:.625rem;padding:.5rem .75rem;width:100%;font-size:.875rem;color:#475569;transition:all .15s}
+    html.dark .dd-link{color:#cbd5e1}.dd-link:hover{background:#f1f5f9;color:#1e293b}html.dark .dd-link:hover{background:#1e293b;color:#fff}
+    .dd-link i{font-size:1.1rem;color:#94a3b8}
+    /* label */
+    .lbl{display:block;font-size:11px;font-weight:600;color:#64748b;margin-bottom:.375rem;text-transform:uppercase;letter-spacing:.03em}
+    html.dark .lbl{color:#94a3b8}
+    /* empty icon */
+    .empty-ic{position:relative}
+    .empty-ic::before{content:'';position:absolute;inset:0;filter:blur(20px);background:rgba(59,130,246,.2);border-radius:9999px}
+    .empty-ic{display:grid;place-items:center;height:5rem;width:5rem;border-radius:1rem;background:#eef5ff;color:#3b82f6}
+    html.dark .empty-ic{background:rgba(30,58,138,.3);color:#8ebdff}
+    /* modal overlay */
+    .modal-wrap{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.4);backdrop-filter:blur(8px)}
+  </style>
+
+  {% block extra_css %}{% endblock %}
+</head>
+
+<body class="bg-ink-50 dark:bg-ink-950 text-ink-800 dark:text-ink-200">
+
+<div class="flex min-h-screen">
+
+  <!-- =========================================================
+       SIDEBAR
+  ========================================================== -->
+  <aside id="sidebar"
+    class="fixed lg:sticky top-0 left-0 z-50 h-screen w-72 shrink-0 -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-out
+           bg-white dark:bg-ink-900 border-r border-ink-200 dark:border-ink-800 flex flex-col">
+
+    <!-- Brand -->
+    <div class="h-16 flex items-center gap-2.5 px-5 border-b border-ink-200 dark:border-ink-800 shrink-0">
+      <div class="h-9 w-9 rounded-xl bg-brand-600 text-white grid place-items-center shadow-glow">
+        <i class="ri-shield-star-line text-lg"></i>
+      </div>
+      <div class="leading-tight">
+        <p class="font-extrabold text-ink-900 dark:text-white tracking-tight">REAL PRICE</p>
+        <p class="text-[10px] uppercase tracking-widest text-ink-400">Admin Console</p>
+      </div>
+      <button onclick="toggleSidebar()" class="ml-auto lg:hidden h-8 w-8 grid place-items-center rounded-lg text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-800">
+        <i class="ri-close-line text-xl"></i>
+      </button>
+    </div>
+
+    <!-- Nav -->
+    <nav class="flex-1 overflow-y-auto no-scrollbar px-3 py-4 space-y-5">
+
+      <!-- Dashboard -->
+      <div>
+        <p class="nav-label">Main</p>
+        <a class="nav-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}" href="{% url 'admin_dashboard' %}"><i class="ri-dashboard-3-line text-lg"></i><span>Dashboard</span></a>
+      </div>
+
+      <!-- Approvals -->
+      <div>
+        <p class="nav-label">Approvals</p>
+        <a class="nav-item {% if request.resolver_match.url_name == 'seller_approvals' %}active{% endif %}" href="{% url 'seller_approvals' %}"><i class="ri-user-follow-line text-lg"></i><span>Seller Approvals</span></a>
+        <a class="nav-item {% if request.resolver_match.url_name == 'listing_approvals' %}active{% endif %}" href="{% url 'listing_approvals' %}"><i class="ri-file-check-line text-lg"></i><span>Listing Approvals</span></a>
+      </div>
+
+      <!-- Management -->
+      <div>
+        <p class="nav-label">Management</p>
+        <a class="nav-item {% if request.resolver_match.url_name == 'seller_list' %}active{% endif %}" href="{% url 'seller_list' %}"><i class="ri-store-2-line text-lg"></i><span>Seller Management</span></a>
+        <a class="nav-item {% if request.resolver_match.url_name == 'buyer_list' %}active{% endif %}" href="{% url 'buyer_list' %}"><i class="ri-user-3-line text-lg"></i><span>Buyer Management</span></a>
+        <a class="nav-item {% if request.resolver_match.url_name == 'admin_property_list' %}active{% endif %}" href="{% url 'admin_property_list' %}"><i class="ri-home-5-line text-lg"></i><span>Property Management</span></a>
+        <a class="nav-item {% if request.resolver_match.url_name == 'admin_complaints' %}active{% endif %}" href="{% url 'admin_complaints' %}"><i class="ri-error-warning-line text-lg"></i><span>Manage Complaints</span></a>
+      </div>
+
+      <!-- Insights -->
+      <div>
+        <p class="nav-label">Insights</p>
+        <a class="nav-item {% if request.resolver_match.url_name == 'admin_analytics' %}active{% endif %}" href="{% url 'admin_analytics' %}"><i class="ri-bar-chart-2-line text-lg"></i><span>Analytics</span></a>
+        <a class="nav-item {% if request.resolver_match.url_name == 'chatbot_logs' %}active{% endif %}" href="{% url 'chatbot_logs' %}"><i class="ri-robot-line text-lg"></i><span>Chatbot Logs</span></a>
+        <a class="nav-item {% if request.resolver_match.url_name == 'activity_logs' %}active{% endif %}" href="{% url 'activity_logs' %}"><i class="ri-history-line text-lg"></i><span>Activity Log</span></a>
+      </div>
+
+      <!-- System -->
+      <div>
+        <p class="nav-label">System</p>
+        <a class="nav-item" href="#"><i class="ri-settings-3-line text-lg"></i><span>Settings</span></a>
+      </div>
+    </nav>
+
+    <!-- Bottom card + logout -->
+    <div class="p-3 border-t border-ink-200 dark:border-ink-800 space-y-3 shrink-0">
+      <div class="rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 p-4 text-white relative overflow-hidden">
+        <div class="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-white/10"></div>
+        <p class="text-sm font-bold relative">Admin Pro</p>
+        <p class="text-[11px] text-brand-100 mt-0.5 relative">Advanced analytics & automation.</p>
+        <button class="mt-3 w-full bg-white/15 hover:bg-white/25 backdrop-blur rounded-lg py-1.5 text-xs font-semibold transition">Upgrade</button>
+      </div>
+      <a class="nav-item text-danger-600 dark:text-danger-400" href="{% url 'admin_logout' %}"><i class="ri-logout-circle-r-line text-lg"></i><span>Logout</span></a>
+    </div>
+  </aside>
+
+  <!-- Mobile overlay -->
+  <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 z-40 bg-ink-950/40 backdrop-blur-sm lg:hidden hidden"></div>
+
+  <!-- =========================================================
+       MAIN CONTENT
+  ========================================================== -->
+  <div class="flex-1 min-w-0 flex flex-col">
+
+    <!-- TOPBAR -->
+    <header class="sticky top-0 z-30 glass-strong border-b border-ink-200/60 dark:border-ink-800/60">
+      <div class="h-16 px-4 sm:px-6 flex items-center gap-3">
+
+        <!-- mobile menu -->
+        <button onclick="toggleSidebar()" class="lg:hidden h-9 w-9 grid place-items-center rounded-xl text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800">
+          <i class="ri-menu-line text-xl"></i>
+        </button>
+
+        <!-- Breadcrumb -->
+        <div class="hidden md:flex items-center gap-2 text-sm">
+          <span class="text-ink-400">Admin</span>
+          <i class="ri-arrow-right-s-line text-ink-300"></i>
+          <span class="font-semibold text-ink-700 dark:text-ink-200">{% block breadcrumb %}Overview{% endblock %}</span>
+        </div>
+
+        <!-- Search -->
+        <div class="ml-auto md:ml-6 flex-1 max-w-md relative hidden sm:block">
+          <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"></i>
+          <input class="input pl-9 pr-16" placeholder="Search users, properties, approvals…" />
+          <kbd class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-ink-400 bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">⌘K</kbd>
+        </div>
+
+        <!-- Actions -->
+        <div class="ml-auto sm:ml-0 flex items-center gap-1.5">
+
+          <!-- Theme toggle -->
+          <button onclick="toggleTheme()" class="h-9 w-9 grid place-items-center rounded-xl text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800 transition" title="Toggle theme">
+            <i id="theme-icon" class="ri-moon-line text-lg"></i>
+          </button>
+
+          <!-- Notifications -->
+          <div class="relative">
+            <button onclick="toggleDropdown('notif-dd', event)" class="relative h-9 w-9 grid place-items-center rounded-xl text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800 transition">
+              <i class="ri-notification-3-line text-lg"></i>
+              <span class="absolute top-1 right-1 min-w-4 h-4 px-1 grid place-items-center text-[9px] font-bold text-white bg-danger-500 rounded-full">5</span>
+            </button>
+            <!-- dropdown -->
+            <div id="notif-dd" class="dropdown hidden absolute right-0 mt-2 w-80 card p-0 overflow-hidden animate-scale-in origin-top-right z-50">
+              <div class="px-4 py-3 border-b border-ink-200 dark:border-ink-800 flex items-center justify-between">
+                <p class="font-bold text-ink-900 dark:text-white text-sm">Notifications</p>
+                <span class="text-[11px] text-brand-600 font-semibold cursor-pointer">Mark all read</span>
+              </div>
+              <div class="max-h-80 overflow-y-auto no-scrollbar divide-y divide-ink-100 dark:divide-ink-800">
+                <div class="px-4 py-3 hover:bg-ink-50 dark:hover:bg-ink-800/50 transition cursor-pointer">
+                  <p class="text-sm font-medium text-ink-800 dark:text-ink-100">New seller registration</p>
+                  <p class="text-xs text-ink-400 mt-0.5">2 sellers waiting for approval</p>
+                </div>
+                <div class="px-4 py-3 hover:bg-ink-50 dark:hover:bg-ink-800/50 transition cursor-pointer">
+                  <p class="text-sm font-medium text-ink-800 dark:text-ink-100">Property pending review</p>
+                  <p class="text-xs text-ink-400 mt-0.5">3 new listings need approval</p>
+                </div>
+                <div class="px-4 py-3 hover:bg-ink-50 dark:hover:bg-ink-800/50 transition cursor-pointer">
+                  <p class="text-sm font-medium text-ink-800 dark:text-ink-100">Complaint received</p>
+                  <p class="text-xs text-ink-400 mt-0.5">New complaint from buyer</p>
+                </div>
+              </div>
+              <a href="#" class="w-full block text-center py-2.5 text-xs font-semibold text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20">View all notifications</a>
+            </div>
+          </div>
+
+          <!-- Profile dropdown -->
+          <div class="relative ml-1">
+            <button onclick="toggleDropdown('profile-dd', event)" class="flex items-center gap-2 rounded-xl p-1 pr-2 hover:bg-ink-100 dark:hover:bg-ink-800 transition">
+              <div class="h-8 w-8 rounded-lg bg-brand-600 text-white grid place-items-center text-sm font-bold">A</div>
+              <div class="hidden md:block text-left leading-tight">
+                <p class="text-xs font-bold text-ink-800 dark:text-white">Admin</p>
+                <p class="text-[10px] text-ink-400">Super Admin</p>
+              </div>
+              <i class="ri-arrow-down-s-line text-ink-400 hidden md:block"></i>
+            </button>
+            <div id="profile-dd" class="dropdown hidden absolute right-0 mt-2 w-60 card p-0 overflow-hidden animate-scale-in origin-top-right z-50">
+              <div class="px-4 py-3 border-b border-ink-200 dark:border-ink-800">
+                <p class="text-sm font-bold text-ink-900 dark:text-white">Administrator</p>
+                <p class="text-xs text-ink-400">admin@realprice.com</p>
+              </div>
+              <div class="py-1">
+                <a href="#" class="dd-link"><i class="ri-user-3-line"></i> My Profile</a>
+                <a href="#" class="dd-link"><i class="ri-settings-3-line"></i> Settings</a>
+                <button class="dd-link"><i class="ri-question-line"></i> Help Center</button>
+              </div>
+              <div class="border-t border-ink-200 dark:border-ink-800 py-1">
+                <a href="{% url 'admin_logout' %}" class="dd-link text-danger-600 dark:text-danger-400"><i class="ri-logout-circle-r-line"></i> Log out</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ PAGE AREA ============ -->
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] w-full mx-auto">
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- ============ FOOTER ============ -->
+    <footer class="border-t border-ink-200 dark:border-ink-800 px-6 py-5 mt-auto">
+      <div class="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-ink-400">
+        <p>© 2026 REAL PRICE · Admin Console · All rights reserved.</p>
+        <div class="flex items-center gap-4">
+          <a class="hover:text-ink-600 dark:hover:text-ink-300 cursor-pointer">Support</a>
+          <a class="hover:text-ink-600 dark:hover:text-ink-300 cursor-pointer">Privacy</a>
+          <a class="hover:text-ink-600 dark:hover:text-ink-300 cursor-pointer">Terms</a>
+          <span class="px-2 py-0.5 rounded bg-ink-100 dark:bg-ink-800 font-mono">v2.4.1</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<!-- =========================================================
+     GLOBAL JS
+========================================================= -->
+<script>
+/* ---------- HELPERS ---------- */
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+
+/* ---------- THEME ---------- */
+function applyTheme(t){ const r=document.documentElement; r.classList.toggle('dark',t==='dark'); localStorage.setItem('theme',t); const icon=$('#theme-icon'); if(icon) icon.className = t==='dark'?'ri-sun-line text-lg':'ri-moon-line text-lg'; }
+function toggleTheme(){ applyTheme(localStorage.getItem('theme')==='dark'?'light':'dark'); }
+(function initTheme(){ const t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'); applyTheme(t); })();
+
+/* ---------- SIDEBAR ---------- */
+function toggleSidebar(){ const s=$('#sidebar'),o=$('#overlay'); s.classList.toggle('-translate-x-full'); o.classList.toggle('hidden'); }
+function closeSidebarOnMobile(){ if(innerWidth<1024){ $('#sidebar').classList.add('-translate-x-full'); $('#overlay').classList.add('hidden'); } }
+
+/* ---------- DROPDOWNS ---------- */
+function toggleDropdown(id,e){ e.stopPropagation(); const dd=$('#'+id); const open=!dd.classList.contains('hidden'); $$('.dropdown').forEach(d=>d.classList.add('hidden')); if(!open) dd.classList.remove('hidden'); }
+document.addEventListener('click',()=>$$('.dropdown').forEach(d=>d.classList.add('hidden')));
+
+/* ---------- RIPPLE ---------- */
+document.addEventListener('click',e=>{ const b=e.target.closest('.btn-ripple'); if(!b)return; const c=document.createElement('span'); const d=Math.max(b.clientWidth,b.clientHeight); const r=b.getBoundingClientRect(); c.style.width=c.style.height=d+'px'; c.style.left=(e.clientX-r.left-d/2)+'px'; c.style.top=(e.clientY-r.top-d/2)+'px'; c.className='ripple'; const old=b.querySelector('.ripple'); if(old)old.remove(); b.appendChild(c); setTimeout(()=>c.remove(),600); });
+
+/* ---------- MODALS ---------- */
+function openModal(id){ $('#'+id).classList.remove('hidden'); document.body.style.overflow='hidden'; }
+function closeModal(id){ $('#'+id).classList.add('hidden'); document.body.style.overflow=''; }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape')$$('.modal-wrap').forEach(m=>m.classList.add('hidden')); });
+</script>
+
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

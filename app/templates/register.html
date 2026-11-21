@@ -1,0 +1,374 @@
+{% extends 'base.html' %}
+
+{% block title %}Register — RealtyFlow{% endblock %}
+{% block meta_description %}Create your RealtyFlow seller account to list properties on our AI-powered real estate marketplace.{% endblock %}
+
+{% block page_bg %}
+<!-- Luxury modern living room interior -->
+<div class="w-full h-full page-bg-image" style="background-image: url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80');"></div>
+<div class="page-bg-overlay" style="background: linear-gradient(135deg, rgba(8, 8, 28, 0.9) 0%, rgba(15, 12, 40, 0.85) 40%, rgba(12, 18, 48, 0.8) 70%, rgba(6, 6, 20, 0.92) 100%);"></div>
+{% endblock %}
+
+{% block page_styles %}
+<style>
+    .register-input {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #fff;
+        transition: all 0.3s ease;
+    }
+    .register-input::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+    }
+    .register-input:focus {
+        outline: none;
+        border-color: rgba(99, 102, 241, 0.6);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        background: rgba(255, 255, 255, 0.12);
+    }
+    .register-input:-webkit-autofill,
+    .register-input:-webkit-autofill:hover,
+    .register-input:-webkit-autofill:focus {
+        -webkit-text-fill-color: #fff;
+        -webkit-box-shadow: 0 0 0px 1000px rgba(30, 30, 60, 0.95) inset;
+        transition: background-color 5000s ease-in-out 0s;
+    }
+
+    /* File input custom styling */
+    .file-input-wrapper input[type="file"]::file-selector-button {
+        background: linear-gradient(135deg, #6366f1, #3b82f6);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 12px;
+        margin-right: 12px;
+        transition: all 0.3s ease;
+    }
+    .file-input-wrapper input[type="file"]::file-selector-button:hover {
+        background: linear-gradient(135deg, #4f46e5, #2563eb);
+    }
+
+    select.register-input {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='rgba(255,255,255,0.4)' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+    }
+    select.register-input option {
+        background: #1e1e3e;
+        color: #fff;
+    }
+
+    @keyframes floatSlow {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(10px, -15px) rotate(90deg); }
+        50% { transform: translate(-5px, -25px) rotate(180deg); }
+        75% { transform: translate(-15px, -10px) rotate(270deg); }
+    }
+    .float-particle {
+        animation: floatSlow 8s ease-in-out infinite;
+        pointer-events: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="relative min-h-screen flex items-center justify-center px-4 pt-28 pb-16">
+    <div class="content-layer w-full max-w-5xl relative">
+
+        <!-- Floating Particles -->
+        <div class="absolute top-[-20px] right-[10%] w-2 h-2 bg-emerald-300/20 rounded-full float-particle" style="animation-delay: 0s;"></div>
+        <div class="absolute top-[30%] left-[-15px] w-3 h-3 bg-purple-300/15 rounded-full float-particle" style="animation-delay: 2s;"></div>
+        <div class="absolute bottom-[10%] right-[-10px] w-2.5 h-2.5 bg-blue-300/20 rounded-full float-particle" style="animation-delay: 4s;"></div>
+
+        <!-- Registration Card -->
+        <div class="login-card rounded-3xl p-8 md:p-10 fade-up">
+
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 mx-auto mb-5 rounded-2xl flex items-center justify-center" style="background: linear-gradient(135deg, #a855f7, #6366f1); box-shadow: 0 12px 30px rgba(168, 85, 247, 0.4), inset 0 2px 4px rgba(255,255,255,0.3);">
+                    <i class="ri-user-add-line text-3xl text-white drop-shadow-lg"></i>
+                </div>
+                <h1 class="text-3xl font-bold font-clash text-white mb-2">Create Your Account</h1>
+                <p class="text-white/60 text-sm">Join us to start your real estate journey</p>
+            </div>
+
+            <!-- Messages -->
+            {% if messages %}
+            <div class="mb-6 space-y-2">
+                {% for message in messages %}
+                <div class="flex items-start gap-3 px-4 py-3 rounded-xl text-sm
+                    {% if message.tags == 'error' %}bg-red-500/15 border border-red-400/20 text-red-200
+                    {% elif message.tags == 'success' %}bg-emerald-500/15 border border-emerald-400/20 text-emerald-200
+                    {% else %}bg-blue-500/15 border border-blue-400/20 text-blue-200{% endif %}">
+                    <i class="{% if message.tags == 'error' %}ri-error-warning-line{% elif message.tags == 'success' %}ri-checkbox-circle-line{% else %}ri-information-line{% endif %} text-lg mt-0.5 flex-shrink-0"></i>
+                    <span>{{ message }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Registration Form -->
+            <form method="POST" enctype="multipart/form-data" action="{% url 'register' %}" id="register-form">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Left Column -->
+                    <div class="space-y-5">
+                        <!-- Full Name -->
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-white/50 mb-2">Full Name</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <i class="ri-user-3-line text-white/30 text-lg"></i>
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder="Enter your full name"
+                                    required
+                                    name="username"
+                                    class="register-input w-full pl-12 pr-4 py-3.5 rounded-xl text-sm font-medium"
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-white/50 mb-2">Email Address</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <i class="ri-mail-line text-white/30 text-lg"></i>
+                                </div>
+                                <input
+                                    type="email"
+                                    placeholder="Enter your email"
+                                    required
+                                    name="email"
+                                    class="register-input w-full pl-12 pr-4 py-3.5 rounded-xl text-sm font-medium"
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Phone -->
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-white/50 mb-2">Phone Number</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <i class="ri-phone-line text-white/30 text-lg"></i>
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder="Enter your phone number"
+                                    required
+                                    name="phone"
+                                    class="register-input w-full pl-12 pr-4 py-3.5 rounded-xl text-sm font-medium"
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Gender -->
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-white/50 mb-2">Gender</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <i class="ri-user-smile-line text-white/30 text-lg"></i>
+                                </div>
+                                <select
+                                    name="gender"
+                                    required
+                                    class="register-input w-full pl-12 pr-10 py-3.5 rounded-xl text-sm font-medium"
+                                >
+                                    <option value="" disabled selected>Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="space-y-5">
+                        <!-- Address -->
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-white/50 mb-2">Address</label>
+                            <div class="relative">
+                                <div class="absolute top-4 left-0 pl-4 pointer-events-none">
+                                    <i class="ri-map-pin-line text-white/30 text-lg"></i>
+                                </div>
+                                <textarea
+                                    placeholder="Enter your address"
+                                    required
+                                    name="address"
+                                    class="register-input w-full pl-12 pr-4 pt-3.5 pb-2 rounded-xl text-sm font-medium resize-none h-24"
+                                ></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Profile Picture -->
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-white/50 mb-2">Profile Picture</label>
+                            <div class="file-input-wrapper">
+                                <input
+                                    type="file"
+                                    name="profile_pic"
+                                    accept="image/*"
+                                    onchange="previewProfilePic(event)"
+                                    class="register-input w-full py-2.5 px-4 rounded-xl text-sm"
+                                />
+                            </div>
+                            <img
+                                id="profile-pic-preview"
+                                src="#"
+                                alt="Preview"
+                                class="mt-3 w-20 h-20 object-cover rounded-xl hidden border border-white/20"
+                            />
+                        </div>
+
+                        <!-- Proof of Identity -->
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-white/50 mb-2">Proof of Identity</label>
+                            <div class="file-input-wrapper">
+                                <input
+                                    type="file"
+                                    name="proof_of_identity"
+                                    accept=".jpg,.jpeg,.png,.pdf"
+                                    onchange="previewIdentityFile(event)"
+                                    class="register-input w-full py-2.5 px-4 rounded-xl text-sm"
+                                />
+                            </div>
+                            <div id="identity-file-preview" class="mt-3 text-sm text-white/70 hidden"></div>
+                        </div>
+
+                        <!-- Password -->
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-white/50 mb-2">Password</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <i class="ri-lock-2-line text-white/30 text-lg"></i>
+                                </div>
+                                <input
+                                    type="password"
+                                    placeholder="Create a password"
+                                    required
+                                    name="password"
+                                    class="register-input w-full pl-12 pr-4 py-3.5 rounded-xl text-sm font-medium"
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-white/50 mb-2">Confirm Password</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <i class="ri-lock-2-line text-white/30 text-lg"></i>
+                                </div>
+                                <input
+                                    type="password"
+                                    placeholder="Confirm your password"
+                                    required
+                                    name="confirm_password"
+                                    class="register-input w-full pl-12 pr-4 py-3.5 rounded-xl text-sm font-medium"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="mt-8">
+                    <button
+                        type="submit"
+                        id="register-btn"
+                        class="login-submit w-full py-4 rounded-xl font-bold text-white text-sm uppercase tracking-widest flex items-center justify-center gap-2"
+                    >
+                        <span id="reg-btn-text">Create Account</span>
+                        <i class="ri-arrow-right-line text-lg" id="reg-btn-icon"></i>
+                        <svg id="reg-btn-spinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Divider -->
+                <div class="flex items-center gap-4 my-6">
+                    <div class="h-px flex-1 bg-gradient-to-r from-transparent via-white/15 to-transparent"></div>
+                    <span class="text-white/30 text-xs font-semibold uppercase tracking-widest">or</span>
+                    <div class="h-px flex-1 bg-gradient-to-r from-transparent via-white/15 to-transparent"></div>
+                </div>
+
+                <!-- Sign In Link -->
+                <div class="text-center">
+                    <p class="text-white/50 text-sm mb-3">Already have an account?</p>
+                    <a href="{% url 'login' %}" class="inline-flex items-center gap-2 glass text-white px-8 py-3 rounded-full font-semibold text-sm hover:bg-white/10 transition-all border border-white/20 hover:border-white/30 hover:scale-105 transform duration-300">
+                        <i class="ri-login-box-line"></i>
+                        Sign In
+                    </a>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+    // Profile picture preview
+    function previewProfilePic(event) {
+        const file = event.target.files[0];
+        const preview = document.getElementById("profile-pic-preview");
+        if (file && file.type.startsWith("image/")) {
+            preview.src = URL.createObjectURL(file);
+            preview.classList.remove("hidden");
+        } else {
+            preview.classList.add("hidden");
+            preview.src = "#";
+        }
+    }
+
+    // Identity file preview
+    function previewIdentityFile(event) {
+        const file = event.target.files[0];
+        const previewDiv = document.getElementById("identity-file-preview");
+        if (!file) {
+            previewDiv.classList.add("hidden");
+            return;
+        }
+        previewDiv.innerHTML = "";
+
+        if (file.type.startsWith("image/")) {
+            const img = document.createElement("img");
+            img.src = URL.createObjectURL(file);
+            img.className = "w-20 h-20 object-cover rounded-xl border border-white/20";
+            previewDiv.appendChild(img);
+        } else if (file.type === "application/pdf") {
+            const icon = document.createElement("div");
+            icon.innerHTML = `<i class="ri-file-pdf-line text-red-400 text-2xl"></i> <span class="text-white/70">${file.name}</span>`;
+            icon.className = "flex items-center gap-2";
+            previewDiv.appendChild(icon);
+        } else {
+            previewDiv.textContent = file.name;
+        }
+
+        previewDiv.classList.remove("hidden");
+    }
+
+    // Form loading state
+    document.getElementById('register-form').addEventListener('submit', function() {
+        const btn = document.getElementById('register-btn');
+        const text = document.getElementById('reg-btn-text');
+        const icon = document.getElementById('reg-btn-icon');
+        const spinner = document.getElementById('reg-btn-spinner');
+        btn.disabled = true;
+        btn.classList.add('opacity-80');
+        text.textContent = 'Creating Account...';
+        icon.classList.add('hidden');
+        spinner.classList.remove('hidden');
+    });
+</script>
+{% endblock %}

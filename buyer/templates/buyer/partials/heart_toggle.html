@@ -1,0 +1,44 @@
+{# ─── Heart toggle JS ─── #}
+{# Include this in any page that uses property_card.html #}
+<div id="heart-toggle-config" data-toggle-base="{% url 'buyer_saved_toggle' 0 %}" class="hidden" aria-hidden="true"></div>
+<script>
+(function() {
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-heart]');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    var pk = btn.dataset.pk;
+    var csrfToken = (document.querySelector('[name=csrfmiddlewaretoken]') && document.querySelector('[name=csrfmiddlewaretoken]').value)
+      || (document.cookie.split(';').map(function(c) { return c.trim(); }).find(function(c) { return c.indexOf('csrftoken=') === 0; }) || '').split('=')[1]
+      || '';
+
+    var configEl = document.getElementById('heart-toggle-config');
+    var baseTemplate = (configEl && configEl.getAttribute('data-toggle-base')) || '/buyer/saved/toggle/0/';
+    var targetUrl = baseTemplate.replace('/0/', '/' + pk + '/');
+
+    fetch(targetUrl, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrfToken,
+        'Content-Type': 'application/json',
+      },
+      credentials: 'same-origin',
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var isSaved = data.saved;
+      // Update all heart buttons for this property on the page
+      document.querySelectorAll('[data-heart][data-pk="' + pk + '"]').forEach(function(b) {
+        b.classList.toggle('active', isSaved);
+        var icon = b.querySelector('i');
+        if (icon) icon.className = isSaved ? 'ri-heart-fill text-red-500' : 'ri-heart-line';
+      });
+    })
+    .catch(function(err) {
+      console.error('Heart toggle failed:', err);
+    });
+  });
+})();
+</script>

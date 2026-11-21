@@ -1,0 +1,86 @@
+<!-- templates/seller/partials/topbar.html -->
+<!-- Verbatim from seller_profile.html lines 208-292 -->
+<header class="sticky top-0 z-30 glass-strong border-b border-ink-200/60 dark:border-ink-800/60">
+      <div class="h-16 px-4 sm:px-6 flex items-center gap-3">
+
+        <!-- mobile menu -->
+        <button onclick="toggleSidebar()" class="lg:hidden h-9 w-9 grid place-items-center rounded-xl text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800">
+          <i class="ri-menu-line text-xl"></i>
+        </button>
+
+        <!-- Breadcrumb -->
+        <div class="hidden md:flex items-center gap-2 text-sm">
+          <span class="text-ink-400">REAL PRICE</span>
+          <i class="ri-arrow-right-s-line text-ink-300"></i>
+          <span id="crumb" class="font-semibold text-ink-700 dark:text-ink-200">{{ page_title|default:"Dashboard" }}</span>
+        </div>
+
+        <!-- Search -->
+        <div class="ml-auto md:ml-6 flex-1 max-w-md relative hidden sm:block">
+          <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"></i>
+          <input class="input pl-9 pr-16" placeholder="Search properties, buyers, visits…" />
+          <kbd class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-ink-400 bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">⌘K</kbd>
+        </div>
+
+        <!-- Actions -->
+        <div class="ml-auto sm:ml-0 flex items-center gap-1.5">
+
+          <!-- Theme toggle -->
+          <button onclick="toggleTheme()" class="h-9 w-9 grid place-items-center rounded-xl text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800 transition" title="Toggle theme">
+            <i id="theme-icon" class="ri-moon-line text-lg"></i>
+          </button>
+
+          <!-- Messages -->
+          <a href="{% url 'seller_chats_page' user.id %}" class="relative h-9 w-9 grid place-items-center rounded-xl text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800 transition">
+            <i class="ri-chat-3-line text-lg"></i>
+            <span class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-danger-500 ring-2 ring-white dark:ring-ink-900"></span>
+          </a>
+
+          <!-- Notifications -->
+          <div class="relative">
+            <button onclick="toggleDropdown('notif-dd', event)" class="relative h-9 w-9 grid place-items-center rounded-xl text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800 transition">
+              <i class="ri-notification-3-line text-lg"></i>
+              <span class="absolute top-1 right-1 min-w-4 h-4 px-1 grid place-items-center text-[9px] font-bold text-white bg-danger-500 rounded-full">3</span>
+            </button>
+            <!-- dropdown -->
+            <div id="notif-dd" class="dropdown hidden absolute right-0 mt-2 w-80 card p-0 overflow-hidden animate-scale-in origin-top-right">
+              <div class="px-4 py-3 border-b border-ink-200 dark:border-ink-800 flex items-center justify-between">
+                <p class="font-bold text-ink-900 dark:text-white text-sm">Notifications</p>
+                <span class="text-[11px] text-brand-600 font-semibold cursor-pointer">Mark all read</span>
+              </div>
+              <div class="max-h-80 overflow-y-auto no-scrollbar divide-y divide-ink-100 dark:divide-ink-800">
+                <!-- items injected by JS -->
+                <div id="topbar-notifs"></div>
+              </div>
+              <a href="{% url 'seller_notifications_page' user.id %}" class="w-full block text-center py-2.5 text-xs font-semibold text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20">View all notifications</a>
+            </div>
+          </div>
+
+          <!-- Profile dropdown -->
+          <div class="relative ml-1">
+            <button onclick="toggleDropdown('profile-dd', event)" class="flex items-center gap-2 rounded-xl p-1 pr-2 hover:bg-ink-100 dark:hover:bg-ink-800 transition">
+              <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=2563eb&color=fff" class="h-8 w-8 rounded-lg object-cover" alt="avatar" />
+              <div class="hidden md:block text-left leading-tight">
+                <p class="text-xs font-bold text-ink-800 dark:text-white">{{ user.get_full_name|default:user.username }}</p>
+                <p class="text-[10px] text-ink-400">Seller</p>
+              </div>
+              <i class="ri-arrow-down-s-line text-ink-400 hidden md:block"></i>
+            </button>
+            <div id="profile-dd" class="dropdown hidden absolute right-0 mt-2 w-60 card p-0 overflow-hidden animate-scale-in origin-top-right">
+              <div class="px-4 py-3 border-b border-ink-200 dark:border-ink-800">
+                <p class="text-sm font-bold text-ink-900 dark:text-white">{{ user.get_full_name|default:user.username }}</p>
+                <p class="text-xs text-ink-400">{{ user.email }}</p>
+              </div>
+              <div class="py-1">
+                <a href="{% url 'seller_profile_details_page' user.id %}" class="dd-link"><i class="ri-user-3-line"></i> My Profile</a>
+                <a href="{% url 'seller_settings_page' user.id %}" class="dd-link"><i class="ri-settings-3-line"></i> Settings</a>
+                <button class="dd-link"><i class="ri-question-line"></i> Help Center</button>
+              </div>
+              <div class="border-t border-ink-200 dark:border-ink-800 py-1">
+                <a href="{% url 'logout' %}" class="dd-link text-danger-600 dark:text-danger-400"><i class="ri-logout-circle-r-line"></i> Log out</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>

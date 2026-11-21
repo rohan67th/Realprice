@@ -1,0 +1,329 @@
+{% extends 'admin_base.html' %}
+{% load humanize %}
+{% block title %}Property Management — REAL PRICE Admin{% endblock %}
+{% block breadcrumb %}Properties{% endblock %}
+
+{% block content %}
+<section class="space-y-6">
+
+  <!-- ═══ PAGE HEADER ═══ -->
+  <div class="animate-fade-in-up">
+    <p class="text-xs uppercase tracking-wider mb-1 text-ink-400">ADMIN › PROPERTIES</p>
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-ink-900 dark:text-white tracking-tight">Property Management</h2>
+    <p class="text-sm mt-1 text-ink-500 dark:text-ink-400">Approved properties listed on the platform</p>
+  </div>
+
+  <!-- ═══ STATS BAR ═══ -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
+    <!-- Total Properties -->
+    <div class="card card-hover p-5 animate-fade-in-up stagger-1">
+      <div class="flex items-center justify-between mb-3">
+        <div class="h-10 w-10 rounded-xl bg-brand-50 dark:bg-brand-900/30 grid place-items-center">
+          <i class="ri-building-4-line text-lg text-brand-600 dark:text-brand-400"></i>
+        </div>
+      </div>
+      <p class="text-2xl font-extrabold text-ink-900 dark:text-white">{{ total_properties }}</p>
+      <p class="text-xs text-ink-400 mt-1">Total Properties</p>
+    </div>
+
+    <!-- Available -->
+    <div class="card card-hover p-5 animate-fade-in-up stagger-2">
+      <div class="flex items-center justify-between mb-3">
+        <div class="h-10 w-10 rounded-xl bg-success-50 dark:bg-success-900/30 grid place-items-center">
+          <i class="ri-price-tag-3-line text-lg text-success-600 dark:text-success-400"></i>
+        </div>
+      </div>
+      <p class="text-2xl font-extrabold text-ink-900 dark:text-white">{{ for_sale_count }}</p>
+      <p class="text-xs text-ink-400 mt-1">Available</p>
+    </div>
+
+    <!-- Rented -->
+    <div class="card card-hover p-5 animate-fade-in-up stagger-3">
+      <div class="flex items-center justify-between mb-3">
+        <div class="h-10 w-10 rounded-xl bg-warning-50 dark:bg-warning-900/30 grid place-items-center">
+          <i class="ri-home-4-line text-lg text-warning-600 dark:text-warning-400"></i>
+        </div>
+      </div>
+      <p class="text-2xl font-extrabold text-ink-900 dark:text-white">{{ for_rent_count }}</p>
+      <p class="text-xs text-ink-400 mt-1">Rented</p>
+    </div>
+
+    <!-- Sold -->
+    <div class="card card-hover p-5 animate-fade-in-up stagger-4">
+      <div class="flex items-center justify-between mb-3">
+        <div class="h-10 w-10 rounded-xl bg-danger-50 dark:bg-danger-900/30 grid place-items-center">
+          <i class="ri-flag-line text-lg text-danger-600 dark:text-danger-400"></i>
+        </div>
+      </div>
+      <p class="text-2xl font-extrabold text-ink-900 dark:text-white">{{ total_properties|add:"-"|add:for_sale_count|default:"0" }}</p>
+      <p class="text-xs text-ink-400 mt-1">Sold</p>
+    </div>
+  </div>
+
+  <!-- ═══ FILTER BAR ═══ -->
+  <div class="card px-5 py-3 animate-fade-in-up">
+    <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+      <div class="relative flex-1">
+        <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"></i>
+        <input type="text" id="searchInput" placeholder="Search by title or seller..."
+          class="input pl-10 pr-4">
+      </div>
+      <select id="typeFilter" class="input w-auto min-w-[140px]">
+        <option value="all">All Types</option>
+        <option value="house">House</option>
+        <option value="apartment">Apartment</option>
+        <option value="commercial">Commercial</option>
+        <option value="land">Land</option>
+      </select>
+      <select id="sortFilter" class="input w-auto min-w-[140px]">
+        <option value="newest">Newest</option>
+        <option value="price-high">Price ↑</option>
+        <option value="price-low">Price ↓</option>
+      </select>
+      <button class="btn-outline text-xs"><i class="ri-download-2-line"></i> Export</button>
+    </div>
+  </div>
+
+  <!-- ═══ PROPERTY TABLE ═══ -->
+  <div class="card overflow-hidden" id="propertyList">
+    <div class="divide-y divide-ink-100 dark:divide-ink-800">
+      {% for property in properties %}
+      <div class="property-row flex flex-col lg:flex-row items-start lg:items-center gap-4 px-6 py-4 hover:bg-ink-50 dark:hover:bg-ink-800/50 transition"
+        data-title="{{ property.property_type|lower }} {{ property.location|lower }} {{ property.features|lower }}"
+        data-seller="{{ property.seller.username|lower }}"
+        data-type="{{ property.property_type|lower }}"
+        data-status="{{ property.status|lower }}"
+        data-price="{{ property.price }}"
+        data-id="{{ property.id }}">
+
+        <!-- Thumbnail -->
+        <div class="w-[72px] h-12 rounded-lg overflow-hidden border border-ink-200 dark:border-ink-700 shrink-0">
+          {% if property.main_image %}
+          <img src="{{ property.main_image.url }}" alt="{{ property.property_type }}" class="w-full h-full object-cover">
+          {% else %}
+          <div class="w-full h-full flex items-center justify-center bg-ink-50 dark:bg-ink-800">
+            <i class="ri-image-line text-lg text-ink-400"></i>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Property Info -->
+        <div class="min-w-0 max-w-md">
+          <h3 class="text-ink-900 dark:text-white font-semibold text-sm truncate">{{ property.property_type }} at {{ property.location }}</h3>
+          <p class="text-xs text-ink-500 dark:text-ink-400 truncate mt-0.5">{{ property.description|default:"No description"|truncatewords:15 }}</p>
+          <p class="text-xs mt-0.5 text-ink-400">Listed by @{{ property.seller.username }} · #{{ property.id }}</p>
+        </div>
+
+        <!-- Location Pill -->
+        <span class="flex items-center gap-1.5 badge-neutral">
+          <i class="ri-map-pin-2-line text-ink-400"></i>
+          {{ property.location|truncatewords:3 }}
+        </span>
+
+        <!-- Type Badge -->
+        {% if property.property_type == 'House' %}
+        <span class="badge-brand">House</span>
+        {% elif property.property_type == 'Apartment' %}
+        <span class="badge-neutral">Apartment</span>
+        {% elif property.property_type == 'Commercial' %}
+        <span class="badge-warning">Commercial</span>
+        {% elif property.property_type == 'Land' %}
+        <span class="badge-success">Land</span>
+        {% elif property.property_type == 'Villa' %}
+        <span class="badge-success">Villa</span>
+        {% else %}
+        <span class="badge-neutral">{{ property.property_type }}</span>
+        {% endif %}
+
+        <!-- Price -->
+        <span class="text-ink-900 dark:text-white font-bold text-sm whitespace-nowrap">₹{{ property.price|floatformat:0|intcomma }}</span>
+
+        <div class="flex-1"></div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-2">
+          <!-- View -->
+          <a href="{% url 'property_detail' property.id %}" class="act-btn border border-ink-200 dark:border-ink-700 rounded-lg" title="View Details">
+            <i class="ri-eye-line text-sm"></i>
+          </a>
+
+          <!-- Delete -->
+          <button onclick="openDeleteModal({{ property.id }}, '{{ property.property_type|escapejs }} at {{ property.location|escapejs }}')" class="act-btn border border-danger-200 dark:border-danger-800 rounded-lg text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/30 hover:text-danger-600" title="Delete Property">
+            <i class="ri-delete-bin-6-line text-sm"></i>
+          </button>
+        </div>
+      </div>
+      {% empty %}
+      <div class="px-6 py-16 text-center text-ink-400">
+        <i class="ri-building-4-line text-5xl mb-3 block"></i>
+        <p class="text-sm font-medium">No properties found</p>
+        <p class="text-xs mt-1">No approved properties listed yet</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Empty filter state -->
+  {% if properties %}
+  <div id="emptyFilterState" class="hidden card px-6 py-16 text-center">
+    <i class="ri-building-4-line text-5xl mb-3 block text-ink-400"></i>
+    <p class="text-sm font-medium text-ink-500">No properties match</p>
+    <p class="text-xs mt-1 text-ink-400">Try adjusting your filters</p>
+    <button onclick="clearFilters()" class="btn-outline text-xs mt-3">Clear filters</button>
+  </div>
+  {% endif %}
+
+  <!-- ═══ PAGINATION ═══ -->
+  <div class="flex justify-center animate-fade-in-up" id="paginationBar">
+    <div class="inline-flex gap-1 mt-2">
+      <button class="btn-outline text-xs py-1.5" onclick="changePage(-1)">
+        <i class="ri-arrow-left-s-line"></i> Prev
+      </button>
+      <div id="pageNumbers" class="flex gap-1"></div>
+      <button class="btn-outline text-xs py-1.5" onclick="changePage(1)">
+        Next <i class="ri-arrow-right-s-line"></i>
+      </button>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══ DELETE CONFIRMATION MODAL ═══ -->
+<div id="deleteModal" class="modal-wrap hidden">
+  <div class="card w-full max-w-md mx-4 p-6">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="h-10 w-10 rounded-xl bg-danger-50 dark:bg-danger-900/30 grid place-items-center">
+        <i class="ri-error-warning-line text-xl text-danger-600 dark:text-danger-400"></i>
+      </div>
+      <div>
+        <h3 class="text-ink-900 dark:text-white font-bold text-lg">Delete Property</h3>
+      </div>
+    </div>
+    <p class="text-sm mb-2 text-ink-500 dark:text-ink-400">
+      You are about to delete <strong class="text-ink-900 dark:text-white" id="deletePropertyName"></strong>.
+    </p>
+    <p class="text-sm mb-6 text-ink-400">This will permanently remove the property. This action cannot be undone.</p>
+
+    <form id="deleteForm" method="POST">
+      {% csrf_token %}
+      <div class="flex items-center justify-end gap-3">
+        <button type="button" onclick="closeDeleteModal()" class="btn-outline text-xs">Cancel</button>
+        <button type="submit" class="btn-danger text-xs">
+          <i class="ri-delete-bin-6-line"></i> Confirm Delete
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const rows = document.querySelectorAll('.property-row');
+  const searchInput = document.getElementById('searchInput');
+  const typeFilter = document.getElementById('typeFilter');
+  const sortFilter = document.getElementById('sortFilter');
+  const emptyState = document.getElementById('emptyFilterState');
+  const ITEMS_PER_PAGE = 8;
+  let currentPage = 1;
+
+  function getVisibleRows() {
+    const search = searchInput.value.toLowerCase();
+    const type = typeFilter.value;
+    const visible = [];
+    rows.forEach(row => {
+      const title = row.dataset.title;
+      const seller = row.dataset.seller;
+      const t = row.dataset.type;
+      const matchSearch = !search || title.includes(search) || seller.includes(search);
+      const matchType = type === 'all' || t === type;
+      if (matchSearch && matchType) visible.push(row);
+    });
+    const sort = sortFilter.value;
+    if (sort === 'price-high') visible.sort((a,b) => parseFloat(b.dataset.price) - parseFloat(a.dataset.price));
+    else if (sort === 'price-low') visible.sort((a,b) => parseFloat(a.dataset.price) - parseFloat(b.dataset.price));
+    else visible.sort((a,b) => parseInt(b.dataset.id) - parseInt(a.dataset.id));
+    return visible;
+  }
+
+  function render() {
+    const visible = getVisibleRows();
+    const totalPages = Math.max(1, Math.ceil(visible.length / ITEMS_PER_PAGE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    rows.forEach(r => r.style.display = 'none');
+    visible.forEach((r, i) => {
+      if (i >= start && i < end) {
+        r.style.display = '';
+      } else {
+        r.style.display = 'none';
+      }
+    });
+    if (emptyState) emptyState.classList.toggle('hidden', visible.length > 0);
+    renderPagination(totalPages);
+  }
+
+  function renderPagination(totalPages) {
+    const container = document.getElementById('pageNumbers');
+    container.innerHTML = '';
+    for (let i = 1; i <= totalPages; i++) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      btn.className = i === currentPage
+        ? 'btn-primary text-xs py-1.5 px-3'
+        : 'btn-outline text-xs py-1.5 px-3';
+      btn.addEventListener('click', () => { currentPage = i; render(); });
+      container.appendChild(btn);
+    }
+    document.getElementById('paginationBar').style.display = totalPages <= 1 ? 'none' : 'flex';
+  }
+
+  window.changePage = function(dir) {
+    const visible = getVisibleRows();
+    const totalPages = Math.max(1, Math.ceil(visible.length / ITEMS_PER_PAGE));
+    currentPage = Math.max(1, Math.min(totalPages, currentPage + dir));
+    render();
+  };
+
+  window.clearFilters = function() {
+    searchInput.value = '';
+    typeFilter.value = 'all';
+    sortFilter.value = 'newest';
+    currentPage = 1;
+    render();
+  };
+
+  searchInput.addEventListener('input', () => { currentPage = 1; render(); });
+  typeFilter.addEventListener('change', () => { currentPage = 1; render(); });
+  sortFilter.addEventListener('change', () => { currentPage = 1; render(); });
+
+  render();
+});
+
+// Delete modal
+function openDeleteModal(propertyId, propertyName) {
+  const modal = document.getElementById('deleteModal');
+  document.getElementById('deletePropertyName').textContent = propertyName;
+  document.getElementById('deleteForm').action = `/property/delete/${propertyId}/`;
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteModal() {
+  const modal = document.getElementById('deleteModal');
+  modal.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('deleteModal')?.addEventListener('click', function(e) {
+  if (e.target === this) closeDeleteModal();
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeDeleteModal();
+});
+</script>
+{% endblock %}

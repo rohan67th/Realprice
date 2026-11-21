@@ -1,0 +1,28 @@
+{% extends "admin_base.html" %}
+
+{% block title %}REAL PRICE — Activity Logs{% endblock %}
+{% block breadcrumb %}Insights{% endblock %}
+
+{% block content %}
+<section class="space-y-6 animate-fade-in-up">
+  <div>
+    <p class="text-xs uppercase tracking-wider mb-1 text-ink-400">ADMIN › INSIGHTS</p>
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-ink-900 dark:text-white tracking-tight">Activity Logs</h2>
+    <p class="text-sm mt-1 text-ink-500 dark:text-ink-400">Complete audit trail of all admin actions on the platform</p>
+  </div>
+
+  <!-- Coming Soon Card -->
+  <div class="card p-12 text-center animate-fade-in-up stagger-1">
+    <div class="empty-ic mx-auto mb-6">
+      <i class="ri-history-line text-3xl relative"></i>
+    </div>
+    <h3 class="text-2xl font-extrabold text-ink-900 dark:text-white mb-2">Coming Soon</h3>
+    <p class="text-sm text-ink-500 dark:text-ink-400 max-w-md mx-auto">The full activity log module is under development. You'll have access to a comprehensive audit trail of every admin action, filterable by user, action type, and date range.</p>
+    <div class="mt-8 flex items-center justify-center gap-3">
+      <a href="{% url 'admin_dashboard' %}" class="btn-primary">
+        <i class="ri-arrow-left-line"></i> Back to Dashboard
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}

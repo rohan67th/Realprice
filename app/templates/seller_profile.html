@@ -1,0 +1,1219 @@
+<!doctype html>
+<html lang="en" class="">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Estately · Seller Dashboard</title>
+  <meta name="description" content="Premium PropTech Seller Dashboard — properties, visits, analytics & more." />
+
+  <!-- ============ FONTS ============ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- ============ REMIX ICONS ============ -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+
+  <!-- ============ TAILWIND (Play CDN + inline config) ============
+       In a Django production deployment, replace this with a compiled
+       tailwind.css build. The inline config below mirrors tailwind.config.js. -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#eef5ff',100:'#d9e8ff',200:'#bcd7ff',300:'#8ebdff',400:'#5a9bff',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554' },
+            ink: { 50:'#f8fafc',100:'#f1f5f9',200:'#e2e8f0',300:'#cbd5e1',400:'#94a3b8',500:'#64748b',600:'#475569',700:'#334155',800:'#1e293b',900:'#0f172a',950:'#020617' },
+            success: { 50:'#ecfdf5',100:'#d1fae5',200:'#a7f3d0',300:'#6ee7b7',400:'#34d399',500:'#10b981',600:'#059669',700:'#047857',800:'#065f46',900:'#064e3b' },
+            warning: { 50:'#fffbeb',100:'#fef3c7',200:'#fde68a',300:'#fcd34d',400:'#fbbf24',500:'#f59e0b',600:'#d97706',700:'#b45309',800:'#92400e',900:'#78350f' },
+            danger: { 50:'#fef2f2',100:'#fee2e2',200:'#fecaca',300:'#fca5a5',400:'#f87171',500:'#ef4444',600:'#dc2626',700:'#b91c1c',800:'#991b1b',900:'#7f1d1d' },
+          },
+          fontFamily: { sans:['Plus Jakarta Sans','ui-sans-serif','system-ui','sans-serif'], display:['Plus Jakarta Sans','sans-serif'], mono:['JetBrains Mono','ui-monospace','monospace'] },
+          borderRadius: { '2xl':'1rem','3xl':'1.25rem','4xl':'1.75rem' },
+          boxShadow: {
+            card:'0 1px 2px 0 rgb(15 23 42 / .04), 0 4px 16px -2px rgb(15 23 42 / .06)',
+            'card-hover':'0 4px 8px -2px rgb(15 23 42 / .08), 0 24px 48px -12px rgb(15 23 42 / .16)',
+            glow:'0 0 0 1px rgb(59 130 246 / .15), 0 12px 32px -8px rgb(59 130 246 / .35)',
+          },
+          keyframes: {
+            'fade-in':{'0%':{opacity:'0'},'100%':{opacity:'1'}},
+            'fade-in-up':{'0%':{opacity:'0',transform:'translateY(12px)'},'100%':{opacity:'1',transform:'translateY(0)'}},
+            'slide-in-left':{'0%':{opacity:'0',transform:'translateX(-12px)'},'100%':{opacity:'1',transform:'translateX(0)'}},
+            'scale-in':{'0%':{opacity:'0',transform:'scale(.96)'},'100%':{opacity:'1',transform:'scale(1)'}},
+            shimmer:{'100%':{transform:'translateX(100%)'}},
+            'pulse-soft':{'0%,100%':{opacity:'1'},'50%':{opacity:'.6'}},
+          },
+          animation: {
+            'fade-in':'fade-in .4s ease-out both','fade-in-up':'fade-in-up .5s cubic-bezier(.16,1,.3,1) both',
+            'slide-in-left':'slide-in-left .3s ease-out both','scale-in':'scale-in .2s ease-out both',
+            shimmer:'shimmer 1.6s infinite','pulse-soft':'pulse-soft 2s ease-in-out infinite',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- ============ CUSTOM STYLES ============ -->
+  <style>
+    html{color-scheme:light}html.dark{color-scheme:dark}
+    body{font-family:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    ::-webkit-scrollbar{width:10px;height:10px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:9999px;border:2px solid transparent;background-clip:content-box}
+    ::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+    html.dark ::-webkit-scrollbar-thumb{background:#334155}
+    html.dark ::-webkit-scrollbar-thumb:hover{background:#475569}
+    .glass{background:rgba(255,255,255,.7);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.6)}
+    html.dark .glass{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.05)}
+    .card{background:#fff;border:1px solid #e2e8f0;border-radius:1rem;box-shadow:0 1px 2px 0 rgb(15 23 42/.04),0 4px 16px -2px rgb(15 23 42/.06);transition:all .3s ease}
+    html.dark .card{background:#0f172a;border-color:#1e293b}
+    .card-hover:hover{transform:translateY(-4px);box-shadow:0 4px 8px -2px rgb(15 23 42/.08),0 24px 48px -12px rgb(15 23 42/.16);border-color:#bcd7ff}
+    html.dark .card-hover:hover{border-color:#1e3a8a}
+    .nav-item{position:relative;display:flex;align-items:center;gap:.75rem;padding:.625rem .75rem;border-radius:.75rem;font-size:.875rem;font-weight:500;color:#64748b;cursor:pointer;transition:all .2s ease}
+    .nav-item:hover{background:#f1f5f9;color:#1e293b}
+    html.dark .nav-item{color:#94a3b8}html.dark .nav-item:hover{background:#1e293b;color:#f1f5f9}
+    .nav-item.active{background:#eef5ff;color:#1d4ed8}
+    html.dark .nav-item.active{background:rgba(30,58,138,.4);color:#8ebdff}
+    .nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);height:1.25rem;width:.25rem;border-radius:0 .25rem .25rem 0;background:#2563eb}
+    html.dark .nav-item.active::before{background:#5a9bff}
+    .btn-ripple{position:relative;overflow:hidden}
+    .ripple{position:absolute;border-radius:9999px;background:rgba(255,255,255,.45);pointer-events:none;transform:scale(0);animation:ripple-anim .6s ease-out}
+    @keyframes ripple-anim{to{transform:scale(2.5);opacity:0}}
+    .skeleton{position:relative;overflow:hidden;background:#f1f5f9;border-radius:.5rem}
+    html.dark .skeleton{background:#1e293b}
+    .skeleton::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);transform:translateX(-100%);animation:shimmer 1.6s infinite}
+    html.dark .skeleton::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.04),transparent)}
+    @keyframes shimmer{100%{transform:translateX(100%)}}
+    .input{width:100%;padding:.625rem .875rem;border-radius:.75rem;background:#fff;border:1px solid #e2e8f0;font-size:.875rem;color:#1e293b;transition:all .2s}
+    .input:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 4px rgba(59,130,246,.1)}
+    html.dark .input{background:#0f172a;border-color:#334155;color:#f1f5f9}
+    .page{display:none}.page.active{display:block}
+    .stagger-1{animation-delay:.06s}.stagger-2{animation-delay:.12s}.stagger-3{animation-delay:.18s}
+    .stagger-4{animation-delay:.24s}.stagger-5{animation-delay:.3s}.stagger-6{animation-delay:.36s}
+    .no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{scrollbar-width:none}
+    .gallery-img{transition:transform .6s cubic-bezier(.16,1,.3,1)}.gallery-card:hover .gallery-img{transform:scale(1.08)}
+    @media (prefers-reduced-motion: reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+  </style>
+</head>
+
+<body class="bg-ink-50 dark:bg-ink-950 text-ink-800 dark:text-ink-200">
+
+<!-- ============================================================
+     ESTATELY — PREMIUM SELLER DASHBOARD (single-file Django template)
+     Sections: Sidebar · Topbar · Dashboard · Properties · Visits ·
+     Calendar · Chats · Notifications · Transactions · Analytics ·
+     Profile · Settings · Empty/Loading States · Modals · Footer
+     (Django placeholders can be added where backend data is needed)
+============================================================ -->
+
+<div class="flex min-h-screen">
+
+  <!-- =========================================================
+       SIDEBAR  (fixed, collapses on mobile via overlay)
+  ========================================================== -->
+  <aside id="sidebar"
+    class="fixed lg:sticky top-0 left-0 z-50 h-screen w-72 shrink-0 -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-out
+           bg-white dark:bg-ink-900 border-r border-ink-200 dark:border-ink-800 flex flex-col">
+
+    <!-- Brand -->
+    <div class="h-16 flex items-center gap-2.5 px-5 border-b border-ink-200 dark:border-ink-800 shrink-0">
+      <div class="h-9 w-9 rounded-xl bg-brand-600 text-white grid place-items-center shadow-glow">
+        <i class="ri-building-line text-lg"></i>
+      </div>
+      <div class="leading-tight">
+        <p class="font-extrabold text-ink-900 dark:text-white tracking-tight">Estately</p>
+        <p class="text-[10px] uppercase tracking-widest text-ink-400">Seller Suite</p>
+      </div>
+      <button onclick="toggleSidebar()" class="ml-auto lg:hidden h-8 w-8 grid place-items-center rounded-lg text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-800">
+        <i class="ri-close-line text-xl"></i>
+      </button>
+    </div>
+
+    <!-- Nav -->
+    <nav class="flex-1 overflow-y-auto no-scrollbar px-3 py-4 space-y-5">
+
+      <!-- Dashboard -->
+      <div>
+        <p class="nav-label">Main</p>
+        <a class="nav-item active" data-page="dashboard"><i class="ri-dashboard-3-line text-lg"></i><span>Dashboard</span></a>
+      </div>
+
+      <!-- Property Management -->
+      <div>
+        <p class="nav-label">Property Management</p>
+        <a class="nav-item" data-page="properties"><i class="ri-home-5-line text-lg"></i><span>My Properties</span></a>
+        <a class="nav-item" data-page="properties" data-action="add"><i class="ri-add-line text-lg"></i><span>Add Property</span></a>
+        <a class="nav-item" data-page="properties" data-filter="draft"><i class="ri-draft-line text-lg"></i><span>Draft Properties</span></a>
+      </div>
+
+      <!-- Visits -->
+      <div>
+        <p class="nav-label">Visits</p>
+        <a class="nav-item" data-page="visits"><i class="ri-calendar-todo-line text-lg"></i><span>Scheduled Visits</span></a>
+        <a class="nav-item" data-page="calendar"><i class="ri-calendar-2-line text-lg"></i><span>Calendar</span></a>
+      </div>
+
+      <!-- Communication -->
+      <div>
+        <p class="nav-label">Communication</p>
+        <a class="nav-item" data-page="chats"><i class="ri-chat-3-line text-lg"></i><span>Chats</span><span class="ml-auto badge-mini">7</span></a>
+        <a class="nav-item" data-page="notifications"><i class="ri-notification-3-line text-lg"></i><span>Notifications</span><span class="ml-auto badge-mini">3</span></a>
+      </div>
+
+      <!-- Transactions -->
+      <div>
+        <p class="nav-label">Transactions</p>
+        <a class="nav-item" data-page="rent-requests"><i class="ri-wallet-3-line text-lg"></i><span>Rent Requests</span></a>
+        <a class="nav-item" data-page="billing"><i class="ri-bill-line text-lg"></i><span>Billing History</span></a>
+      </div>
+
+      <!-- Analytics / Profile / Settings -->
+      <div>
+        <p class="nav-label">Account</p>
+        <a class="nav-item" data-page="analytics"><i class="ri-bar-chart-2-line text-lg"></i><span>Analytics</span></a>
+        <a class="nav-item" data-page="profile"><i class="ri-user-3-line text-lg"></i><span>Profile</span></a>
+        <a class="nav-item" data-page="settings"><i class="ri-settings-3-line text-lg"></i><span>Settings</span></a>
+      </div>
+
+      <!-- Showcase -->
+      <div>
+        <p class="nav-label">UI Showcase</p>
+        <a class="nav-item" data-page="empty-states"><i class="ri-inbox-2-line text-lg"></i><span>Empty States</span></a>
+        <a class="nav-item" data-page="loading-states"><i class="ri-loader-4-line text-lg"></i><span>Loading States</span></a>
+      </div>
+    </nav>
+
+    <!-- Logout + upgrade card -->
+    <div class="p-3 border-t border-ink-200 dark:border-ink-800 space-y-3 shrink-0">
+      <div class="rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 p-4 text-white relative overflow-hidden">
+        <div class="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-white/10"></div>
+        <p class="text-sm font-bold relative">Go Pro</p>
+        <p class="text-[11px] text-brand-100 mt-0.5 relative">Unlock advanced analytics & AI pricing.</p>
+        <button class="mt-3 w-full bg-white/15 hover:bg-white/25 backdrop-blur rounded-lg py-1.5 text-xs font-semibold transition">Upgrade</button>
+      </div>
+      <a class="nav-item text-danger-600 dark:text-danger-400" data-page="logout"><i class="ri-logout-circle-r-line text-lg"></i><span>Logout</span></a>
+    </div>
+  </aside>
+
+  <!-- Mobile overlay -->
+  <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 z-40 bg-ink-950/40 backdrop-blur-sm lg:hidden hidden"></div>
+
+  <!-- =========================================================
+       MAIN CONTENT
+  ========================================================== -->
+  <div class="flex-1 min-w-0 flex flex-col">
+
+    <!-- ============ TOP NAVBAR ============ -->
+    <header class="sticky top-0 z-30 glass-strong border-b border-ink-200/60 dark:border-ink-800/60">
+      <div class="h-16 px-4 sm:px-6 flex items-center gap-3">
+
+        <!-- mobile menu -->
+        <button onclick="toggleSidebar()" class="lg:hidden h-9 w-9 grid place-items-center rounded-xl text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800">
+          <i class="ri-menu-line text-xl"></i>
+        </button>
+
+        <!-- Breadcrumb -->
+        <div class="hidden md:flex items-center gap-2 text-sm">
+          <span class="text-ink-400">Estately</span>
+          <i class="ri-arrow-right-s-line text-ink-300"></i>
+          <span id="crumb" class="font-semibold text-ink-700 dark:text-ink-200">Dashboard</span>
+        </div>
+
+        <!-- Search -->
+        <div class="ml-auto md:ml-6 flex-1 max-w-md relative hidden sm:block">
+          <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"></i>
+          <input class="input pl-9 pr-16" placeholder="Search properties, buyers, visits…" />
+          <kbd class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-ink-400 bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">⌘K</kbd>
+        </div>
+
+        <!-- Actions -->
+        <div class="ml-auto sm:ml-0 flex items-center gap-1.5">
+
+          <!-- Theme toggle -->
+          <button onclick="toggleTheme()" class="h-9 w-9 grid place-items-center rounded-xl text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800 transition" title="Toggle theme">
+            <i id="theme-icon" class="ri-moon-line text-lg"></i>
+          </button>
+
+          <!-- Messages -->
+          <button onclick="navigate('chats')" class="relative h-9 w-9 grid place-items-center rounded-xl text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800 transition">
+            <i class="ri-chat-3-line text-lg"></i>
+            <span class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-danger-500 ring-2 ring-white dark:ring-ink-900"></span>
+          </button>
+
+          <!-- Notifications -->
+          <div class="relative">
+            <button onclick="toggleDropdown('notif-dd', event)" class="relative h-9 w-9 grid place-items-center rounded-xl text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800 transition">
+              <i class="ri-notification-3-line text-lg"></i>
+              <span class="absolute top-1 right-1 min-w-4 h-4 px-1 grid place-items-center text-[9px] font-bold text-white bg-danger-500 rounded-full">3</span>
+            </button>
+            <!-- dropdown -->
+            <div id="notif-dd" class="dropdown hidden absolute right-0 mt-2 w-80 card p-0 overflow-hidden animate-scale-in origin-top-right">
+              <div class="px-4 py-3 border-b border-ink-200 dark:border-ink-800 flex items-center justify-between">
+                <p class="font-bold text-ink-900 dark:text-white text-sm">Notifications</p>
+                <span class="text-[11px] text-brand-600 font-semibold cursor-pointer">Mark all read</span>
+              </div>
+              <div class="max-h-80 overflow-y-auto no-scrollbar divide-y divide-ink-100 dark:divide-ink-800">
+                <!-- items injected by JS -->
+                <div id="topbar-notifs"></div>
+              </div>
+              <button onclick="navigate('notifications')" class="w-full py-2.5 text-xs font-semibold text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20">View all notifications</button>
+            </div>
+          </div>
+
+          <!-- Profile dropdown -->
+          <div class="relative ml-1">
+            <button onclick="toggleDropdown('profile-dd', event)" class="flex items-center gap-2 rounded-xl p-1 pr-2 hover:bg-ink-100 dark:hover:bg-ink-800 transition">
+              <img src="https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&fit=crop" class="h-8 w-8 rounded-lg object-cover" alt="avatar" />
+              <div class="hidden md:block text-left leading-tight">
+                <p class="text-xs font-bold text-ink-800 dark:text-white">Daniel Cooper</p>
+                <p class="text-[10px] text-ink-400">Premium Seller</p>
+              </div>
+              <i class="ri-arrow-down-s-line text-ink-400 hidden md:block"></i>
+            </button>
+            <div id="profile-dd" class="dropdown hidden absolute right-0 mt-2 w-60 card p-0 overflow-hidden animate-scale-in origin-top-right">
+              <div class="px-4 py-3 border-b border-ink-200 dark:border-ink-800">
+                <p class="text-sm font-bold text-ink-900 dark:text-white">Daniel Cooper</p>
+                <p class="text-xs text-ink-400">daniel.cooper@estately.com</p>
+              </div>
+              <div class="py-1">
+                <button onclick="navigate('profile')" class="dd-link"><i class="ri-user-3-line"></i> My Profile</button>
+                <button onclick="navigate('settings')" class="dd-link"><i class="ri-settings-3-line"></i> Settings</button>
+                <button class="dd-link"><i class="ri-question-line"></i> Help Center</button>
+              </div>
+              <div class="border-t border-ink-200 dark:border-ink-800 py-1">
+                <button class="dd-link text-danger-600 dark:text-danger-400"><i class="ri-logout-circle-r-line"></i> Log out</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ PAGE AREA ============ -->
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] w-full mx-auto">
+
+      <!-- =========================================================
+           PAGE: DASHBOARD
+      ========================================================== -->
+      <section id="page-dashboard" class="page active space-y-6">
+
+        <!-- Welcome + Quick Actions -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Welcome card -->
+          <div class="lg:col-span-2 card p-6 sm:p-8 relative overflow-hidden animate-fade-in-up">
+            <div class="absolute -right-10 -top-10 h-44 w-44 rounded-full bg-brand-100/60 dark:bg-brand-900/30 blur-2xl"></div>
+            <div class="relative">
+              <p class="text-sm text-ink-500 dark:text-ink-400">Welcome back,</p>
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-ink-900 dark:text-white tracking-tight mt-1">Daniel Cooper 👋</h1>
+              <p class="text-sm text-ink-500 dark:text-ink-400 mt-2 max-w-lg">You have <span class="font-semibold text-brand-600">9 pending requests</span> and <span class="font-semibold text-brand-600">4 visits</span> scheduled this week. Let's close some deals.</p>
+              <div class="mt-6 flex flex-wrap gap-3">
+                <button onclick="openModal('modal-property')" class="btn-primary"><i class="ri-add-line"></i> Add Property</button>
+                <button onclick="openModal('modal-visit')" class="btn-secondary"><i class="ri-calendar-check-line"></i> Schedule Visit</button>
+                <button onclick="navigate('analytics')" class="btn-outline"><i class="ri-bar-chart-2-line"></i> View Analytics</button>
+                <button onclick="navigate('chats')" class="btn-outline"><i class="ri-chat-3-line"></i> View Messages</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick stats summary -->
+          <div class="card p-6 animate-fade-in-up stagger-1">
+            <p class="text-sm font-bold text-ink-900 dark:text-white">This Month</p>
+            <p class="text-xs text-ink-400">Performance snapshot</p>
+            <div class="mt-4 space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-ink-500">Revenue</span>
+                <span class="text-sm font-bold text-ink-900 dark:text-white">$2.41M</span>
+              </div>
+              <div class="h-2 rounded-full bg-ink-100 dark:bg-ink-800 overflow-hidden"><div class="h-full bg-brand-500 rounded-full" style="width:78%"></div></div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-ink-500">Listings live</span>
+                <span class="text-sm font-bold text-ink-900 dark:text-white">17 / 48</span>
+              </div>
+              <div class="h-2 rounded-full bg-ink-100 dark:bg-ink-800 overflow-hidden"><div class="h-full bg-success-500 rounded-full" style="width:35%"></div></div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-ink-500">Response rate</span>
+                <span class="text-sm font-bold text-ink-900 dark:text-white">98%</span>
+              </div>
+              <div class="h-2 rounded-full bg-ink-100 dark:bg-ink-800 overflow-hidden"><div class="h-full bg-warning-500 rounded-full" style="width:98%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ STATISTICS CARDS (8) ============ -->
+        <div id="stat-grid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"></div>
+
+        <!-- Charts row -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Revenue chart -->
+          <div class="lg:col-span-2 card p-6 animate-fade-in-up">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h3 class="font-bold text-ink-900 dark:text-white">Revenue Overview</h3>
+                <p class="text-xs text-ink-400">Last 7 months · in $K</p>
+              </div>
+              <span class="badge-success"><i class="ri-arrow-up-line"></i> +22.4%</span>
+            </div>
+            <div id="dash-revenue-chart" class="h-56"></div>
+          </div>
+          <!-- Conversion donut -->
+          <div class="card p-6 animate-fade-in-up stagger-1">
+            <h3 class="font-bold text-ink-900 dark:text-white">Conversion Funnel</h3>
+            <p class="text-xs text-ink-400">Views → Closed</p>
+            <div class="mt-4 flex items-center justify-center">
+              <div id="dash-donut" class="relative h-44 w-44"></div>
+            </div>
+            <div id="dash-donut-legend" class="mt-4 space-y-2"></div>
+          </div>
+        </div>
+
+        <!-- Properties preview + Recent activity -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Recent properties -->
+          <div class="lg:col-span-2 card p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-ink-900 dark:text-white">Recent Properties</h3>
+              <button onclick="navigate('properties')" class="text-xs font-semibold text-brand-600 hover:text-brand-700">View all <i class="ri-arrow-right-line"></i></button>
+            </div>
+            <div id="dash-properties" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+          </div>
+          <!-- Recent activity timeline -->
+          <div class="card p-6">
+            <h3 class="font-bold text-ink-900 dark:text-white mb-4">Recent Activity</h3>
+            <div id="activity-timeline" class="relative"></div>
+          </div>
+        </div>
+
+        <!-- Upcoming visits + Messages + Notifications -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Upcoming visits -->
+          <div class="card p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-ink-900 dark:text-white">Upcoming Visits</h3>
+              <button onclick="navigate('visits')" class="text-xs font-semibold text-brand-600">All</button>
+            </div>
+            <div id="dash-visits" class="space-y-3"></div>
+          </div>
+          <!-- Messages preview -->
+          <div class="card p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-ink-900 dark:text-white">Messages</h3>
+              <button onclick="navigate('chats')" class="text-xs font-semibold text-brand-600">All</button>
+            </div>
+            <div id="dash-messages" class="space-y-1"></div>
+          </div>
+          <!-- Notifications panel -->
+          <div class="card p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-ink-900 dark:text-white">Notifications</h3>
+              <button onclick="navigate('notifications')" class="text-xs font-semibold text-brand-600">All</button>
+            </div>
+            <div id="dash-notifs" class="space-y-3"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================
+           PAGE: PROPERTIES  (gallery cards + table)
+      ========================================================== -->
+      <section id="page-properties" class="page space-y-6">
+        <!-- Header + view toggle -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-extrabold text-ink-900 dark:text-white">My Properties</h2>
+            <p class="text-sm text-ink-400" id="props-subtitle">Manage and track all your listings</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button onclick="openModal('modal-property')" class="btn-primary"><i class="ri-add-line"></i> Add Property</button>
+            <div class="flex rounded-xl border border-ink-200 dark:border-ink-700 p-1 bg-white dark:bg-ink-900">
+              <button id="view-gallery-btn" onclick="setPropView('gallery')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition"><i class="ri-grid-line"></i></button>
+              <button id="view-table-btn" onclick="setPropView('table')" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition"><i class="ri-list-check-2"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gallery view -->
+        <div id="props-gallery" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"></div>
+
+        <!-- Table view -->
+        <div id="props-table" class="hidden card overflow-hidden">
+          <!-- toolbar -->
+          <div class="p-4 flex flex-col sm:flex-row gap-3 sm:items-center border-b border-ink-200 dark:border-ink-800">
+            <div class="relative flex-1 max-w-xs">
+              <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"></i>
+              <input id="props-search" oninput="renderPropsTable()" class="input pl-9" placeholder="Search properties…" />
+            </div>
+            <select id="props-filter" onchange="renderPropsTable()" class="input sm:w-44">
+              <option value="all">All statuses</option>
+              <option value="available">Available</option>
+              <option value="pending">Pending</option>
+              <option value="sold">Sold</option>
+              <option value="draft">Draft</option>
+            </select>
+            <span id="props-count" class="ml-auto text-xs text-ink-400"></span>
+          </div>
+          <!-- table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-ink-400 border-b border-ink-200 dark:border-ink-800">
+                  <th class="th sortable" onclick="sortProps('title')">Property <i class="ri-arrow-up-down-line"></i></th>
+                  <th class="th sortable" onclick="sortProps('price')">Price <i class="ri-arrow-up-down-line"></i></th>
+                  <th class="th">Status</th>
+                  <th class="th sortable" onclick="sortProps('views')">Views <i class="ri-arrow-up-down-line"></i></th>
+                  <th class="th sortable" onclick="sortProps('inquiries')">Inquiries <i class="ri-arrow-up-down-line"></i></th>
+                  <th class="th sortable" onclick="sortProps('visits')">Visits <i class="ri-arrow-up-down-line"></i></th>
+                  <th class="th text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="props-tbody"></tbody>
+            </table>
+          </div>
+          <!-- pagination -->
+          <div class="p-4 flex items-center justify-between border-t border-ink-200 dark:border-ink-800">
+            <p id="props-pageinfo" class="text-xs text-ink-400"></p>
+            <div id="props-pagination" class="flex items-center gap-1"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================
+           PAGE: VISITS
+      ========================================================== -->
+      <section id="page-visits" class="page space-y-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-extrabold text-ink-900 dark:text-white">Scheduled Visits</h2>
+            <p class="text-sm text-ink-400">Upcoming property tours and meetings</p>
+          </div>
+          <button onclick="openModal('modal-visit')" class="btn-primary"><i class="ri-add-line"></i> Schedule Visit</button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6" id="visits-grid"></div>
+      </section>
+
+      <!-- =========================================================
+           PAGE: CALENDAR
+      ========================================================== -->
+      <section id="page-calendar" class="page space-y-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-extrabold text-ink-900 dark:text-white">Calendar</h2>
+            <p class="text-sm text-ink-400">July 2026</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="h-9 w-9 grid place-items-center rounded-xl border border-ink-200 dark:border-ink-700 text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800"><i class="ri-arrow-left-s-line"></i></button>
+            <button class="h-9 w-9 grid place-items-center rounded-xl border border-ink-200 dark:border-ink-700 text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800"><i class="ri-arrow-right-s-line"></i></button>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <!-- Calendar grid -->
+          <div class="lg:col-span-3 card p-4 sm:p-6">
+            <div class="grid grid-cols-7 gap-1 sm:gap-2 mb-2">
+              <div class="cal-head">Sun</div><div class="cal-head">Mon</div><div class="cal-head">Tue</div>
+              <div class="cal-head">Wed</div><div class="cal-head">Thu</div><div class="cal-head">Fri</div><div class="cal-head">Sat</div>
+            </div>
+            <div id="cal-grid" class="grid grid-cols-7 gap-1 sm:gap-2"></div>
+          </div>
+          <!-- Legend / upcoming -->
+          <div class="card p-6">
+            <h3 class="font-bold text-ink-900 dark:text-white mb-4">Event Types</h3>
+            <div class="space-y-3">
+              <div class="flex items-center gap-2"><span class="h-3 w-3 rounded bg-brand-500"></span><span class="text-sm text-ink-600 dark:text-ink-300">Scheduled Visit</span></div>
+              <div class="flex items-center gap-2"><span class="h-3 w-3 rounded bg-warning-500"></span><span class="text-sm text-ink-600 dark:text-ink-300">Inspection</span></div>
+              <div class="flex items-center gap-2"><span class="h-3 w-3 rounded bg-success-500"></span><span class="text-sm text-ink-600 dark:text-ink-300">Rent Meeting</span></div>
+              <div class="flex items-center gap-2"><span class="h-3 w-3 rounded bg-danger-500"></span><span class="text-sm text-ink-600 dark:text-ink-300">Closing Date</span></div>
+            </div>
+            <hr class="my-5 border-ink-200 dark:border-ink-800" />
+            <h3 class="font-bold text-ink-900 dark:text-white mb-3">Today</h3>
+            <div id="cal-today" class="space-y-2"></div>
+          </div>
+        </div>
+      </section>
+
+
+
+      <!-- =========================================================
+           PAGE: NOTIFICATIONS
+      ========================================================== -->
+      <section id="page-notifications" class="page space-y-6">
+        <div class="flex items-center justify-between">
+          <div><h2 class="text-xl font-extrabold text-ink-900 dark:text-white">Notifications</h2><p class="text-sm text-ink-400">Stay on top of every update</p></div>
+          <div class="flex gap-2">
+            <button class="btn-outline"><i class="ri-check-double-line"></i> Mark all read</button>
+            <button class="btn-secondary"><i class="ri-settings-3-line"></i> Preferences</button>
+          </div>
+        </div>
+        <div id="notif-list" class="card divide-y divide-ink-100 dark:divide-ink-800"></div>
+      </section>
+
+      <!-- =========================================================
+           PAGE: RENT REQUESTS (Transactions)
+      ========================================================== -->
+      <section id="page-rent-requests" class="page space-y-6">
+        <div><h2 class="text-xl font-extrabold text-ink-900 dark:text-white">Rent Requests</h2><p class="text-sm text-ink-400">Pending and recent rental applications</p></div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="card p-5"><p class="text-xs text-ink-400 font-semibold uppercase tracking-wide">Pending</p><p class="text-2xl font-extrabold text-ink-900 dark:text-white mt-1">9</p><span class="badge-warning mt-2 inline-flex"><i class="ri-time-line"></i> Awaiting</span></div>
+          <div class="card p-5"><p class="text-xs text-ink-400 font-semibold uppercase tracking-wide">Approved</p><p class="text-2xl font-extrabold text-ink-900 dark:text-white mt-1">42</p><span class="badge-success mt-2 inline-flex"><i class="ri-check-line"></i> This year</span></div>
+          <div class="card p-5"><p class="text-xs text-ink-400 font-semibold uppercase tracking-wide">Monthly Rent</p><p class="text-2xl font-extrabold text-ink-900 dark:text-white mt-1">$48.2K</p><span class="badge-brand mt-2 inline-flex"><i class="ri-arrow-up-line"></i> +6%</span></div>
+        </div>
+        <div class="card overflow-hidden">
+          <table class="w-full text-sm">
+            <thead><tr class="text-left text-ink-400 border-b border-ink-200 dark:border-ink-800"><th class="th">Tenant</th><th class="th">Property</th><th class="th">Amount</th><th class="th">Duration</th><th class="th">Status</th><th class="th text-right">Action</th></tr></thead>
+            <tbody id="rent-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- =========================================================
+           PAGE: BILLING HISTORY (Transactions)
+      ========================================================== -->
+      <section id="page-billing" class="page space-y-6">
+        <div><h2 class="text-xl font-extrabold text-ink-900 dark:text-white">Billing History</h2><p class="text-sm text-ink-400">Invoices and payout records</p></div>
+        <div class="card overflow-hidden">
+          <table class="w-full text-sm">
+            <thead><tr class="text-left text-ink-400 border-b border-ink-200 dark:border-ink-800"><th class="th">Invoice</th><th class="th">Date</th><th class="th">Description</th><th class="th">Amount</th><th class="th">Status</th><th class="th text-right">Download</th></tr></thead>
+            <tbody id="bill-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- =========================================================
+           PAGE: ANALYTICS
+      ========================================================== -->
+      <section id="page-analytics" class="page space-y-6">
+        <div class="flex items-center justify-between">
+          <div><h2 class="text-xl font-extrabold text-ink-900 dark:text-white">Analytics</h2><p class="text-sm text-ink-400">Performance insights across your portfolio</p></div>
+          <select class="input w-40"><option>Last 7 days</option><option>Last 30 days</option><option>Last quarter</option></select>
+        </div>
+
+        <!-- KPI strip -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="card p-5"><p class="text-xs text-ink-400 font-semibold uppercase">Total Revenue</p><p class="text-2xl font-extrabold text-ink-900 dark:text-white mt-1">$2.41M</p><span class="badge-success mt-2 inline-flex"><i class="ri-arrow-up-line"></i> +22%</span></div>
+          <div class="card p-5"><p class="text-xs text-ink-400 font-semibold uppercase">Total Views</p><p class="text-2xl font-extrabold text-ink-900 dark:text-white mt-1">24.8K</p><span class="badge-success mt-2 inline-flex"><i class="ri-arrow-up-line"></i> +18%</span></div>
+          <div class="card p-5"><p class="text-xs text-ink-400 font-semibold uppercase">Conversion</p><p class="text-2xl font-extrabold text-ink-900 dark:text-white mt-1">3.1%</p><span class="badge-success mt-2 inline-flex"><i class="ri-arrow-up-line"></i> +0.4%</span></div>
+          <div class="card p-5"><p class="text-xs text-ink-400 font-semibold uppercase">Avg. Days Listed</p><p class="text-2xl font-extrabold text-ink-900 dark:text-white mt-1">34</p><span class="badge-danger mt-2 inline-flex"><i class="ri-arrow-down-line"></i> -5</span></div>
+        </div>
+
+        <!-- Revenue + Views -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="card p-6"><div class="flex items-center justify-between mb-6"><h3 class="font-bold text-ink-900 dark:text-white">Revenue Chart</h3><span class="badge-brand">Monthly</span></div><div id="ana-revenue" class="h-64"></div></div>
+          <div class="card p-6"><div class="flex items-center justify-between mb-6"><h3 class="font-bold text-ink-900 dark:text-white">Views Chart</h3><span class="badge-brand">Weekly</span></div><div id="ana-views" class="h-64"></div></div>
+        </div>
+
+        <!-- Monthly sales + Conversion donut -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="card p-6"><h3 class="font-bold text-ink-900 dark:text-white mb-6">Monthly Sales</h3><div id="ana-sales" class="h-56"></div></div>
+          <div class="card p-6"><h3 class="font-bold text-ink-900 dark:text-white mb-6">Conversion Rate</h3><div class="flex items-center gap-8 flex-wrap"><div id="ana-donut" class="h-44 w-44 relative"></div><div id="ana-donut-legend" class="space-y-2 flex-1 min-w-[140px]"></div></div></div>
+        </div>
+
+        <!-- Property performance + Popular -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="card p-6"><h3 class="font-bold text-ink-900 dark:text-white mb-6">Property Performance</h3><div id="ana-perf" class="space-y-4"></div></div>
+          <div class="card p-6"><h3 class="font-bold text-ink-900 dark:text-white mb-6">Popular Properties</h3><div id="ana-popular" class="space-y-4"></div></div>
+        </div>
+      </section>
+
+      <!-- =========================================================
+           PAGE: PROFILE
+      ========================================================== -->
+      <section id="page-profile" class="page space-y-6">
+        <!-- Cover + profile card -->
+        <div class="card overflow-hidden">
+          <div class="h-36 sm:h-44 bg-cover bg-center relative" style="background-image:url('https://images.pexels.com/photos/325185/pexels-photo-325185.jpeg?auto=compress&cs=tinysrgb&w=1200&h=300&fit=crop')">
+            <div class="absolute inset-0 bg-gradient-to-t from-ink-900/40 to-transparent"></div>
+            <button class="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-white/20 backdrop-blur text-white text-xs font-semibold hover:bg-white/30"><i class="ri-camera-line"></i> Edit Cover</button>
+          </div>
+          <div class="px-6 pb-6">
+            <div class="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12 sm:-mt-14">
+              <div class="relative">
+                <img src="https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop" class="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl object-cover ring-4 ring-white dark:ring-ink-900" alt="seller" />
+                <span class="absolute bottom-1 right-1 h-6 w-6 rounded-full bg-success-500 ring-2 ring-white dark:ring-ink-900 grid place-items-center"><i class="ri-check-line text-white text-xs"></i></span>
+              </div>
+              <div class="flex-1 sm:pb-2">
+                <div class="flex items-center gap-2">
+                  <h2 class="text-xl font-extrabold text-ink-900 dark:text-white">Daniel Cooper</h2>
+                  <span class="badge-brand"><i class="ri-verified-badge-line"></i> Verified</span>
+                </div>
+                <p class="text-sm text-ink-400">Premium Seller · San Francisco, CA · Since March 2021</p>
+              </div>
+              <div class="flex gap-2 sm:pb-2">
+                <button onclick="openModal('modal-profile')" class="btn-primary"><i class="ri-edit-line"></i> Edit Profile</button>
+                <button class="btn-outline"><i class="ri-share-line"></i> Share</button>
+              </div>
+            </div>
+
+            <!-- stat row -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+              <div class="rounded-2xl bg-ink-50 dark:bg-ink-800/50 p-4"><p class="text-xs text-ink-400 font-semibold uppercase">Rating</p><p class="text-xl font-extrabold text-ink-900 dark:text-white mt-1 flex items-center gap-1">4.9 <i class="ri-star-fill text-warning-500 text-sm"></i></p></div>
+              <div class="rounded-2xl bg-ink-50 dark:bg-ink-800/50 p-4"><p class="text-xs text-ink-400 font-semibold uppercase">Listed</p><p class="text-xl font-extrabold text-ink-900 dark:text-white mt-1">48</p></div>
+              <div class="rounded-2xl bg-ink-50 dark:bg-ink-800/50 p-4"><p class="text-xs text-ink-400 font-semibold uppercase">Sold</p><p class="text-xl font-extrabold text-ink-900 dark:text-white mt-1">31</p></div>
+              <div class="rounded-2xl bg-ink-50 dark:bg-ink-800/50 p-4"><p class="text-xs text-ink-400 font-semibold uppercase">Response Rate</p><p class="text-xl font-extrabold text-ink-900 dark:text-white mt-1">98%</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- completion + response -->
+          <div class="card p-6">
+            <h3 class="font-bold text-ink-900 dark:text-white mb-4">Profile Completion</h3>
+            <div class="flex items-center gap-4">
+              <div class="relative h-24 w-24"><div id="profile-ring"></div><div class="absolute inset-0 grid place-items-center"><p class="text-xl font-extrabold text-ink-900 dark:text-white">82%</p></div></div>
+              <div class="flex-1 space-y-2 text-sm">
+                <p class="flex items-center gap-2 text-ink-600 dark:text-ink-300"><i class="ri-check-line text-success-500"></i> Basic info</p>
+                <p class="flex items-center gap-2 text-ink-600 dark:text-ink-300"><i class="ri-check-line text-success-500"></i> Photo</p>
+                <p class="flex items-center gap-2 text-ink-400"><i class="ri-time-line"></i> Address pending</p>
+              </div>
+            </div>
+            <hr class="my-5 border-ink-200 dark:border-ink-800"/>
+            <h3 class="font-bold text-ink-900 dark:text-white mb-3">Response Time</h3>
+            <p class="text-3xl font-extrabold text-ink-900 dark:text-white">1h 12m</p>
+            <p class="text-xs text-success-600 font-semibold mt-1"><i class="ri-arrow-down-line"></i> 18% faster than last month</p>
+          </div>
+
+          <!-- Verification -->
+          <div class="lg:col-span-2 card p-6">
+            <h3 class="font-bold text-ink-900 dark:text-white mb-4">Verification</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="verify-card verified"><div class="verify-ic bg-success-50 dark:bg-success-900/30 text-success-600 dark:text-success-400"><i class="ri-phone-line text-xl"></i></div><div><p class="font-semibold text-ink-900 dark:text-white text-sm">Phone Verified</p><p class="text-xs text-ink-400">+1 (415) 555-0182</p></div><i class="ri-shield-check-line text-success-500 text-lg ml-auto"></i></div>
+              <div class="verify-card verified"><div class="verify-ic bg-success-50 dark:bg-success-900/30 text-success-600 dark:text-success-400"><i class="ri-mail-line text-xl"></i></div><div><p class="font-semibold text-ink-900 dark:text-white text-sm">Email Verified</p><p class="text-xs text-ink-400">daniel.cooper@estately.com</p></div><i class="ri-shield-check-line text-success-500 text-lg ml-auto"></i></div>
+              <div class="verify-card verified"><div class="verify-ic bg-success-50 dark:bg-success-900/30 text-success-600 dark:text-success-400"><i class="ri-id-card-line text-xl"></i></div><div><p class="font-semibold text-ink-900 dark:text-white text-sm">Government ID</p><p class="text-xs text-ink-400">Approved · Driver's license</p></div><i class="ri-shield-check-line text-success-500 text-lg ml-auto"></i></div>
+              <div class="verify-card"><div class="verify-ic bg-warning-50 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400"><i class="ri-map-pin-line text-xl"></i></div><div><p class="font-semibold text-ink-900 dark:text-white text-sm">Address</p><p class="text-xs text-ink-400">Pending verification</p></div><button class="ml-auto text-xs font-semibold text-brand-600">Verify</button></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================
+           PAGE: SETTINGS
+      ========================================================== -->
+      <section id="page-settings" class="page">
+        <h2 class="text-xl font-extrabold text-ink-900 dark:text-white mb-6">Settings</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <!-- tabs -->
+          <div class="card p-3 h-fit lg:sticky lg:top-20">
+            <button class="set-tab active" data-tab="profile"><i class="ri-user-3-line"></i> Profile</button>
+            <button class="set-tab" data-tab="notif"><i class="ri-notification-3-line"></i> Notifications</button>
+            <button class="set-tab" data-tab="appearance"><i class="ri-palette-line"></i> Appearance</button>
+            <button class="set-tab" data-tab="privacy"><i class="ri-lock-line"></i> Privacy</button>
+            <button class="set-tab" data-tab="security"><i class="ri-shield-keyhole-line"></i> Security</button>
+            <button class="set-tab" data-tab="password"><i class="ri-key-2-line"></i> Password</button>
+          </div>
+          <!-- panels -->
+          <div class="lg:col-span-3 space-y-6">
+            <div class="set-panel" data-panel="profile"><div class="card p-6"><h3 class="font-bold text-ink-900 dark:text-white mb-4">Profile Settings</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label class="lbl">Full Name</label><input class="input" value="Daniel Cooper"/></div><div><label class="lbl">Email</label><input class="input" value="daniel.cooper@estately.com"/></div><div><label class="lbl">Phone</label><input class="input" value="+1 (415) 555-0182"/></div><div><label class="lbl">Location</label><input class="input" value="San Francisco, CA"/></div><div class="sm:col-span-2"><label class="lbl">Bio</label><textarea class="input" rows="3">Premium real estate seller specializing in luxury properties across the Bay Area.</textarea></div></div><div class="mt-5 flex justify-end gap-3"><button class="btn-outline">Cancel</button><button class="btn-primary"><i class="ri-save-line"></i> Save Changes</button></div></div></div>
+            <div class="set-panel hidden" data-panel="notif"><div class="card p-6"><h3 class="font-bold text-ink-900 dark:text-white mb-4">Notification Settings</h3><div class="space-y-1" id="set-notif-list"></div></div></div>
+            <div class="set-panel hidden" data-panel="appearance"><div class="card p-6"><h3 class="font-bold text-ink-900 dark:text-white mb-4">Appearance</h3><div class="grid grid-cols-2 gap-4"><button onclick="setTheme('light')" class="theme-opt"><div class="h-20 rounded-xl bg-white border-2 border-ink-200 mb-2"></div><p class="text-sm font-semibold text-ink-700 dark:text-ink-200">Light</p></button><button onclick="setTheme('dark')" class="theme-opt"><div class="h-20 rounded-xl bg-ink-900 border-2 border-ink-700 mb-2"></div><p class="text-sm font-semibold text-ink-700 dark:text-ink-200">Dark</p></button></div></div></div>
+            <div class="set-panel hidden" data-panel="privacy"><div class="card p-6"><h3 class="font-bold text-ink-900 dark:text-white mb-4">Privacy</h3><div class="space-y-1" id="set-privacy-list"></div></div></div>
+            <div class="set-panel hidden" data-panel="security"><div class="card p-6"><h3 class="font-bold text-ink-900 dark:text-white mb-4">Security</h3><div class="space-y-4"><div class="flex items-center justify-between p-4 rounded-xl bg-ink-50 dark:bg-ink-800/50"><div><p class="font-semibold text-ink-900 dark:text-white text-sm">Two-Factor Authentication</p><p class="text-xs text-ink-400">Add an extra layer of security</p></div><button class="btn-primary">Enable</button></div><div class="flex items-center justify-between p-4 rounded-xl bg-ink-50 dark:bg-ink-800/50"><div><p class="font-semibold text-ink-900 dark:text-white text-sm">Active Sessions</p><p class="text-xs text-ink-400">2 devices currently signed in</p></div><button class="btn-outline">Manage</button></div></div></div></div>
+            <div class="set-panel hidden" data-panel="password"><div class="card p-6"><h3 class="font-bold text-ink-900 dark:text-white mb-4">Change Password</h3><div class="space-y-4 max-w-md"><div><label class="lbl">Current Password</label><input type="password" class="input" placeholder="••••••••"/></div><div><label class="lbl">New Password</label><input type="password" class="input" placeholder="••••••••"/></div><div><label class="lbl">Confirm Password</label><input type="password" class="input" placeholder="••••••••"/></div><button class="btn-primary mt-2"><i class="ri-lock-line"></i> Update Password</button></div></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================
+           PAGE: EMPTY STATES (showcase)
+      ========================================================== -->
+      <section id="page-empty-states" class="page space-y-6">
+        <h2 class="text-xl font-extrabold text-ink-900 dark:text-white">Empty States</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="card p-12 flex flex-col items-center text-center animate-scale-in"><div class="empty-ic"><i class="ri-home-2-line"></i></div><h3 class="mt-6 text-lg font-bold text-ink-900 dark:text-white">No Properties Yet</h3><p class="mt-2 text-sm text-ink-500 max-w-sm">You haven't listed any properties. Start by adding your first listing to reach thousands of buyers.</p><button class="btn-primary mt-6"><i class="ri-add-line"></i> Add Your First Property</button></div>
+          <div class="card p-12 flex flex-col items-center text-center animate-scale-in"><div class="empty-ic"><i class="ri-calendar-line"></i></div><h3 class="mt-6 text-lg font-bold text-ink-900 dark:text-white">No Visits Scheduled</h3><p class="mt-2 text-sm text-ink-500 max-w-sm">No upcoming property tours. Schedule a visit to connect with potential buyers.</p><button class="btn-primary mt-6"><i class="ri-calendar-check-line"></i> Schedule a Visit</button></div>
+          <div class="card p-12 flex flex-col items-center text-center animate-scale-in"><div class="empty-ic"><i class="ri-chat-3-line"></i></div><h3 class="mt-6 text-lg font-bold text-ink-900 dark:text-white">No Chats</h3><p class="mt-2 text-sm text-ink-500 max-w-sm">Your inbox is empty. When buyers message you, conversations will appear here.</p><button class="btn-outline mt-6"><i class="ri-search-line"></i> Browse Buyers</button></div>
+          <div class="card p-12 flex flex-col items-center text-center animate-scale-in"><div class="empty-ic"><i class="ri-notification-3-line"></i></div><h3 class="mt-6 text-lg font-bold text-ink-900 dark:text-white">No Notifications</h3><p class="mt-2 text-sm text-ink-500 max-w-sm">You're all caught up. New notifications about your properties will show here.</p></div>
+        </div>
+      </section>
+
+      <!-- =========================================================
+           PAGE: LOADING STATES (skeletons)
+      ========================================================== -->
+      <section id="page-loading-states" class="page space-y-6">
+        <h2 class="text-xl font-extrabold text-ink-900 dark:text-white">Loading States</h2>
+        <!-- skeleton stat cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div class="card p-5"><div class="flex justify-between"><div class="skeleton h-11 w-11 rounded-xl"></div><div class="skeleton h-6 w-16 rounded-lg"></div></div><div class="skeleton h-8 w-24 mt-4"></div><div class="skeleton h-4 w-32 mt-2"></div></div>
+          <div class="card p-5"><div class="flex justify-between"><div class="skeleton h-11 w-11 rounded-xl"></div><div class="skeleton h-6 w-16 rounded-lg"></div></div><div class="skeleton h-8 w-24 mt-4"></div><div class="skeleton h-4 w-32 mt-2"></div></div>
+          <div class="card p-5"><div class="flex justify-between"><div class="skeleton h-11 w-11 rounded-xl"></div><div class="skeleton h-6 w-16 rounded-lg"></div></div><div class="skeleton h-8 w-24 mt-4"></div><div class="skeleton h-4 w-32 mt-2"></div></div>
+          <div class="card p-5"><div class="flex justify-between"><div class="skeleton h-11 w-11 rounded-xl"></div><div class="skeleton h-6 w-16 rounded-lg"></div></div><div class="skeleton h-8 w-24 mt-4"></div><div class="skeleton h-4 w-32 mt-2"></div></div>
+        </div>
+        <!-- skeleton property cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div class="card overflow-hidden"><div class="skeleton h-48 w-full rounded-none"></div><div class="p-5 space-y-3"><div class="flex justify-between"><div class="skeleton h-5 w-32"></div><div class="skeleton h-5 w-20 rounded-full"></div></div><div class="skeleton h-4 w-40"></div><div class="skeleton h-7 w-28"></div><div class="flex gap-4 pt-2"><div class="skeleton h-4 w-12"></div><div class="skeleton h-4 w-12"></div><div class="skeleton h-4 w-12"></div></div></div></div>
+          <div class="card overflow-hidden"><div class="skeleton h-48 w-full rounded-none"></div><div class="p-5 space-y-3"><div class="flex justify-between"><div class="skeleton h-5 w-32"></div><div class="skeleton h-5 w-20 rounded-full"></div></div><div class="skeleton h-4 w-40"></div><div class="skeleton h-7 w-28"></div><div class="flex gap-4 pt-2"><div class="skeleton h-4 w-12"></div><div class="skeleton h-4 w-12"></div><div class="skeleton h-4 w-12"></div></div></div></div>
+          <div class="card overflow-hidden"><div class="skeleton h-48 w-full rounded-none"></div><div class="p-5 space-y-3"><div class="flex justify-between"><div class="skeleton h-5 w-32"></div><div class="skeleton h-5 w-20 rounded-full"></div></div><div class="skeleton h-4 w-40"></div><div class="skeleton h-7 w-28"></div><div class="flex gap-4 pt-2"><div class="skeleton h-4 w-12"></div><div class="skeleton h-4 w-12"></div><div class="skeleton h-4 w-12"></div></div></div></div>
+        </div>
+        <!-- skeleton table -->
+        <div class="card p-5 space-y-4">
+          <div class="skeleton h-10 w-full rounded-xl"></div>
+          <div class="skeleton h-12 w-full rounded-lg"></div>
+          <div class="skeleton h-12 w-full rounded-lg"></div>
+          <div class="skeleton h-12 w-full rounded-lg"></div>
+          <div class="skeleton h-12 w-full rounded-lg"></div>
+        </div>
+        <!-- skeleton profile -->
+        <div class="card p-6 space-y-4 max-w-2xl"><div class="flex items-center gap-4"><div class="skeleton h-20 w-20 rounded-full"></div><div class="space-y-2"><div class="skeleton h-6 w-40"></div><div class="skeleton h-4 w-28"></div></div></div><div class="grid grid-cols-3 gap-4 pt-2"><div class="skeleton h-16 rounded-xl"></div><div class="skeleton h-16 rounded-xl"></div><div class="skeleton h-16 rounded-xl"></div></div></div>
+      </section>
+
+    </main>
+
+    <!-- ============ FOOTER ============ -->
+    <footer class="border-t border-ink-200 dark:border-ink-800 px-6 py-5 mt-auto">
+      <div class="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-ink-400">
+        <p>© 2026 Estately Inc. · All rights reserved.</p>
+        <div class="flex items-center gap-4">
+          <a class="hover:text-ink-600 cursor-pointer">Support</a>
+          <a class="hover:text-ink-600 cursor-pointer">Privacy</a>
+          <a class="hover:text-ink-600 cursor-pointer">Terms</a>
+          <span class="px-2 py-0.5 rounded bg-ink-100 dark:bg-ink-800 font-mono">v2.4.1</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<!-- =========================================================
+     MODALS
+========================================================= -->
+<!-- Delete Property -->
+<div id="modal-delete" class="modal-wrap hidden fixed inset-0 z-[100] grid place-items-center p-4">
+  <div class="absolute inset-0 bg-ink-950/40 backdrop-blur-sm animate-fade-in" onclick="closeModal('modal-delete')"></div>
+  <div class="relative w-full max-w-md card overflow-hidden animate-scale-in">
+    <div class="p-6 text-center"><div class="mx-auto h-14 w-14 rounded-2xl bg-danger-50 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400 grid place-items-center"><i class="ri-delete-bin-2-line text-2xl"></i></div><h3 class="mt-4 text-lg font-bold text-ink-900 dark:text-white">Delete Property?</h3><p class="mt-2 text-sm text-ink-500">Are you sure you want to delete <span class="font-semibold text-ink-700 dark:text-ink-200" id="del-name">this property</span>? This action cannot be undone.</p></div>
+    <div class="flex gap-3 p-5 border-t border-ink-200 dark:border-ink-800 bg-ink-50/50 dark:bg-ink-900/50"><button class="btn-outline flex-1" onclick="closeModal('modal-delete')">Cancel</button><button class="btn-danger flex-1" onclick="closeModal('modal-delete')"><i class="ri-delete-bin-line"></i> Delete</button></div>
+  </div>
+</div>
+
+<!-- Add / Edit Property -->
+<div id="modal-property" class="modal-wrap hidden fixed inset-0 z-[100] grid place-items-center p-4">
+  <div class="absolute inset-0 bg-ink-950/40 backdrop-blur-sm animate-fade-in" onclick="closeModal('modal-property')"></div>
+  <div class="relative w-full max-w-2xl card overflow-hidden animate-scale-in max-h-[90vh] flex flex-col">
+    <div class="flex items-center justify-between p-5 border-b border-ink-200 dark:border-ink-800"><div class="flex items-center gap-3"><div class="h-10 w-10 rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 grid place-items-center"><i class="ri-home-add-line text-xl"></i></div><div><h3 class="text-base font-bold text-ink-900 dark:text-white">Add New Property</h3><p class="text-xs text-ink-400">Fill in the listing details</p></div></div><button onclick="closeModal('modal-property')" class="h-8 w-8 grid place-items-center rounded-lg text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-800"><i class="ri-close-line"></i></button></div>
+    <div class="p-5 overflow-y-auto space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label class="lbl">Title</label><input class="input" placeholder="e.g. Bay View Modern Villa"/></div><div><label class="lbl">Property Type</label><select class="input"><option>Villa</option><option>Penthouse</option><option>Apartment</option><option>Condo</option><option>Townhouse</option><option>House</option></select></div></div>
+      <div><label class="lbl">Location</label><input class="input" placeholder="e.g. Pacific Heights, San Francisco"/></div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4"><div><label class="lbl">Price ($)</label><input class="input" placeholder="2,850,000"/></div><div><label class="lbl">Bedrooms</label><input class="input" type="number" placeholder="3"/></div><div><label class="lbl">Bathrooms</label><input class="input" type="number" placeholder="3"/></div><div><label class="lbl">Area (sqft)</label><input class="input" type="number" placeholder="2450"/></div></div>
+      <div><label class="lbl">Status</label><select class="input"><option>Available</option><option>Pending</option><option>Sold</option><option>Draft</option></select></div>
+      <div><label class="lbl">Description</label><textarea class="input" rows="3" placeholder="Describe the property…"></textarea></div>
+      <div class="rounded-xl border-2 border-dashed border-ink-200 dark:border-ink-700 p-6 text-center"><i class="ri-upload-cloud-2-line text-3xl text-ink-300"></i><p class="text-sm text-ink-500 mt-2">Drag & drop images or <span class="text-brand-600 font-semibold">browse</span></p><p class="text-xs text-ink-400 mt-1">PNG, JPG up to 10MB</p></div>
+    </div>
+    <div class="flex justify-end gap-3 p-5 border-t border-ink-200 dark:border-ink-800 bg-ink-50/50 dark:bg-ink-900/50"><button class="btn-outline" onclick="closeModal('modal-property')">Cancel</button><button class="btn-primary" onclick="closeModal('modal-property')"><i class="ri-save-line"></i> Save Property</button></div>
+  </div>
+</div>
+
+<!-- Schedule Visit -->
+<div id="modal-visit" class="modal-wrap hidden fixed inset-0 z-[100] grid place-items-center p-4">
+  <div class="absolute inset-0 bg-ink-950/40 backdrop-blur-sm animate-fade-in" onclick="closeModal('modal-visit')"></div>
+  <div class="relative w-full max-w-lg card overflow-hidden animate-scale-in">
+    <div class="flex items-center justify-between p-5 border-b border-ink-200 dark:border-ink-800"><div class="flex items-center gap-3"><div class="h-10 w-10 rounded-xl bg-success-50 dark:bg-success-900/30 text-success-600 dark:text-success-400 grid place-items-center"><i class="ri-calendar-check-line text-xl"></i></div><div><h3 class="text-base font-bold text-ink-900 dark:text-white">Schedule a Visit</h3><p class="text-xs text-ink-400">Arrange a property tour</p></div></div><button onclick="closeModal('modal-visit')" class="h-8 w-8 grid place-items-center rounded-lg text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-800"><i class="ri-close-line"></i></button></div>
+    <div class="p-5 space-y-4"><div><label class="lbl">Buyer Name</label><input class="input" placeholder="e.g. Olivia Bennett"/></div><div><label class="lbl">Property</label><select class="input"><option>Bay View Modern Villa</option><option>Skyline Penthouse Loft</option><option>Heritage Victorian Townhouse</option></select></div><div class="grid grid-cols-2 gap-4"><div><label class="lbl">Date</label><input class="input" type="date"/></div><div><label class="lbl">Time</label><input class="input" type="time"/></div></div><div><label class="lbl">Notes</label><textarea class="input" rows="2" placeholder="Any special arrangements…"></textarea></div></div>
+    <div class="flex justify-end gap-3 p-5 border-t border-ink-200 dark:border-ink-800 bg-ink-50/50 dark:bg-ink-900/50"><button class="btn-outline" onclick="closeModal('modal-visit')">Cancel</button><button class="btn-primary" onclick="closeModal('modal-visit')"><i class="ri-calendar-check-line"></i> Schedule</button></div>
+  </div>
+</div>
+
+<!-- Profile Update -->
+<div id="modal-profile" class="modal-wrap hidden fixed inset-0 z-[100] grid place-items-center p-4">
+  <div class="absolute inset-0 bg-ink-950/40 backdrop-blur-sm animate-fade-in" onclick="closeModal('modal-profile')"></div>
+  <div class="relative w-full max-w-lg card overflow-hidden animate-scale-in">
+    <div class="flex items-center justify-between p-5 border-b border-ink-200 dark:border-ink-800"><div class="flex items-center gap-3"><div class="h-10 w-10 rounded-xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 grid place-items-center"><i class="ri-user-settings-line text-xl"></i></div><div><h3 class="text-base font-bold text-ink-900 dark:text-white">Edit Profile</h3><p class="text-xs text-ink-400">Update your seller information</p></div></div><button onclick="closeModal('modal-profile')" class="h-8 w-8 grid place-items-center rounded-lg text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-800"><i class="ri-close-line"></i></button></div>
+    <div class="p-5 space-y-4"><div class="flex items-center gap-4"><img src="https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&fit=crop" class="h-16 w-16 rounded-xl object-cover"/><button class="btn-outline"><i class="ri-camera-line"></i> Change Photo</button></div><div class="grid grid-cols-2 gap-4"><div><label class="lbl">Full Name</label><input class="input" value="Daniel Cooper"/></div><div><label class="lbl">Phone</label><input class="input" value="+1 (415) 555-0182"/></div></div><div><label class="lbl">Email</label><input class="input" value="daniel.cooper@estately.com"/></div><div><label class="lbl">Location</label><input class="input" value="San Francisco, CA"/></div></div>
+    <div class="flex justify-end gap-3 p-5 border-t border-ink-200 dark:border-ink-800 bg-ink-50/50 dark:bg-ink-900/50"><button class="btn-outline" onclick="closeModal('modal-profile')">Cancel</button><button class="btn-primary" onclick="closeModal('modal-profile')"><i class="ri-save-line"></i> Save Changes</button></div>
+  </div>
+</div>
+
+<!-- =========================================================
+     JAVASCRIPT — all interactions (vanilla)
+========================================================= -->
+<script>
+/* ---------- DATA (Django would replace with context variables) ---------- */
+const SELLER = { name:'Daniel Cooper' };
+const PROPERTIES = [
+  {id:'p1',title:'Skyline Penthouse Loft',type:'Penthouse',location:'SoMa, San Francisco',price:2850000,status:'available',beds:3,baths:3,area:2450,views:1842,inquiries:34,visits:12,fav:true,img:'https://images.pexels.com/photos/1571055/pexels-photo-1571055.jpeg?auto=compress&cs=tinysrgb&w=900&h=620&fit=crop',updated:'2h ago'},
+  {id:'p2',title:'Bay View Modern Villa',type:'Villa',location:'Pacific Heights, SF',price:4950000,status:'available',beds:5,baths:4,area:4100,views:2930,inquiries:58,visits:19,fav:false,img:'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=900&h=620&fit=crop',updated:'5h ago'},
+  {id:'p3',title:'Heritage Victorian Townhouse',type:'Townhouse',location:'Nob Hill, SF',price:1980000,status:'pending',beds:4,baths:3,area:3200,views:1240,inquiries:27,visits:8,fav:false,img:'https://images.pexels.com/photos/143453/pexels-photo-143453.jpeg?auto=compress&cs=tinysrgb&w=900&h=620&fit=crop',updated:'1d ago'},
+  {id:'p4',title:'Minimalist Studio Apartment',type:'Apartment',location:'Mission District, SF',price:720000,status:'available',beds:1,baths:1,area:680,views:980,inquiries:15,visits:6,fav:true,img:'https://images.pexels.com/photos/164877/pexels-photo-164877.jpeg?auto=compress&cs=tinysrgb&w=900&h=620&fit=crop',updated:'3d ago'},
+  {id:'p5',title:'Garden View Family Home',type:'House',location:'Noe Valley, SF',price:1650000,status:'sold',beds:3,baths:2,area:1850,views:2110,inquiries:41,visits:15,fav:false,img:'https://images.pexels.com/photos/1111360/pexels-photo-1111360.jpeg?auto=compress&cs=tinysrgb&w=900&h=620&fit=crop',updated:'1w ago'},
+  {id:'p6',title:'Marina waterfront Condo',type:'Condo',location:'Marina District, SF',price:1320000,status:'available',beds:2,baths:2,area:1320,views:1560,inquiries:22,visits:9,fav:false,img:'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=900&h=620&fit=crop',updated:'2w ago'},
+  {id:'p7',title:'Industrial Loft Conversion',type:'Loft',location:'Dogpatch, SF',price:890000,status:'draft',beds:2,baths:1,area:1100,views:0,inquiries:0,visits:0,fav:false,img:'https://images.pexels.com/photos/53610/pexels-photo-53610.jpeg?auto=compress&cs=tinysrgb&w=900&h=620&fit=crop',updated:'3w ago'},
+  {id:'p8',title:'Sunset Boulevard Estate',type:'Estate',location:'Sunset, SF',price:3200000,status:'available',beds:6,baths:5,area:5200,views:3410,inquiries:67,visits:21,fav:true,img:'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=900&h=620&fit=crop',updated:'4w ago'},
+];
+const STATS = [
+  {label:'Total Properties',value:48,trend:12.5,up:true,icon:'ri-building-2',accent:'brand'},
+  {label:'Available',value:17,trend:4.2,up:true,icon:'ri-home-5',accent:'success'},
+  {label:'Sold',value:31,trend:18.0,up:true,icon:'ri-checkbox-circle',accent:'warning'},
+  {label:'Pending Requests',value:9,trend:3.1,up:false,icon:'ri-time',accent:'danger'},
+  {label:'Property Views',value:24890,trend:22.4,up:true,icon:'ri-eye',accent:'brand'},
+  {label:'Scheduled Visits',value:23,trend:8.7,up:true,icon:'ri-calendar-check',accent:'success'},
+  {label:'Unread Chats',value:7,trend:2.0,up:false,icon:'ri-chat-3',accent:'warning'},
+  {label:'Profile Completion',value:82,suffix:'%',trend:6.0,up:true,icon:'ri-user-check',accent:'brand'},
+];
+const ACTIVITIES = [
+  {text:'Buyer viewed property',detail:'Marcus Lee viewed Bay View Modern Villa',time:'12 min ago',icon:'ri-eye',accent:'brand'},
+  {text:'Property edited',detail:'Updated pricing for Skyline Penthouse Loft',time:'1 hour ago',icon:'ri-edit-2',accent:'warning'},
+  {text:'Visit confirmed',detail:'Visit scheduled for Heritage Victorian',time:'3 hours ago',icon:'ri-calendar-check',accent:'success'},
+  {text:'Rent request received',detail:'New rent request for Marina Condo',time:'6 hours ago',icon:'ri-wallet-3',accent:'danger'},
+  {text:'Property listed',detail:'Sunset Boulevard Estate is now live',time:'1 day ago',icon:'ri-add-circle',accent:'brand'},
+  {text:'Profile updated',detail:'Verification documents uploaded',time:'2 days ago',icon:'ri-user-check',accent:'success'},
+];
+const VISITS = [
+  {id:'v1',buyer:'Olivia Bennett',photo:'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop',property:'Bay View Modern Villa',date:'Today',time:'10:30 AM',status:'confirmed'},
+  {id:'v2',buyer:'Marcus Lee',photo:'https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop',property:'Skyline Penthouse Loft',date:'Today',time:'2:00 PM',status:'confirmed'},
+  {id:'v3',buyer:'Sofia Ramirez',photo:'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop',property:'Heritage Victorian',date:'Tomorrow',time:'11:15 AM',status:'pending'},
+  {id:'v4',buyer:'James Carter',photo:'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop',property:'Marina waterfront Condo',date:'Jul 11',time:'4:45 PM',status:'pending'},
+
+const NOTIFS = [
+  {id:'n1',title:'Property Inquiry',body:'New inquiry on Bay View Modern Villa from Olivia B.',time:'8 min ago',type:'inquiry',icon:'ri-question-answer',accent:'brand',read:false},
+  {id:'n2',title:'Visit Request',body:'Marcus Lee requested a visit for Skyline Penthouse',time:'40 min ago',type:'visit',icon:'ri-calendar-todo',accent:'success',read:false},
+  {id:'n3',title:'Rent Approval Needed',body:'Rent request for Marina Condo awaits your approval',time:'2h ago',type:'rent',icon:'ri-wallet-3',accent:'warning',read:false},
+  {id:'n4',title:'Profile Verification',body:'Your government ID verification was approved',time:'5h ago',type:'verification',icon:'ri-shield-check',accent:'success',read:true},
+  {id:'n5',title:'Document Uploaded',body:'New title deed uploaded for Sunset Estate',time:'1d ago',type:'document',icon:'ri-file-upload',accent:'brand',read:true},
+];
+const CALENDAR = [
+  {day:8,title:'Property Tour',type:'visit',time:'10:30 AM'},{day:8,title:'Penthouse Visit',type:'visit',time:'2:00 PM'},
+  {day:9,title:'Victorian Inspection',type:'inspection',time:'11:15 AM'},{day:11,title:'Rent Meeting',type:'rent',time:'4:45 PM'},
+  {day:15,title:'Closing Date',type:'closing',time:'9:00 AM'},{day:18,title:'Estate Inspection',type:'inspection',time:'1:00 PM'},
+  {day:22,title:'Condo Visit',type:'visit',time:'3:30 PM'},
+];
+const RENT = [
+  {tenant:'Olivia Bennett',prop:'Bay View Modern Villa',amt:'$8,500',dur:'12 months',st:'pending'},
+  {tenant:'James Carter',prop:'Marina waterfront Condo',amt:'$4,200',dur:'6 months',st:'pending'},
+  {tenant:'Emma Wilson',prop:'Minimalist Studio',amt:'$2,800',dur:'12 months',st:'approved'},
+  {tenant:'Marcus Lee',prop:'Skyline Penthouse',amt:'$12,000',dur:'24 months',st:'approved'},
+];
+const BILLS = [
+  {inv:'INV-2026-014',date:'Jul 01, 2026',desc:'Premium subscription',amt:'$99.00',st:'paid'},
+  {inv:'INV-2026-013',date:'Jun 03, 2026',desc:'Featured listing boost',amt:'$49.00',st:'paid'},
+  {inv:'INV-2026-012',date:'May 28, 2026',desc:'Payout — Garden View Home',amt:'$1,650,000',st:'paid'},
+  {inv:'INV-2026-011',date:'May 01, 2026',desc:'Premium subscription',amt:'$99.00',st:'paid'},
+];
+
+/* ---------- HELPERS ---------- */
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const fmtPrice = n => n>=1e6 ? '$'+(n/1e6).toFixed(2)+'M' : '$'+Math.round(n/1e3)+'K';
+const fmtNum = n => n>=1e3 ? (n/1e3).toFixed(1)+'k' : ''+n;
+const accentMap = {
+  brand:'bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400',
+  success:'bg-success-50 text-success-600 dark:bg-success-900/30 dark:text-success-400',
+  warning:'bg-warning-50 text-warning-600 dark:bg-warning-900/30 dark:text-warning-400',
+  danger:'bg-danger-50 text-danger-600 dark:bg-danger-900/30 dark:text-danger-400',
+};
+const statusBadge = s => ({available:['Available','success'],pending:['Pending','warning'],sold:['Sold','danger'],draft:['Draft','neutral']}[s]||['Unknown','neutral']);
+
+/* ---------- THEME ---------- */
+function applyTheme(t){ const r=document.documentElement; r.classList.toggle('dark',t==='dark'); localStorage.setItem('theme',t); $('#theme-icon').className = t==='dark'?'ri-sun-line text-lg':'ri-moon-line text-lg'; }
+function toggleTheme(){ applyTheme(localStorage.getItem('theme')==='dark'?'light':'dark'); }
+function setTheme(t){ applyTheme(t); }
+(function initTheme(){ const t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'); applyTheme(t); })();
+
+/* ---------- SIDEBAR ---------- */
+function toggleSidebar(){ const s=$('#sidebar'),o=$('#overlay'); s.classList.toggle('-translate-x-full'); o.classList.toggle('hidden'); }
+function closeSidebarOnMobile(){ if(innerWidth<1024){ $('#sidebar').classList.add('-translate-x-full'); $('#overlay').classList.add('hidden'); } }
+
+/* ---------- NAVIGATION ---------- */
+const PAGE_TITLES = {dashboard:'Dashboard',properties:'My Properties',visits:'Scheduled Visits',calendar:'Calendar',chats:'Chats',notifications:'Notifications','rent-requests':'Rent Requests',billing:'Billing History',analytics:'Analytics',profile:'Profile',settings:'Settings','empty-states':'Empty States','loading-states':'Loading States'};
+function navigate(page, action, filter){
+  $$('.page').forEach(p=>p.classList.remove('active'));
+  const target = $('#page-'+page); if(!target) return;
+  target.classList.add('active');
+  $$('.nav-item').forEach(n=>n.classList.remove('active'));
+  $$(`.nav-item[data-page="${page}"]`).forEach(n=>n.classList.add('active'));
+  $('#crumb').textContent = PAGE_TITLES[page]||page;
+  closeSidebarOnMobile();
+  scrollTo({top:0,behavior:'smooth'});
+  // page-specific actions
+  if(page==='properties'){ if(filter){ propFilter=filter; $('#props-filter').value=filter; $('#props-subtitle').textContent='Showing '+filter+' properties'; } else { propFilter='all'; $('#props-filter').value='all'; $('#props-subtitle').textContent='Manage and track all your listings'; } if(action==='add'){ openModal('modal-property'); } renderPropsGallery(); renderPropsTable(); }
+  if(page==='chats'){
+    const sellerId = $('#sidebar')?.dataset?.userId || '{{ user.id }}';
+    window.location.href = `/seller_profile/${sellerId}/chats/`;
+    return;
+  }
+}
+$$('.nav-item').forEach(n=>n.addEventListener('click',()=>navigate(n.dataset.page, n.dataset.action, n.dataset.filter)));
+
+/* ---------- DROPDOWNS ---------- */
+function toggleDropdown(id,e){ e.stopPropagation(); const dd=$('#'+id); const open=!dd.classList.contains('hidden'); $$('.dropdown').forEach(d=>d.classList.add('hidden')); if(!open) dd.classList.remove('hidden'); }
+document.addEventListener('click',()=>$$('.dropdown').forEach(d=>d.classList.add('hidden')));
+
+/* ---------- RIPPLE ---------- */
+document.addEventListener('click',e=>{ const b=e.target.closest('.btn-ripple'); if(!b)return; const c=document.createElement('span'); const d=Math.max(b.clientWidth,b.clientHeight); const r=b.getBoundingClientRect(); c.style.width=c.style.height=d+'px'; c.style.left=(e.clientX-r.left-d/2)+'px'; c.style.top=(e.clientY-r.top-d/2)+'px'; c.className='ripple'; const old=b.querySelector('.ripple'); if(old)old.remove(); b.appendChild(c); setTimeout(()=>c.remove(),600); });
+
+/* ---------- MODALS ---------- */
+function openModal(id){ $('#'+id).classList.remove('hidden'); document.body.style.overflow='hidden'; }
+function closeModal(id){ $('#'+id).classList.add('hidden'); document.body.style.overflow=''; }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape')$$('.modal-wrap').forEach(m=>m.classList.add('hidden')); });
+
+/* ---------- ANIMATED COUNTER ---------- */
+function animateNumber(el,target,dur=1200,suffix=''){
+  let started=false;
+  const obs=new IntersectionObserver(entries=>{ if(entries[0].isIntersecting&&!started){started=true; const s=performance.now(); const tick=n=>{ const p=Math.min((n-s)/dur,1); const e=1-Math.pow(1-p,3); const v=Math.round(target*e); el.textContent=(target>999?fmtNum(v):v)+suffix; if(p<1)requestAnimationFrame(tick); }; requestAnimationFrame(tick); }},{threshold:.4}); obs.observe(el);
+}
+
+/* ---------- RENDER: STAT CARDS ---------- */
+function renderStats(){
+  $('#stat-grid').innerHTML = STATS.map((s,i)=>`
+    <div class="card card-hover p-5 animate-fade-in-up stagger-${(i%6)+1}">
+      <div class="flex items-start justify-between">
+        <div class="h-11 w-11 rounded-xl grid place-items-center ${accentMap[s.accent]}"><i class="${s.icon} text-xl"></i></div>
+        <span class="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg ${s.up?'text-success-700 bg-success-50 dark:text-success-300 dark:bg-success-900/30':'text-danger-700 bg-danger-50 dark:text-danger-300 dark:bg-danger-900/30'}"><i class="${s.up?'ri-arrow-up-line':'ri-arrow-down-line'}"></i>${s.trend}%</span>
+      </div>
+      <p class="mt-4 text-3xl font-extrabold text-ink-900 dark:text-white tracking-tight stat-num" data-val="${s.value}" data-suffix="${s.suffix||''}">0${s.suffix||''}</p>
+      <p class="mt-1 text-sm text-ink-500 dark:text-ink-400 font-medium">${s.label}</p>
+    </div>`).join('');
+  $$('.stat-num').forEach(el=>animateNumber(el,+el.dataset.val,1200,el.dataset.suffix));
+}
+
+/* ---------- RENDER: PROPERTY CARD ---------- */
+function propCard(p){
+  const [label,varr]=statusBadge(p.status);
+  return `<div class="card card-hover overflow-hidden gallery-card animate-fade-in-up">
+    <div class="relative h-48 overflow-hidden">
+      <img src="${p.img}" class="gallery-img h-full w-full object-cover" alt="${p.title}"/>
+      <div class="absolute inset-0 bg-gradient-to-t from-ink-950/50 to-transparent"></div>
+      <div class="absolute top-3 left-3"><span class="badge-${varr}">${label}</span></div>
+      <button onclick="toggleFav('${p.id}',event)" class="absolute top-3 right-3 h-8 w-8 rounded-full bg-white/80 dark:bg-ink-900/70 backdrop-blur grid place-items-center text-ink-700 dark:text-ink-200 hover:scale-110 transition"><i class="${p.fav?'ri-heart-fill text-danger-500':'ri-heart-line'}"></i></button>
+      <div class="absolute bottom-3 left-3 right-3 flex items-end justify-between">
+        <span class="px-2 py-1 rounded-lg bg-white/80 dark:bg-ink-900/70 backdrop-blur text-[11px] font-semibold text-ink-700 dark:text-ink-200">${p.type}</span>
+        <span class="px-2 py-1 rounded-lg bg-white/80 dark:bg-ink-900/70 backdrop-blur text-[11px] font-semibold text-ink-700 dark:text-ink-200"><i class="ri-eye-line"></i> ${fmtNum(p.views)}</span>
+      </div>
+    </div>
+    <div class="p-5">
+      <div class="flex items-start justify-between gap-2">
+        <h3 class="font-bold text-ink-900 dark:text-white leading-snug">${p.title}</h3>
+      </div>
+      <p class="text-sm text-ink-400 mt-1 flex items-center gap-1"><i class="ri-map-pin-line"></i>${p.location}</p>
+      <p class="text-2xl font-extrabold text-brand-600 dark:text-brand-400 mt-3">${fmtPrice(p.price)}</p>
+      <div class="flex items-center gap-4 mt-3 text-sm text-ink-500 dark:text-ink-400">
+        <span class="flex items-center gap-1"><i class="ri-bed-line"></i>${p.beds}</span>
+        <span class="flex items-center gap-1"><i class="ri-bath-line"></i>${p.baths}</span>
+        <span class="flex items-center gap-1"><i class="ri-ruler-2-line"></i>${p.area.toLocaleString()} sqft</span>
+      </div>
+      <div class="flex items-center justify-between mt-4 pt-4 border-t border-ink-100 dark:border-ink-800">
+        <span class="text-xs text-ink-400">Updated ${p.updated}</span>
+        <div class="flex gap-1">
+          <button class="act-btn" title="View"><i class="ri-eye-line"></i></button>
+          <button class="act-btn" title="Edit" onclick="openModal('modal-property')"><i class="ri-edit-line"></i></button>
+          <button class="act-btn" title="Analytics"><i class="ri-bar-chart-line"></i></button>
+          <button class="act-btn text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20" title="Delete" onclick="openDelete('${p.title}')"><i class="ri-delete-bin-line"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function toggleFav(id,e){ e.stopPropagation(); const p=PROPERTIES.find(x=>x.id===id); p.fav=!p.fav; renderPropsGallery(); }
+function openDelete(name){ $('#del-name').textContent=name; openModal('modal-delete'); }
+
+/* ---------- PROPERTIES: gallery + table ---------- */
+let propView='gallery', propFilter='all', propSortKey='title', propSortAsc=true, propPage=1, propSearch='';
+function setPropView(v){ propView=v; $('#props-gallery').classList.toggle('hidden',v!=='gallery'); $('#props-table').classList.toggle('hidden',v!=='table'); $('#view-gallery-btn').className='px-3 py-1.5 rounded-lg text-sm font-semibold transition '+(v==='gallery'?'bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400':'text-ink-400 hover:text-ink-600'); $('#view-table-btn').className='px-3 py-1.5 rounded-lg text-sm font-semibold transition '+(v==='table'?'bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400':'text-ink-400 hover:text-ink-600'); }
+function filteredProps(){ return PROPERTIES.filter(p=>(propFilter==='all'||p.status===propFilter)&&(propSearch===''||(p.title+p.location).toLowerCase().includes(propSearch.toLowerCase()))); }
+function renderPropsGallery(){ const list = propFilter==='all'?PROPERTIES.slice(0,6):filteredProps().slice(0,6); $('#props-gallery').innerHTML = list.map(propCard).join(''); }
+function sortProps(key){ if(propSortKey===key)propSortAsc=!propSortAsc; else{propSortKey=key;propSortAsc=true;} renderPropsTable(); }
+function renderPropsTable(){
+  propSearch=$('#props-search')?.value||'';
+  let list=filteredProps();
+  list.sort((a,b)=>{ let av=a[propSortKey],bv=b[propSortKey]; if(typeof av==='string'){return propSortAsc?av.localeCompare(bv):bv.localeCompare(av);} return propSortAsc?av-bv:bv-av; });
+  const perPage=5; const pages=Math.max(1,Math.ceil(list.length/perPage)); if(propPage>pages)propPage=pages; const slice=list.slice((propPage-1)*perPage,propPage*perPage);
+  $('#props-tbody').innerHTML = slice.length?slice.map(p=>{const [l,v]=statusBadge(p.status);return `<tr class="border-b border-ink-100 dark:border-ink-800 hover:bg-ink-50/60 dark:hover:bg-ink-800/30 transition">
+    <td class="py-3 px-4"><div class="flex items-center gap-3"><img src="${p.img}" class="h-11 w-11 rounded-lg object-cover"/><div><p class="font-semibold text-ink-900 dark:text-white text-sm">${p.title}</p><p class="text-xs text-ink-400">${p.location}</p></div></div></td>
+    <td class="py-3 px-4 font-semibold text-ink-700 dark:text-ink-200">${fmtPrice(p.price)}</td>
+    <td class="py-3 px-4"><span class="badge-${v}">${l}</span></td>
+    <td class="py-3 px-4 text-ink-500">${fmtNum(p.views)}</td>
+    <td class="py-3 px-4 text-ink-500">${p.inquiries}</td>
+    <td class="py-3 px-4 text-ink-500">${p.visits}</td>
+    <td class="py-3 px-4 text-right"><div class="inline-flex gap-1"><button class="act-btn" title="View"><i class="ri-eye-line"></i></button><button class="act-btn" title="Edit" onclick="openModal('modal-property')"><i class="ri-edit-line"></i></button><button class="act-btn text-danger-500" title="Delete" onclick="openDelete('${p.title}')"><i class="ri-delete-bin-line"></i></button></div></td>
+  </tr>`}).join(''):`<tr><td colspan="7" class="py-10 text-center text-ink-400 text-sm">No properties found</td></tr>`;
+  $('#props-count').textContent=`${list.length} properties`;
+  $('#props-pageinfo').textContent=`Page ${propPage} of ${pages}`;
+  let pg=''; for(let i=1;i<=pages;i++){ pg+=`<button onclick="propPage=${i};renderPropsTable()" class="px-3 py-1.5 rounded-lg text-xs font-semibold ${i===propPage?'bg-brand-600 text-white':'text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800'}">${i}</button>`; }
+  $('#props-pagination').innerHTML = `<button onclick="propPage=Math.max(1,propPage-1);renderPropsTable()" class="px-2 py-1.5 rounded-lg text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-800"><i class="ri-arrow-left-s-line"></i></button>${pg}<button onclick="propPage=Math.min(pages,propPage+1);renderPropsTable()" class="px-2 py-1.5 rounded-lg text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-800"><i class="ri-arrow-right-s-line"></i></button>`;
+}
+
+/* ---------- DASHBOARD: recent properties ---------- */
+function renderDashProps(){ $('#dash-properties').innerHTML = PROPERTIES.slice(0,4).map(p=>{const [l,v]=statusBadge(p.status);return `<div class="card card-hover overflow-hidden"><div class="relative h-32 overflow-hidden"><img src="${p.img}" class="h-full w-full object-cover"/><div class="absolute top-2 left-2"><span class="badge-${v} text-[10px]">${l}</span></div></div><div class="p-3"><p class="font-semibold text-sm text-ink-900 dark:text-white truncate">${p.title}</p><p class="text-xs text-ink-400 mt-0.5">${p.location}</p><div class="flex items-center justify-between mt-2"><span class="font-bold text-brand-600 dark:text-brand-400 text-sm">${fmtPrice(p.price)}</span><span class="text-xs text-ink-400"><i class="ri-eye-line"></i> ${fmtNum(p.views)}</span></div></div></div>`}).join(''); }
+
+/* ---------- ACTIVITY TIMELINE ---------- */
+function renderActivity(){ $('#activity-timeline').innerHTML = `<div class="absolute left-[18px] top-2 bottom-2 w-px bg-ink-200 dark:bg-ink-700"></div>`+ACTIVITIES.map(a=>`<div class="relative flex gap-3 pb-5 last:pb-0"><div class="relative z-10 h-9 w-9 rounded-xl grid place-items-center shrink-0 ${accentMap[a.accent]}"><i class="${a.icon}"></i></div><div class="pt-1"><p class="text-sm font-semibold text-ink-800 dark:text-ink-100">${a.text}</p><p class="text-xs text-ink-400 mt-0.5">${a.detail}</p><p class="text-[11px] text-ink-400 mt-1"><i class="ri-time-line"></i> ${a.time}</p></div></div>`).join(''); }
+
+/* ---------- DASHBOARD: visits / messages / notifs ---------- */
+function renderDashVisits(){ $('#dash-visits').innerHTML = VISITS.slice(0,3).map(v=>{const s=v.status==='confirmed'?['Confirmed','success']:['Pending','warning'];return `<div class="flex items-center gap-3 p-3 rounded-xl hover:bg-ink-50 dark:hover:bg-ink-800/40 transition"><img src="${v.photo}" class="h-10 w-10 rounded-full object-cover"/><div class="flex-1 min-w-0"><p class="text-sm font-semibold text-ink-900 dark:text-white truncate">${v.buyer}</p><p class="text-xs text-ink-400 truncate">${v.property}</p></div><div class="text-right"><p class="text-xs font-semibold text-ink-700 dark:text-ink-200">${v.date}</p><p class="text-[11px] text-ink-400">${v.time}</p></div></div>`}).join(''); }
+function renderDashMessages(){ $('#dash-messages').innerHTML = CHATS.slice(0,4).map(c=>`<button onclick="navigate('chats')" class="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-ink-50 dark:hover:bg-ink-800/40 transition text-left"><div class="relative"><img src="${c.avatar}" class="h-9 w-9 rounded-full object-cover"/>${c.online?'<span class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-success-500 ring-2 ring-white dark:ring-ink-900"></span>':''}</div><div class="flex-1 min-w-0"><p class="text-sm font-semibold text-ink-900 dark:text-white truncate">${c.name}</p><p class="text-xs text-ink-400 truncate">${c.last}</p></div><div class="text-right shrink-0"><p class="text-[10px] text-ink-400">${c.time}</p>${c.unread?`<span class="mt-1 inline-grid place-items-center min-w-4 h-4 px-1 text-[9px] font-bold text-white bg-brand-600 rounded-full">${c.unread}</span>`:''}</div></button>`).join(''); }
+function renderDashNotifs(){ $('#dash-notifs').innerHTML = NOTIFS.slice(0,4).map(n=>`<div class="flex gap-3 p-2.5 rounded-xl hover:bg-ink-50 dark:hover:bg-ink-800/40 transition ${n.read?'opacity-60':''}"><div class="h-8 w-8 rounded-lg grid place-items-center shrink-0 ${accentMap[n.accent]}"><i class="${n.icon} text-sm"></i></div><div class="flex-1 min-w-0"><p class="text-sm font-semibold text-ink-800 dark:text-ink-100">${n.title}</p><p class="text-xs text-ink-400 truncate">${n.body}</p><p class="text-[10px] text-ink-400 mt-0.5">${n.time}</p></div>${n.read?'':'<span class="h-2 w-2 rounded-full bg-brand-500 mt-1.5 shrink-0"></span>'}</div>`).join(''); }
+function renderTopbarNotifs(){ $('#topbar-notifs').innerHTML = NOTIFS.slice(0,4).map(n=>`<div class="flex gap-3 p-3 hover:bg-ink-50 dark:hover:bg-ink-800/40 transition cursor-pointer ${n.read?'opacity-60':''}"><div class="h-8 w-8 rounded-lg grid place-items-center shrink-0 ${accentMap[n.accent]}"><i class="${n.icon} text-sm"></i></div><div class="flex-1 min-w-0"><p class="text-sm font-semibold text-ink-800 dark:text-ink-100">${n.title}</p><p class="text-xs text-ink-400 truncate">${n.body}</p></div></div>`).join(''); }
+
+/* ---------- VISITS PAGE ---------- */
+function renderVisits(){ $('#visits-grid').innerHTML = VISITS.map(v=>{const [l,s]=v.status==='confirmed'?['Confirmed','success']:['Pending','warning'];return `<div class="card card-hover p-5 animate-fade-in-up"><div class="flex items-center gap-3"><img src="${v.photo}" class="h-12 w-12 rounded-full object-cover ring-2 ring-white dark:ring-ink-800"/><div class="flex-1"><p class="font-bold text-ink-900 dark:text-white">${v.buyer}</p><p class="text-xs text-ink-400">${v.date} · ${v.time}</p></div><span class="badge-${s}">${l}</span></div><div class="mt-4 p-3 rounded-xl bg-ink-50 dark:bg-ink-800/40"><p class="text-xs text-ink-400">Property</p><p class="text-sm font-semibold text-ink-800 dark:text-ink-100 flex items-center gap-1.5"><i class="ri-home-4-line text-brand-500"></i>${v.property}</p></div><button class="btn-primary w-full mt-4"><i class="ri-video-line"></i> Start Meeting</button></div>`}).join(''); }
+
+/* ---------- NOTIFICATIONS PAGE ---------- */
+function renderNotifList(){ $('#notif-list').innerHTML = NOTIFS.map(n=>`<div class="flex gap-4 p-4 hover:bg-ink-50/60 dark:hover:bg-ink-800/30 transition cursor-pointer ${n.read?'opacity-60':''}"><div class="h-10 w-10 rounded-xl grid place-items-center shrink-0 ${accentMap[n.accent]}"><i class="${n.icon}"></i></div><div class="flex-1 min-w-0"><div class="flex items-center gap-2"><p class="font-semibold text-ink-900 dark:text-white text-sm">${n.title}</p>${n.read?'':'<span class="h-2 w-2 rounded-full bg-brand-500"></span>'}</div><p class="text-sm text-ink-500 dark:text-ink-400 mt-0.5">${n.body}</p><p class="text-xs text-ink-400 mt-1">${n.time}</p></div></div>`).join(''); }
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ---------- RENT / BILLING TABLES ---------- */
+function renderRent(){ $('#rent-tbody').innerHTML = RENT.map(r=>{const [l,v]=r.st==='pending'?['Pending','warning']:['Approved','success'];return `<tr class="border-b border-ink-100 dark:border-ink-800 hover:bg-ink-50/60 dark:hover:bg-ink-800/30"><td class="py-3 px-4 font-semibold text-ink-800 dark:text-ink-100">${r.tenant}</td><td class="py-3 px-4 text-ink-500">${r.prop}</td><td class="py-3 px-4 font-semibold text-ink-700 dark:text-ink-200">${r.amt}</td><td class="py-3 px-4 text-ink-500">${r.dur}</td><td class="py-3 px-4"><span class="badge-${v}">${l}</span></td><td class="py-3 px-4 text-right"><button class="btn-outline text-xs px-3 py-1.5">${r.st==='pending'?'Review':'View'}</button></td></tr>`}).join(''); }
+function renderBills(){ $('#bill-tbody').innerHTML = BILLS.map(b=>`<tr class="border-b border-ink-100 dark:border-ink-800 hover:bg-ink-50/60 dark:hover:bg-ink-800/30"><td class="py-3 px-4 font-mono text-xs text-ink-600 dark:text-ink-300">${b.inv}</td><td class="py-3 px-4 text-ink-500">${b.date}</td><td class="py-3 px-4 text-ink-700 dark:text-ink-200">${b.desc}</td><td class="py-3 px-4 font-semibold text-ink-800 dark:text-white">${b.amt}</td><td class="py-3 px-4"><span class="badge-success">Paid</span></td><td class="py-3 px-4 text-right"><button class="act-btn"><i class="ri-download-line"></i></button></td></tr>`).join(''); }
+
+/* ---------- CALENDAR ---------- */
+function renderCalendar(){
+  const today=8; const firstDow=3; /* July 1 2026 = Wed */ const daysInMonth=31;
+  let html=''; for(let i=0;i<firstDow;i++) html+=`<div class="cal-cell opacity-0"></div>`;
+  for(let d=1;d<=daysInMonth;d++){ const evs=CALENDAR.filter(e=>e.day===d); const isToday=d===today;
+    const dotMap={visit:'bg-brand-500',inspection:'bg-warning-500',rent:'bg-success-500',closing:'bg-danger-500'};
+    html+=`<div class="cal-cell ${isToday?'ring-2 ring-brand-500 bg-brand-50/50 dark:bg-brand-900/20':''} ${evs.length?'has-event':''}">
+      <span class="cal-day ${isToday?'text-brand-600 dark:text-brand-400 font-bold':''}">${d}</span>
+      ${evs.slice(0,2).map(e=>`<div class="cal-event ${e.type}"><span class="cal-dot ${dotMap[e.type]}"></span><span class="truncate">${e.title}</span></div>`).join('')}
+      ${evs.length>2?`<span class="text-[10px] text-ink-400 px-1">+${evs.length-2} more</span>`:''}
+    </div>`; }
+  $('#cal-grid').innerHTML=html;
+  $('#cal-today').innerHTML = CALENDAR.filter(e=>e.day===today).map(e=>{const c={visit:'brand',inspection:'warning',rent:'success',closing:'danger'}[e.type];return `<div class="p-3 rounded-xl bg-ink-50 dark:bg-ink-800/40"><div class="flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-${c}-500"></span><p class="text-sm font-semibold text-ink-800 dark:text-ink-100">${e.title}</p></div><p class="text-xs text-ink-400 mt-1 pl-4">${e.time}</p></div>`}).join('') || '<p class="text-sm text-ink-400">No events today</p>';
+}
+
+/* ---------- PLACEHOLDER CHARTS (pure CSS/SVG) ---------- */
+function barChart(el,data,color='brand'){
+  const max=Math.max(...data.map(d=>d.value));
+  el.innerHTML = `<div class="flex items-end justify-between gap-2 h-full pt-4">${data.map((d,i)=>`<div class="flex-1 flex flex-col items-center justify-end h-full gap-2 group"><div class="w-full rounded-t-lg bg-${color}-100 dark:bg-${color}-900/40 relative overflow-hidden transition-all duration-500 group-hover:bg-${color}-200 dark:group-hover:bg-${color}-900/60" style="height:${(d.value/max*100)}%; animation:fade-in-up .6s ease-out ${i*60}ms both"><div class="absolute bottom-0 inset-x-0 bg-${color}-500 rounded-t-lg" style="height:${d.value/max*100}%"></div></div><span class="text-[10px] text-ink-400 font-medium">${d.label}</span></div>`).join('')}</div>`;
+}
+function lineChart(el,data){
+  const max=Math.max(...data.map(d=>d.value)); const min=Math.min(...data.map(d=>d.value));
+  const w=100,h=100; const pts=data.map((d,i)=>[ (i/(data.length-1))*w, h-((d.value-min)/(max-min))*h*0.85-7.5 ]);
+  const path=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const area=path+` L${w} ${h} L0 ${h} Z`;
+  el.innerHTML=`<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" class="w-full h-full"><defs><linearGradient id="lg${el.id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b82f6" stop-opacity=".25"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/></linearGradient></defs><path d="${area}" fill="url(#lg${el.id})"/><path d="${path}" fill="none" stroke="#3b82f6" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/>${pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="1.2" fill="#3b82f6" vector-effect="non-scaling-stroke"/>`).join('')}</svg><div class="flex justify-between mt-2">${data.map(d=>`<span class="text-[10px] text-ink-400">${d.label}</span>`).join('')}</div>`;
+}
+function donutChart(el,segments){
+  const total=segments.reduce((s,x)=>s+x.value,0); const c=2*Math.PI*42; let off=0;
+  const seg=segments.map(s=>{ const len=(s.value/total)*c; const dash=`${len} ${c-len}`; const dashOff=-off; off+=len; const col={brand:'#3b82f6',warning:'#f59e0b',success:'#10b981',danger:'#ef4444'}[s.color]; return `<circle cx="50" cy="50" r="42" fill="none" stroke="${col}" stroke-width="10" stroke-dasharray="${dash}" stroke-dashoffset="${dashOff}" stroke-linecap="round" transform="rotate(-90 50 50)" style="transition:stroke-dasharray 1s ease"/>`; }).join('');
+  el.innerHTML=`<svg viewBox="0 0 100 100" class="w-full h-full">${seg}<circle cx="50" cy="50" r="42" fill="none" stroke="#e2e8f0" stroke-width="10" class="dark:stroke-ink-700" style="opacity:.0"/></svg><div class="absolute inset-0 grid place-items-center"><div class="text-center"><p class="text-2xl font-extrabold text-ink-900 dark:text-white">3.1%</p><p class="text-[10px] text-ink-400">Close rate</p></div></div>`;
+}
+function donutLegend(el,segments){
+  const total=segments.reduce((s,x)=>s+x.value,0);
+  el.innerHTML=segments.map(s=>{const col={brand:'bg-brand-500',warning:'bg-warning-500',success:'bg-success-500',danger:'bg-danger-500'}[s.color];return `<div class="flex items-center gap-2 text-sm"><span class="h-2.5 w-2.5 rounded-full ${col}"></span><span class="text-ink-600 dark:text-ink-300 flex-1">${s.label}</span><span class="font-semibold text-ink-800 dark:text-white text-xs">${fmtNum(s.value)}</span></div>`}).join('');
+}
+function renderCharts(){
+  barChart($('#dash-revenue-chart'),[{label:'Jan',value:42},{label:'Feb',value:58},{label:'Mar',value:51},{label:'Apr',value:73},{label:'May',value:64},{label:'Jun',value:88},{label:'Jul',value:96}],'brand');
+  donutChart($('#dash-donut'),[{label:'Views',value:24890,color:'brand'},{label:'Inquiries',value:3120,color:'warning'},{label:'Visits',value:480,color:'success'},{label:'Closed',value:31,color:'danger'}]);
+  donutLegend($('#dash-donut-legend'),[{label:'Views',value:24890,color:'brand'},{label:'Inquiries',value:3120,color:'warning'},{label:'Visits',value:480,color:'success'},{label:'Closed',value:31,color:'danger'}]);
+  barChart($('#ana-revenue'),[{label:'Jan',value:42},{label:'Feb',value:58},{label:'Mar',value:51},{label:'Apr',value:73},{label:'May',value:64},{label:'Jun',value:88},{label:'Jul',value:96}],'brand');
+  lineChart($('#ana-views'),[{label:'Mon',value:320},{label:'Tue',value:480},{label:'Wed',value:410},{label:'Thu',value:620},{label:'Fri',value:740},{label:'Sat',value:890},{label:'Sun',value:720}]);
+  barChart($('#ana-sales'),[{label:'Q1',value:151},{label:'Q2',value:225},{label:'Q3',value:188},{label:'Q4',value:274}],'success');
+  donutChart($('#ana-donut'),[{label:'Views',value:24890,color:'brand'},{label:'Inquiries',value:3120,color:'warning'},{label:'Visits',value:480,color:'success'},{label:'Closed',value:31,color:'danger'}]);
+  donutLegend($('#ana-donut-legend'),[{label:'Views',value:24890,color:'brand'},{label:'Inquiries',value:3120,color:'warning'},{label:'Visits',value:480,color:'success'},{label:'Closed',value:31,color:'danger'}]);
+  // property performance (horizontal bars)
+  const perf=[{t:'Bay View Modern Villa',v:100},{t:'Sunset Boulevard Estate',v:92},{t:'Garden View Family Home',v:72},{t:'Skyline Penthouse Loft',v:63},{t:'Marina waterfront Condo',v:53}];
+  $('#ana-perf').innerHTML=perf.map(p=>`<div><div class="flex justify-between text-sm mb-1"><span class="text-ink-700 dark:text-ink-200 font-medium">${p.t}</span><span class="text-ink-400 text-xs">${p.v}%</span></div><div class="h-2 rounded-full bg-ink-100 dark:bg-ink-800 overflow-hidden"><div class="h-full bg-brand-500 rounded-full transition-all duration-700" style="width:${p.v}%"></div></div></div>`).join('');
+  // popular properties
+  const pop=[{t:'Sunset Boulevard Estate',v:3410,p:100},{t:'Bay View Modern Villa',v:2930,p:86},{t:'Garden View Family Home',v:2110,p:62},{t:'Skyline Penthouse Loft',v:1842,p:54},{t:'Marina waterfront Condo',v:1560,p:46}];
+  $('#ana-popular').innerHTML=pop.map((p,i)=>`<div class="flex items-center gap-3"><span class="h-7 w-7 rounded-lg grid place-items-center text-xs font-bold ${i===0?'bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-300':'bg-ink-100 text-ink-500 dark:bg-ink-800 dark:text-ink-400'}">${i+1}</span><div class="flex-1 min-w-0"><p class="text-sm font-semibold text-ink-800 dark:text-ink-100 truncate">${p.t}</p><div class="h-1.5 rounded-full bg-ink-100 dark:bg-ink-800 mt-1.5 overflow-hidden"><div class="h-full bg-gradient-to-r from-brand-400 to-brand-600 rounded-full" style="width:${p.p}%"></div></div></div><span class="text-xs font-bold text-ink-700 dark:text-ink-200 shrink-0"><i class="ri-eye-line"></i> ${fmtNum(p.v)}</span></div>`).join('');
+}
+
+/* ---------- PROFILE RING ---------- */
+function renderProfileRing(){ const el=$('#profile-ring'); const pct=82; el.innerHTML=`<svg viewBox="0 0 100 100" class="w-full h-full -rotate-90"><circle cx="50" cy="50" r="42" fill="none" stroke="#e2e8f0" stroke-width="8" class="dark:stroke-ink-700"/><circle cx="50" cy="50" r="42" fill="none" stroke="#3b82f6" stroke-width="8" stroke-linecap="round" stroke-dasharray="${2*Math.PI*42}" stroke-dashoffset="${2*Math.PI*42*(1-pct/100)}" style="transition:stroke-dashoffset 1s ease"/></svg>`; }
+
+/* ---------- SETTINGS TABS ---------- */
+$$('.set-tab').forEach(t=>t.addEventListener('click',()=>{ $$('.set-tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); $$('.set-panel').forEach(p=>p.classList.toggle('hidden',p.dataset.panel!==t.dataset.tab)); }));
+function renderSettingsLists(){
+  const notifOpts=[{t:'Property inquiries',on:true},{t:'Visit requests',on:true},{t:'Rent approvals',on:true},{t:'Document uploads',on:false},{t:'Marketing tips',on:false}];
+  $('#set-notif-list').innerHTML=notifOpts.map(o=>toggleRow(o.t,o.on)).join('');
+  const privOpts=[{t:'Show profile to public',on:true},{t:'Allow buyer messages',on:true},{t:'Show contact details',on:false},{t:'Appear in search results',on:true}];
+  $('#set-privacy-list').innerHTML=privOpts.map(o=>toggleRow(o.t,o.on)).join('');
+  $$('.toggle').forEach(t=>t.addEventListener('click',()=>{t.classList.toggle('on'); t.querySelector('.knob').classList.toggle('translate-x-4');}));
+}
+function toggleRow(label,on){ return `<div class="flex items-center justify-between py-3 border-b border-ink-100 dark:border-ink-800 last:border-0"><span class="text-sm text-ink-700 dark:text-ink-200 font-medium">${label}</span><button class="toggle ${on?'on':''}"><span class="knob ${on?'translate-x-4':''}"></span></button></div>`; }
+
+/* ---------- INIT ---------- */
+function init(){
+  renderStats(); renderDashProps(); renderActivity(); renderDashVisits(); renderDashMessages(); renderDashNotifs(); renderTopbarNotifs();
+  renderPropsGallery(); renderPropsTable(); renderVisits(); renderNotifList(); renderRent(); renderBills(); renderCalendar(); renderCharts(); renderProfileRing(); renderSettingsLists();
+
+
+}
+document.addEventListener('DOMContentLoaded',init);
+</script>
+
+<!-- =========================================================
+     COMPONENT CLASSES (Tailwind @apply not available in CDN,
+     so utility classes are applied via these shortcut classes)
+========================================================= -->
+<style>
+  /* nav label */
+  .nav-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;padding:0 .75rem;margin-bottom:.5rem}
+  html.dark .nav-label{color:#475569}
+  /* mini badge */
+  .badge-mini{display:inline-grid;place-items:center;min-width:1.25rem;height:1.25rem;padding:0 .25rem;font-size:10px;font-weight:700;color:#fff;background:#2563eb;border-radius:9999px}
+  /* buttons */
+  .btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.625rem 1rem;border-radius:.75rem;font-size:.875rem;font-weight:600;color:#fff;background:#2563eb;box-shadow:0 1px 2px rgba(37,99,235,.2);transition:all .2s}
+  .btn-primary:hover{background:#1d4ed8;box-shadow:0 4px 12px rgba(37,99,235,.3)}
+  .btn-primary{position:relative;overflow:hidden}
+  .btn-secondary{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.625rem 1rem;border-radius:.75rem;font-size:.875rem;font-weight:600;color:#334155;background:#f1f5f9;transition:all .2s}
+  html.dark .btn-secondary{background:#1e293b;color:#e2e8f0}
+  .btn-secondary:hover{background:#e2e8f0}html.dark .btn-secondary:hover{background:#334155}
+  .btn-secondary{position:relative;overflow:hidden}
+  .btn-outline{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.625rem 1rem;border-radius:.75rem;font-size:.875rem;font-weight:600;color:#334155;border:1px solid #e2e8f0;background:transparent;transition:all .2s}
+  html.dark .btn-outline{color:#e2e8f0;border-color:#334155}
+  .btn-outline:hover{background:#f8fafc;border-color:#cbd5e1}html.dark .btn-outline:hover{background:#1e293b}
+  .btn-outline{position:relative;overflow:hidden}
+  .btn-danger{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.625rem 1rem;border-radius:.75rem;font-size:.875rem;font-weight:600;color:#fff;background:#dc2626;transition:all .2s}
+  .btn-danger:hover{background:#b91c1c}.btn-danger{position:relative;overflow:hidden}
+  /* badges */
+  .badge-brand{display:inline-flex;align-items:center;gap:.25rem;padding:.25rem .625rem;border-radius:9999px;font-size:11px;font-weight:600;color:#1d4ed8;background:#eef5ff}html.dark .badge-brand{color:#8ebdff;background:rgba(30,58,138,.3)}
+  .badge-success{display:inline-flex;align-items:center;gap:.25rem;padding:.25rem .625rem;border-radius:9999px;font-size:11px;font-weight:600;color:#047857;background:#ecfdf5}html.dark .badge-success{color:#6ee7b7;background:rgba(6,95,70,.3)}
+  .badge-warning{display:inline-flex;align-items:center;gap:.25rem;padding:.25rem .625rem;border-radius:9999px;font-size:11px;font-weight:600;color:#b45309;background:#fffbeb}html.dark .badge-warning{color:#fcd34d;background:rgba(146,64,14,.3)}
+  .badge-danger{display:inline-flex;align-items:center;gap:.25rem;padding:.25rem .625rem;border-radius:9999px;font-size:11px;font-weight:600;color:#b91c1c;background:#fef2f2}html.dark .badge-danger{color:#fca5a5;background:rgba(153,27,27,.3)}
+  .badge-neutral{display:inline-flex;align-items:center;gap:.25rem;padding:.25rem .625rem;border-radius:9999px;font-size:11px;font-weight:600;color:#475569;background:#f1f5f9}html.dark .badge-neutral{color:#cbd5e1;background:#1e293b}
+  /* table header */
+  .th{padding:.75rem 1rem;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+  .sortable{cursor:pointer;user-select:none}.sortable:hover{color:#2563eb}
+  /* action button */
+  .act-btn{display:inline-grid;place-items:center;height:2rem;width:2rem;border-radius:.5rem;color:#64748b;transition:all .2s}
+  .act-btn:hover{background:#f1f5f9;color:#2563eb}html.dark .act-btn{color:#94a3b8}html.dark .act-btn:hover{background:#1e293b;color:#8ebdff}
+  /* dropdown link */
+  .dd-link{display:flex;align-items:center;gap:.625rem;padding:.5rem .75rem;width:100%;font-size:.875rem;color:#475569;transition:all .15s}
+  html.dark .dd-link{color:#cbd5e1}.dd-link:hover{background:#f1f5f9;color:#1e293b}html.dark .dd-link:hover{background:#1e293b;color:#fff}
+  .dd-link i{font-size:1.1rem;color:#94a3b8}
+  /* label */
+  .lbl{display:block;font-size:11px;font-weight:600;color:#64748b;margin-bottom:.375rem;text-transform:uppercase;letter-spacing:.03em}
+  html.dark .lbl{color:#94a3b8}
+  /* calendar */
+  .cal-head{text-align:center;font-size:11px;font-weight:600;color:#94a3b8;padding:.5rem 0}
+  .cal-cell{min-height:5rem;border-radius:.625rem;border:1px solid #f1f5f9;padding:.375rem;transition:all .2s;cursor:pointer}
+  html.dark .cal-cell{border-color:#1e293b}.cal-cell:hover{background:#f8fafc;border-color:#e2e8f0}html.dark .cal-cell:hover{background:#1e293b}
+  .cal-day{font-size:11px;font-weight:600;color:#64748b}
+  .cal-event{display:flex;align-items:center;gap:.25rem;margin-top:.125rem;padding:.125rem .25rem;border-radius:.25rem;font-size:9px;font-weight:500;color:#475569;overflow:hidden;white-space:nowrap}
+  html.dark .cal-event{color:#cbd5e1}.cal-event.visit{background:#eef5ff}html.dark .cal-event.visit{background:rgba(30,58,138,.3)}
+  .cal-event.inspection{background:#fffbeb}html.dark .cal-event.inspection{background:rgba(146,64,14,.3)}
+  .cal-event.rent{background:#ecfdf5}html.dark .cal-event.rent{background:rgba(6,95,70,.3)}
+  .cal-event.closing{background:#fef2f2}html.dark .cal-event.closing{background:rgba(153,27,27,.3)}
+  .cal-dot{height:.375rem;width:.375rem;border-radius:9999px;flex-shrink:0}
+  /* verify card */
+  .verify-card{display:flex;align-items:center;gap:.75rem;padding:1rem;border-radius:.875rem;border:1px solid #e2e8f0;transition:all .2s}
+  html.dark .verify-card{border-color:#334155}.verify-card:hover{border-color:#bcd7ff;box-shadow:0 4px 16px -4px rgba(59,130,246,.15)}
+  .verify-ic{height:2.5rem;width:2.5rem;border-radius:.625rem;display:grid;place-items:center;flex-shrink:0}
+  /* empty icon */
+  .empty-ic{position:relative}
+  .empty-ic::before{content:'';position:absolute;inset:0;filter:blur(20px);background:rgba(59,130,246,.2);border-radius:9999px}
+  .empty-ic{display:grid;place-items:center;height:5rem;width:5rem;border-radius:1rem;background:#eef5ff;color:#3b82f6}
+  html.dark .empty-ic{background:rgba(30,58,138,.3);color:#8ebdff}
+  /* settings tab */
+  .set-tab{display:flex;align-items:center;gap:.625rem;padding:.625rem .75rem;border-radius:.625rem;font-size:.875rem;font-weight:500;color:#64748b;width:100%;text-align:left;transition:all .15s;cursor:pointer}
+  .set-tab:hover{background:#f1f5f9;color:#1e293b}html.dark .set-tab{color:#94a3b8}html.dark .set-tab:hover{background:#1e293b;color:#f1f5f9}
+  .set-tab.active{background:#eef5ff;color:#1d4ed8}html.dark .set-tab.active{background:rgba(30,58,138,.3);color:#8ebdff}
+  .set-tab i{font-size:1.1rem}
+  /* toggle switch */
+  .toggle{width:2.5rem;height:1.5rem;border-radius:9999px;background:#cbd5e1;padding:.125rem;transition:all .2s;flex-shrink:0}
+  .toggle.on{background:#2563eb}.toggle .knob{display:block;height:1.25rem;width:1.25rem;border-radius:9999px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .2s}
+  /* theme option */
+  .theme-opt{text-align:left;border-radius:.75rem;padding:.375rem;border:2px solid transparent;transition:all .2s}
+  .theme-opt:hover{border-color:#bcd7ff}
+  html.dark .theme-opt:hover{border-color:#1e3a8a}
+</style>
+</body>
+</html>

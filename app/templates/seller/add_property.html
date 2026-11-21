@@ -1,0 +1,389 @@
+{% extends "seller/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<!-- Custom styles for Drag and Drop dropzones -->
+<style>
+  .dropzone-box {
+    transition: border-color 0.2s, background-color 0.2s;
+  }
+  .dropzone-box:hover {
+    border-color: #3b82f6;
+    background-color: rgba(59, 130, 246, 0.02);
+  }
+  .sticky-bar {
+    box-shadow: 0 -4px 12px -2px rgba(15, 23, 42, 0.05);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-[1400px] mx-auto pb-24">
+
+  <!-- ==================== HEADER ==================== -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-ink-200 dark:border-ink-800 pb-5">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-ink-400 mb-2">
+        <span>Estately</span>
+        <i class="ri-arrow-right-s-line"></i>
+        <span>Properties</span>
+        <i class="ri-arrow-right-s-line"></i>
+        <span class="text-ink-600 dark:text-ink-300 font-medium">Add Property</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-ink-900 dark:text-white tracking-tight">Add New Property</h1>
+      <p class="text-sm text-ink-400 mt-1">Create a professional property listing.</p>
+    </div>
+    <div>
+      <a href="{% url 'seller_properties_page' user.id %}" class="btn-outline text-xs">
+        <i class="ri-arrow-left-line"></i> Back to Properties
+      </a>
+    </div>
+  </div>
+
+  <!-- ==================== STEP PROGRESS WIZARD INDICATOR ==================== -->
+  <div class="card p-6">
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-3xl mx-auto">
+      <!-- Step 1 -->
+      <div class="step-indicator-item flex-1 flex flex-col items-center text-center relative w-full" data-step="1">
+        <div class="indicator-circle h-9 w-9 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold text-sm shadow-glow">1</div>
+        <span class="indicator-text text-xs font-bold text-brand-600 mt-2">Basic Info</span>
+      </div>
+      <div class="indicator-line hidden sm:block flex-1 h-1 bg-ink-100 dark:bg-ink-800 -mt-5" data-step="1"></div>
+      <!-- Step 2 -->
+      <div class="step-indicator-item flex-1 flex flex-col items-center text-center w-full" data-step="2">
+        <div class="indicator-circle h-9 w-9 rounded-full bg-ink-100 dark:bg-ink-800 text-ink-400 flex items-center justify-center font-bold text-sm">2</div>
+        <span class="indicator-text text-xs font-semibold text-ink-400 mt-2">Details</span>
+      </div>
+      <div class="indicator-line hidden sm:block flex-1 h-1 bg-ink-100 dark:bg-ink-800 -mt-5" data-step="2"></div>
+      <!-- Step 3 -->
+      <div class="step-indicator-item flex-1 flex flex-col items-center text-center w-full" data-step="3">
+        <div class="indicator-circle h-9 w-9 rounded-full bg-ink-100 dark:bg-ink-800 text-ink-400 flex items-center justify-center font-bold text-sm">3</div>
+        <span class="indicator-text text-xs font-semibold text-ink-400 mt-2">Media</span>
+      </div>
+      <div class="indicator-line hidden sm:block flex-1 h-1 bg-ink-100 dark:bg-ink-800 -mt-5" data-step="3"></div>
+      <!-- Step 4 -->
+      <div class="step-indicator-item flex-1 flex flex-col items-center text-center w-full" data-step="4">
+        <div class="indicator-circle h-9 w-9 rounded-full bg-ink-100 dark:bg-ink-800 text-ink-400 flex items-center justify-center font-bold text-sm">4</div>
+        <span class="indicator-text text-xs font-semibold text-ink-400 mt-2">Review & Publish</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Validation Toast Warning -->
+  <div id="validation-alert" class="fixed top-4 right-4 z-[200] hidden animate-scale-in">
+    <div class="flex items-center gap-3 bg-danger-600 text-white px-5 py-3 rounded-xl shadow-glow">
+      <i class="ri-error-warning-fill text-lg"></i>
+      <span class="text-sm font-semibold">Please fill in all required fields on this step.</span>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN FORM LAYOUT ==================== -->
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- LEFT COLUMN: Form Step Panels -->
+      <div class="lg:col-span-2 space-y-6">
+
+        <!-- STEP 1: Basic Information -->
+        <div class="step-panel card p-6 space-y-6" data-step="1">
+          <div>
+            <h3 class="text-lg font-bold text-ink-900 dark:text-white">Basic Information</h3>
+            <p class="text-xs text-ink-400 mt-0.5">Where is the property and what is its category?</p>
+          </div>
+
+          <!-- Property Type -->
+          <div>
+            <label for="property_type" class="lbl">Property Type <span class="text-danger-500">*</span></label>
+            <select id="property_type" name="property_type" class="input" required>
+              <option value="" disabled selected>Select property type</option>
+              <option value="House">House</option>
+              <option value="Apartment">Apartment</option>
+              <option value="Commercial">Commercial</option>
+              <option value="Land">Land</option>
+            </select>
+          </div>
+
+          <!-- Property Address -->
+          <div>
+            <label for="address" class="lbl">Property Address <span class="text-danger-500">*</span></label>
+            <input type="text" id="address" name="address" placeholder="Full street address (e.g. 102 Marina Blvd, Apt 4C)" class="input" required />
+          </div>
+
+          <!-- Location Name + Fetch Coordinate -->
+          <div>
+            <label for="location" class="lbl">Location <span class="text-danger-500">*</span></label>
+            <div class="flex gap-2">
+              <input type="text" id="location" name="location" placeholder="e.g. San Francisco, Nob Hill" class="input" required />
+              <button type="button" id="fetch-location" class="btn-primary shrink-0 py-2.5">
+                Fetch Coordinates
+              </button>
+            </div>
+          </div>
+
+          <!-- Latitude & Longitude -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="latitude" class="lbl">Latitude</label>
+              <input type="text" id="latitude" name="latitude" placeholder="e.g. 37.7749" class="input bg-ink-50/50 dark:bg-ink-950/20" />
+            </div>
+            <div>
+              <label for="longitude" class="lbl">Longitude</label>
+              <input type="text" id="longitude" name="longitude" placeholder="e.g. -122.4194" class="input bg-ink-50/50 dark:bg-ink-950/20" />
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2: Property Details & Features -->
+        <div class="step-panel card p-6 space-y-6 hidden" data-step="2">
+          <div>
+            <h3 class="text-lg font-bold text-ink-900 dark:text-white">Property Details</h3>
+            <p class="text-xs text-ink-400 mt-0.5">Specifications, pricing and additional descriptions.</p>
+          </div>
+
+          <!-- Price, Area -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="price" class="lbl">Property Price (₹) <span class="text-danger-500">*</span></label>
+              <input type="number" id="price" name="price" placeholder="e.g., 7500000" min="0" class="input" required />
+            </div>
+            <div>
+              <label for="area_sqft" class="lbl">Area (sq ft)</label>
+              <input type="number" id="area_sqft" name="area_sqft" placeholder="e.g. 1500" class="input" />
+            </div>
+          </div>
+
+          <!-- Bedrooms, Bathrooms, Status -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label for="bedrooms" class="lbl">Bedrooms</label>
+              <input type="number" id="bedrooms" name="bedrooms" placeholder="e.g. 3" class="input" />
+            </div>
+            <div>
+              <label for="bathrooms" class="lbl">Bathrooms</label>
+              <input type="number" id="bathrooms" name="bathrooms" placeholder="e.g. 2" class="input" />
+            </div>
+            <div>
+              <label for="status" class="lbl">Status <span class="text-danger-500">*</span></label>
+              <select id="status" name="status" class="input" required>
+                <option value="Available" selected>Available</option>
+                <option value="Sold">Sold</option>
+                <option value="Rented">Rented</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Features -->
+          <div>
+            <label for="features" class="lbl">Features</label>
+            <input type="text" id="features" name="features" placeholder="e.g. Gym, Parking, Security, Garden, Swimming Pool" class="input" />
+            <p class="text-[10px] text-ink-400 mt-1">Separate features with commas.</p>
+          </div>
+
+          <!-- Description -->
+          <div>
+            <label for="description" class="lbl">Description</label>
+            <textarea id="description" name="description" rows="4" maxlength="1000" placeholder="Provide a detailed description of the property features, vicinity, and highlights..." class="input"></textarea>
+            <div class="flex justify-end mt-1">
+              <span id="char-count" class="text-[10px] text-ink-400">0 / 1000 characters</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: Media Upload -->
+        <div class="step-panel card p-6 space-y-6 hidden" data-step="3">
+          <div>
+            <h3 class="text-lg font-bold text-ink-900 dark:text-white">Media Upload</h3>
+            <p class="text-xs text-ink-400 mt-0.5">Upload photos. A main cover photo is required.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            <!-- Main Image Dropzone -->
+            <div>
+              <label class="lbl">Main Cover Image <span class="text-danger-500">*</span></label>
+              <div id="dropzone-main" class="dropzone-box border-2 border-dashed border-ink-200 dark:border-ink-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-2xl h-44 flex flex-col items-center justify-center text-center p-4 cursor-pointer relative overflow-hidden bg-ink-50/50 dark:bg-ink-900/10">
+                <!-- preview wrapper -->
+                <div id="preview-main" class="absolute inset-0 bg-cover bg-center hidden"></div>
+                <button type="button" id="clear-main" class="absolute top-2 right-2 h-7 w-7 bg-ink-950/80 backdrop-blur rounded-full text-white grid place-items-center hover:bg-danger-600 transition hidden z-10">
+                  <i class="ri-close-line"></i>
+                </button>
+                <div class="placeholder-content flex flex-col items-center">
+                  <i class="ri-image-add-line text-3xl text-brand-500"></i>
+                  <p class="text-xs font-semibold text-ink-700 dark:text-ink-200 mt-2">Upload Cover Image</p>
+                  <p class="text-[10px] text-ink-400 mt-1">Drag & drop or click</p>
+                </div>
+              </div>
+              <input type="file" id="main_image" name="main_image" class="hidden" accept="image/*" required />
+            </div>
+
+            <!-- Additional Image 1 -->
+            <div>
+              <label class="lbl">Gallery Photo 1</label>
+              <div id="dropzone-img1" class="dropzone-box border-2 border-dashed border-ink-200 dark:border-ink-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-2xl h-44 flex flex-col items-center justify-center text-center p-4 cursor-pointer relative overflow-hidden bg-ink-50/50 dark:bg-ink-900/10">
+                <div id="preview-img1" class="absolute inset-0 bg-cover bg-center hidden"></div>
+                <button type="button" id="clear-img1" class="absolute top-2 right-2 h-7 w-7 bg-ink-950/80 backdrop-blur rounded-full text-white grid place-items-center hover:bg-danger-600 transition hidden z-10">
+                  <i class="ri-close-line"></i>
+                </button>
+                <div class="placeholder-content flex flex-col items-center">
+                  <i class="ri-camera-lens-line text-3xl text-ink-400"></i>
+                  <p class="text-xs font-semibold text-ink-700 dark:text-ink-200 mt-2">Upload Photo 1</p>
+                  <p class="text-[10px] text-ink-400 mt-1">Drag & drop or click</p>
+                </div>
+              </div>
+              <input type="file" id="image_1" name="image_1" class="hidden" accept="image/*" />
+            </div>
+
+            <!-- Additional Image 2 -->
+            <div>
+              <label class="lbl">Gallery Photo 2</label>
+              <div id="dropzone-img2" class="dropzone-box border-2 border-dashed border-ink-200 dark:border-ink-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-2xl h-44 flex flex-col items-center justify-center text-center p-4 cursor-pointer relative overflow-hidden bg-ink-50/50 dark:bg-ink-900/10">
+                <div id="preview-img2" class="absolute inset-0 bg-cover bg-center hidden"></div>
+                <button type="button" id="clear-img2" class="absolute top-2 right-2 h-7 w-7 bg-ink-950/80 backdrop-blur rounded-full text-white grid place-items-center hover:bg-danger-600 transition hidden z-10">
+                  <i class="ri-close-line"></i>
+                </button>
+                <div class="placeholder-content flex flex-col items-center">
+                  <i class="ri-camera-lens-line text-3xl text-ink-400"></i>
+                  <p class="text-xs font-semibold text-ink-700 dark:text-ink-200 mt-2">Upload Photo 2</p>
+                  <p class="text-[10px] text-ink-400 mt-1">Drag & drop or click</p>
+                </div>
+              </div>
+              <input type="file" id="image_2" name="image_2" class="hidden" accept="image/*" />
+            </div>
+
+            <!-- Additional Image 3 -->
+            <div>
+              <label class="lbl">Gallery Photo 3</label>
+              <div id="dropzone-img3" class="dropzone-box border-2 border-dashed border-ink-200 dark:border-ink-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-2xl h-44 flex flex-col items-center justify-center text-center p-4 cursor-pointer relative overflow-hidden bg-ink-50/50 dark:bg-ink-900/10">
+                <div id="preview-img3" class="absolute inset-0 bg-cover bg-center hidden"></div>
+                <button type="button" id="clear-img3" class="absolute top-2 right-2 h-7 w-7 bg-ink-950/80 backdrop-blur rounded-full text-white grid place-items-center hover:bg-danger-600 transition hidden z-10">
+                  <i class="ri-close-line"></i>
+                </button>
+                <div class="placeholder-content flex flex-col items-center">
+                  <i class="ri-camera-lens-line text-3xl text-ink-400"></i>
+                  <p class="text-xs font-semibold text-ink-700 dark:text-ink-200 mt-2">Upload Photo 3</p>
+                  <p class="text-[10px] text-ink-400 mt-1">Drag & drop or click</p>
+                </div>
+              </div>
+              <input type="file" id="image_3" name="image_3" class="hidden" accept="image/*" />
+            </div>
+
+          </div>
+
+          <div class="p-4 rounded-xl bg-ink-50 dark:bg-ink-900/50 border border-ink-200 dark:border-ink-800 flex items-start gap-2.5">
+            <i class="ri-information-line text-brand-500 mt-0.5"></i>
+            <div class="text-[11px] text-ink-500 leading-relaxed">
+              <span class="font-bold text-ink-800 dark:text-white">Supported Formats:</span> PNG, JPG, JPEG, WEBP.
+              <br/>
+              <span class="font-bold text-ink-800 dark:text-white">Maximum Size:</span> Up to 10MB per file. High-resolution photos sell listings 45% faster.
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 4: Review and Publish -->
+        <div class="step-panel card p-6 space-y-6 hidden" data-step="4">
+          <div>
+            <h3 class="text-lg font-bold text-ink-900 dark:text-white">Review & Publish</h3>
+            <p class="text-xs text-ink-400 mt-0.5">Double check details before listing live.</p>
+          </div>
+
+          <div id="review-info" class="card bg-ink-50/50 dark:bg-ink-950/20 p-5 space-y-4">
+            <!-- Populated dynamically by JS -->
+          </div>
+
+          <div class="p-4 rounded-xl bg-brand-50/50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 flex gap-3">
+            <i class="ri-shield-user-line text-lg text-brand-600 dark:text-brand-400 mt-0.5"></i>
+            <div class="text-xs text-brand-900/80 dark:text-brand-200/80 leading-relaxed">
+              <span class="font-bold">Agreement:</span> By publishing this property, you agree that all provided details and photos are verified and true. Admin will review the submission before it appears live in search directories.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: Sticky Listing Summary Preview -->
+      <div class="lg:col-span-1">
+        <div class="card p-6 space-y-6 lg:sticky lg:top-24">
+          <div>
+            <h3 class="text-base font-bold text-ink-900 dark:text-white">Listing Summary</h3>
+            <p class="text-xs text-ink-400 mt-0.5">Real-time listing preview</p>
+          </div>
+
+          <div class="space-y-4">
+            <!-- Property summary cards -->
+            <div class="flex items-center justify-between border-b border-ink-100 dark:border-ink-800 pb-3">
+              <span class="text-xs text-ink-400">Type</span>
+              <span id="summary-type" class="text-xs font-bold text-ink-800 dark:text-white">Not specified</span>
+            </div>
+            <div class="flex items-center justify-between border-b border-ink-100 dark:border-ink-800 pb-3">
+              <span class="text-xs text-ink-400">Location</span>
+              <span id="summary-location" class="text-xs font-bold text-ink-800 dark:text-white truncate max-w-[150px]">Not specified</span>
+            </div>
+            <div class="flex items-center justify-between border-b border-ink-100 dark:border-ink-800 pb-3">
+              <span class="text-xs text-ink-400">Status</span>
+              <span id="summary-status" class="text-xs font-bold text-ink-800 dark:text-white">Available</span>
+            </div>
+            <div class="flex items-center justify-between border-b border-ink-100 dark:border-ink-800 pb-3">
+              <span class="text-xs text-ink-400">Asking Price</span>
+              <span id="summary-price" class="text-sm font-extrabold text-brand-600 dark:text-brand-400">₹0</span>
+            </div>
+            <div class="flex items-center justify-between border-b border-ink-100 dark:border-ink-800 pb-3">
+              <span class="text-xs text-ink-400">Images Uploaded</span>
+              <span id="summary-images-count" class="text-xs font-bold text-ink-800 dark:text-white">0 / 4 Images</span>
+            </div>
+          </div>
+
+          <!-- Progress Completed -->
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs font-bold">
+              <span class="text-ink-600 dark:text-ink-300">Completion</span>
+              <span id="summary-progress-text" class="text-brand-600">0% Complete</span>
+            </div>
+            <div class="h-2 w-full rounded-full bg-ink-100 dark:bg-ink-800 overflow-hidden">
+              <div id="summary-progress-bar" class="h-full bg-brand-600 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Listing Tips -->
+          <div class="rounded-2xl bg-ink-50 dark:bg-ink-900/40 p-4 border border-ink-100 dark:border-ink-800/80">
+            <h4 class="text-xs font-bold text-ink-800 dark:text-white flex items-center gap-1.5">
+              <i class="ri-lightbulb-line text-warning-500"></i> Tips for Better Listings
+            </h4>
+            <ul class="mt-3 space-y-2 text-[11px] text-ink-500 list-disc list-inside leading-relaxed">
+              <li>Add a clean descriptive title.</li>
+              <li>Always geocode your address coordinates.</li>
+              <li>List at least 3 property features.</li>
+              <li>Include high-quality gallery photos.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== BOTTOM STICKY ACTION BAR ==================== -->
+    <div class="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-ink-900 border-t border-ink-200 dark:border-ink-800 px-6 py-4 sticky-bar flex items-center justify-between lg:left-72 transition-all duration-300">
+      <a href="{% url 'seller_properties_page' user.id %}" class="btn-outline">
+        Cancel
+      </a>
+      <div class="flex gap-3">
+        <button type="button" id="btn-prev" class="btn-secondary hidden">
+          <i class="ri-arrow-left-line"></i> Previous
+        </button>
+        <button type="button" id="btn-next" class="btn-primary">
+          Next <i class="ri-arrow-right-line"></i>
+        </button>
+        <button type="submit" id="btn-submit" class="btn-primary hidden bg-success-600 hover:bg-success-700">
+          <i class="ri-checkbox-circle-line"></i> Publish Property
+        </button>
+      </div>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'seller/js/add_property.js' %}"></script>
+{% endblock %}
